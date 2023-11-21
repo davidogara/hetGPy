@@ -1,5 +1,6 @@
 import numpy as np
 
+MACHINE_DOUBLE_EPS = np.sqrt(2.220446e-16) # From David's RStudio .Machine$double_eps
 
 class hetGP:
     def __init__(self):
@@ -39,6 +40,7 @@ class hetGP:
         mult  = np.zeros(X0.shape[0], dtype=X0.dtype)
         for ii in np.unique(corresp):
             out = Z[(ii==corresp).nonzero()[0]]
+            
             Zlist[ii] = out
             Z0[ii]    = out.mean()
             mult[ii]  = len(out)
