@@ -1,10 +1,20 @@
-#include <Rcpp.h>
-using namespace Rcpp;
+<%
+cfg['compiler_args'] = ['-std=c++11']
+cfg['include_dirs'] = ['../eigen']
+setup_pybind11(cfg)
+%>
 
-NumericMatrix distcpp(NumericMatrix X1){
+#include <iostream>
+#include <pybind11/pybind11.h>
+#include <pybind11/eigen.h>
+#include <Eigen/Dense>
+#include <Eigen/LU>
+
+namespace py = pybind11;
+Eigen::MatrixXd distcpp(Eigen::MatrixXd X1){
   int nr = X1.nrow();
   int nc = X1.ncol();
-  NumericMatrix s(nr, nr);
+  Eigen::MatrixXd s(nr, nr);
   double tmp;
 
   for(int i = 1; i < nr; i++){
@@ -27,10 +37,10 @@ NumericMatrix distcpp(NumericMatrix X1){
 }
 
 // // [[Rcpp::export]]
-// NumericMatrix distcpp_v2(NumericMatrix X){
+// Eigen::MatrixXd distcpp_v2(Eigen::MatrixXd X){
 //   int nr = X.nrow();
 //   int nc = X.ncol();
-//   NumericMatrix s(nr, nr);
+//   Eigen::MatrixXd s(nr, nr);
 //   double tmp;
 //
 //   const double* ptrX1 = (const double*) &X(1,0);
@@ -59,11 +69,11 @@ NumericMatrix distcpp(NumericMatrix X1){
 
 
 
-NumericMatrix distcpp_2(NumericMatrix X1, NumericMatrix X2){
+Eigen::MatrixXd distcpp_2(Eigen::MatrixXd X1, Eigen::MatrixXd X2){
   int nr1 = X1.nrow();
   int nr2 = X2.nrow();
   int dim = X1.ncol();
-  NumericMatrix s(nr1, nr2);
+  Eigen::MatrixXd s(nr1, nr2);
   double tmp;
 
   double* ptrs = &s(0,0);
@@ -86,10 +96,10 @@ NumericMatrix distcpp_2(NumericMatrix X1, NumericMatrix X2){
   return s;
 }
 
-NumericMatrix distcppMaha(NumericMatrix X1, NumericVector m){
+Eigen::MatrixXd distcppMaha(Eigen::MatrixXd X1, NumericVector m){
   int nr = X1.nrow();
   int nc = X1.ncol();
-  NumericMatrix s(nr, nr);
+  Eigen::MatrixXd s(nr, nr);
   double tmp;
 
   for(int i = 1; i < nr; i++){
@@ -112,11 +122,11 @@ NumericMatrix distcppMaha(NumericMatrix X1, NumericVector m){
   return s;
 }
 
-NumericMatrix distcppMaha_2(NumericMatrix X1, NumericMatrix X2, NumericVector m){
+Eigen::MatrixXd distcppMaha_2(Eigen::MatrixXd X1, Eigen::MatrixXd X2, NumericVector m){
   int nr1 = X1.nrow();
   int nr2 = X2.nrow();
   int dim = X1.ncol();
-  NumericMatrix s(nr1, nr2);
+  Eigen::MatrixXd s(nr1, nr2);
   double tmp;
 
   double* ptrs = &s(0,0);
@@ -142,13 +152,13 @@ NumericMatrix distcppMaha_2(NumericMatrix X1, NumericMatrix X2, NumericVector m)
 }
 
 // [[Rcpp::export]]
-NumericMatrix distance_cpp(NumericMatrix X1, Rcpp::Nullable<Rcpp::NumericMatrix> X2 = R_NilValue, Rcpp::Nullable<Rcpp::NumericVector> m = R_NilValue){
-  NumericMatrix tmp;
+Eigen::MatrixXd distance_cpp(Eigen::MatrixXd X1, Rcpp::Nullable<Rcpp::Eigen::MatrixXd> X2 = R_NilValue, Rcpp::Nullable<Rcpp::NumericVector> m = R_NilValue){
+  Eigen::MatrixXd tmp;
   if(X2.isNotNull()){
     if(m.isNotNull()){
-      tmp = distcppMaha_2(X1, (NumericMatrix) X2, (NumericVector) m);
+      tmp = distcppMaha_2(X1, (Eigen::MatrixXd) X2, (NumericVector) m);
     }else{
-      tmp = distcpp_2(X1, (NumericMatrix) X2);
+      tmp = distcpp_2(X1, (Eigen::MatrixXd) X2);
     }
   }else{
     if(m.isNotNull()){
@@ -162,9 +172,9 @@ NumericMatrix distance_cpp(NumericMatrix X1, Rcpp::Nullable<Rcpp::NumericMatrix>
 
 
 // [[Rcpp::export]]
-NumericMatrix partial_d_dist_dX_i1_i2(NumericMatrix X1, int i1, int i2){
+Eigen::MatrixXd partial_d_dist_dX_i1_i2(Eigen::MatrixXd X1, int i1, int i2){
   int nr = X1.nrow();
-  NumericMatrix s(nr, nr);
+  Eigen::MatrixXd s(nr, nr);
 
   for(int i = 0; i < nr; i++){
     if(i == (i1 - 1))
@@ -175,9 +185,9 @@ NumericMatrix partial_d_dist_dX_i1_i2(NumericMatrix X1, int i1, int i2){
 }
 
 // [[Rcpp::export]]
-NumericMatrix partial_d_dist_dX1_i1_i2_X2(NumericMatrix X1, NumericMatrix X2, int i1, int i2){
+Eigen::MatrixXd partial_d_dist_dX1_i1_i2_X2(Eigen::MatrixXd X1, Eigen::MatrixXd X2, int i1, int i2){
   int nr = X2.nrow();
-  NumericMatrix s(X1.nrow(), nr);
+  Eigen::MatrixXd s(X1.nrow(), nr);
 
   for(int i = 0; i < nr; i++){
     s(i1 - 1, i) = -2 * (X1(i1-1, i2-1) - X2(i, i2-1));
