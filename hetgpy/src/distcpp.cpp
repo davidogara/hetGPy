@@ -96,7 +96,7 @@ Eigen::MatrixXd distcpp_2(Eigen::MatrixXd X1, Eigen::MatrixXd X2){
   return s;
 }
 
-Eigen::MatrixXd distcppMaha(Eigen::MatrixXd X1, NumericVector m){
+Eigen::MatrixXd distcppMaha(Eigen::MatrixXd X1, Eigen::VectorXf m){
   int nr = X1.nrow();
   int nc = X1.ncol();
   Eigen::MatrixXd s(nr, nr);
@@ -122,7 +122,7 @@ Eigen::MatrixXd distcppMaha(Eigen::MatrixXd X1, NumericVector m){
   return s;
 }
 
-Eigen::MatrixXd distcppMaha_2(Eigen::MatrixXd X1, Eigen::MatrixXd X2, NumericVector m){
+Eigen::MatrixXd distcppMaha_2(Eigen::MatrixXd X1, Eigen::MatrixXd X2, Eigen::VectorXf m){
   int nr1 = X1.nrow();
   int nr2 = X2.nrow();
   int dim = X1.ncol();
@@ -152,17 +152,18 @@ Eigen::MatrixXd distcppMaha_2(Eigen::MatrixXd X1, Eigen::MatrixXd X2, NumericVec
 }
 
 // [[Rcpp::export]]
-Eigen::MatrixXd distance_cpp(Eigen::MatrixXd X1, Rcpp::Nullable<Rcpp::Eigen::MatrixXd> X2 = R_NilValue, Rcpp::Nullable<Rcpp::NumericVector> m = R_NilValue){
+// https://stackoverflow.com/questions/59270590/pybind11-default-argument-numpy-array-or-none
+Eigen::MatrixXd distance_cpp(Eigen::MatrixXd X1, std::optional<Eigen::MatrixXd> X2, std::optional<Eigen::VectorXf> m){
   Eigen::MatrixXd tmp;
-  if(X2.isNotNull()){
-    if(m.isNotNull()){
-      tmp = distcppMaha_2(X1, (Eigen::MatrixXd) X2, (NumericVector) m);
+  if(X2.has_value()){
+    if(m.has_value()){
+      tmp = distcppMaha_2(X1, (Eigen::MatrixXd) X2, (Eigen::VectorXf) m);
     }else{
       tmp = distcpp_2(X1, (Eigen::MatrixXd) X2);
     }
   }else{
-    if(m.isNotNull()){
-      tmp = distcppMaha(X1, (NumericVector) m);
+    if(m.has_value()){
+      tmp = distcppMaha(X1, (Eigen::VectorXf) m);
     }else{
       tmp = distcpp(X1);
     }
@@ -173,7 +174,7 @@ Eigen::MatrixXd distance_cpp(Eigen::MatrixXd X1, Rcpp::Nullable<Rcpp::Eigen::Mat
 
 // [[Rcpp::export]]
 Eigen::MatrixXd partial_d_dist_dX_i1_i2(Eigen::MatrixXd X1, int i1, int i2){
-  int nr = X1.nrow();
+  int nr = X1.rows();
   Eigen::MatrixXd s(nr, nr);
 
   for(int i = 0; i < nr; i++){
@@ -186,8 +187,8 @@ Eigen::MatrixXd partial_d_dist_dX_i1_i2(Eigen::MatrixXd X1, int i1, int i2){
 
 // [[Rcpp::export]]
 Eigen::MatrixXd partial_d_dist_dX1_i1_i2_X2(Eigen::MatrixXd X1, Eigen::MatrixXd X2, int i1, int i2){
-  int nr = X2.nrow();
-  Eigen::MatrixXd s(X1.nrow(), nr);
+  int nr = X2.rows();
+  Eigen::MatrixXd s(X1.rows(), nr);
 
   for(int i = 0; i < nr; i++){
     s(i1 - 1, i) = -2 * (X1(i1-1, i2-1) - X2(i, i2-1));
