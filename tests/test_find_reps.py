@@ -6,12 +6,12 @@ def test_find_reps_on_mcycle():
 
     model = hetGP.hetGP()
     mcycle = pd.read_csv('tests/data/mcycle.csv',index_col=False)
-    X = mcycle['times'].values
+    X = mcycle['times'].values.reshape(-1,1)
     Z = mcycle['accel'].values
     test = model.find_reps(X,Z,rescale=False, return_Zlist=True,normalize=False,
                            inputBounds=None)
     # get data from R output
-    X0   = pd.read_csv('tests/data/X0_no_normal_no_rescale.csv')['V1'].values
+    X0   = pd.read_csv('tests/data/X0_no_normal_no_rescale.csv')['V1'].values.reshape(-1,1)
     Z0   = pd.read_csv('tests/data/Z0_no_normal_no_rescale.csv')['.'].values
     Z    = pd.read_csv('tests/data/Z_no_normal_no_rescale.csv')['.'].values
     mult = pd.read_csv('tests/data/mult_no_normal_no_rescale.csv')['.'].values

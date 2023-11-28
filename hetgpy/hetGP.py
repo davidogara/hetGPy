@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.linalg.lapack import dtrtri
-from hetgpy.utils import cov_gen
+from hetgpy.utils import cov_gen, partial_cov_gen
 MACHINE_DOUBLE_EPS = np.sqrt(2.220446e-16) # From David's RStudio .Machine$double_eps
 
 class hetGP:
@@ -15,7 +15,8 @@ class hetGP:
             if return_Zlist:
                 return dict(X0=X,Z0=Z,mult = 1, Z = Z, Zlist = dict(Z))
             return(dict(X0 = X, Z0 = Z, mult = 1, Z = Z))
-
+        if len(X.shape) == 1: # if x is a 1D series
+            raise ValueError(f"X appears to be a 1D array. Suggest reshaping with X.reshape(-1,1)")
         if rescale:
             if inputBounds is None:
                 inputBounds = np.array([X.min(axis=0),
@@ -58,9 +59,9 @@ class hetGP:
         n = X0.shape[0]
         N = Z.shape[0]
 
-        C = self.cov_gen(X1 = X0, theta = theta, type = covtype)
+        C = cov_gen(X1 = X0, theta = theta, type = covtype)
         self.C = C
-        Ki = np.linalg.cholesky(C + np.diag(g / mult) ).T
+        Ki = np.linalg.cholesky(C + np.diag(eps + g / mult) ).T
         ldetKi = - 2.0 * np.sum(np.log(np.diag(Ki)))
         # to mirror R's chol2inv: do the following:
         # expose dtrtri from lapack (for fast cholesky inversion of a triangular matrix)
@@ -70,10 +71,51 @@ class hetGP:
         self.Ki = Ki
         if beta0 is None:
             beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
+            self.beta0 = beta0
 
         psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
         #  psi <- 1/N * ((crossprod(Z - beta0) - crossprod((Z0 - beta0) * mult, Z0 - beta0))/g + psi_0)
-        psi = 1.0 / N * ((Z-beta0).T @ (Z-beta0) - (((Z0-beta0)*mult).T @ (Z0-beta0)) / g + psi_0)
+        #t1 = (Z-beta0).T @ (Z-beta0)
+        #t2 = ((Z0-beta0)*mult).T @ (Z0-beta0)
+        #psi = (1.0 / N) * (((t1 - t2) / g) + psi_0)
+        psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
         # loglik <- -N/2 * log(2*pi) - N/2 * log(psi) + 1/2 * ldetKi - (N - n)/2 * log(g) - 1/2 * sum(log(mult)) - N/2
-        loglik = (-N / 2.0) * np.log(2*pi) - (N / 2.0) * np.log(psi) + 1.0 / 2.0 * ldetKi - (N - n)/2.0 * np.log(g) - 1.0 / 2.0 * np.sum(np.log(mult)) - N / 2.0
+        loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.sum(np.log(mult)) - (N / 2.0)
         return loglik
+    
+    def dlogLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian",
+                       eps = MACHINE_DOUBLE_EPS, components = ("theta", "g"), env = None):
+        k = len(Z)
+        n = X0.shape[0]
+        
+        C     = self.C # assumes these have been instantiated by a call to `logLikHom` first
+        Ki    = self.Ki
+        beta0 = self.beta0
+        
+        Z0 = Z0 - beta0
+        Z  = Z - beta0
+  
+        KiZ0 = Ki @ Z0 ## to avoid recomputing  
+        psi  = Z0.T @ KiZ0
+        tmp1 = tmp2 = None
+
+        # First component, derivative with respect to theta
+        if "theta" in components:
+            tmp1 = np.repeat(np.nan, len(theta))
+            if len(theta)==1:
+                dC_dthetak = partial_cov_gen(X1 = X0, theta = theta, type = covtype, arg = "theta_k") * C
+                tmp1 = k/2 * (KiZ0.T @ dC_dthetak) @ KiZ0 /(((Z.T @ Z) - (Z0 * mult).T @ Z0)/g + psi) - 1/2 * np.trace(Ki @ dC_dthetak) # replaces trace_sym
+                tmp1 = np.array(tmp1)
+            else:
+                for i in range(len(theta)):
+                    # use i:i+1 to preserve vector structure -- see "An integer, i, returns the same values as i:i+1 except the dimensionality of the returned object is reduced by 1"
+                    ## at: https://numpy.org/doc/stable/user/basics.indexing.html
+                    X1 = X0[:,i].reshape(-1,1)
+                    # tmp1[i] <- k/2 * crossprod(KiZ0, dC_dthetak) %*% KiZ0 /((crossprod(Z) - crossprod(Z0 * mult, Z0))/g + psi) - 1/2 * trace_sym(Ki, dC_dthetak)
+                    dC_dthetak = partial_cov_gen(X1 = X1, theta = theta[i], type = covtype, arg = "theta_k") * C
+                    tmp1[i] = k/2 * (KiZ0.T @ dC_dthetak) @ KiZ0 /(((Z.T @ Z) - (Z0 * mult).T @ Z0)/g + psi) - 1/2 * np.trace(Ki @ dC_dthetak) # replaces trace_sym
+        # Second component derivative with respect to g
+        if "g" in components:
+            tmp2 = k/2 * ((Z.T @ Z - (Z0 * mult).T @ Z0)/g**2 + np.sum(KiZ0**2/mult)) / ((Z.T @ Z - (Z0 * mult).T @ Z0)/g + psi) - (k - n)/ (2*g) - 1/2 * np.sum(np.diag(Ki)/mult)
+            tmp2 = np.array(tmp2)
+        return np.hstack((tmp1, tmp2))
