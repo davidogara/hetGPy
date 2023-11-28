@@ -22,9 +22,9 @@ def cov_Gaussian(X1, X2 = None, theta = None):
             X2 = X1 if X2 is None else X2
             return np.exp(-euclidean_dist(X1,X2)/theta)
     if X2 is None:
-        A = X1 * np.repeat(1/np.sqrt(theta),np.repeat(X1.shape[0],len(theta)))
+        A = X1 * 1.0 / np.sqrt(theta)
         return np.exp(-1.0*euclidean_dist(A,A))
     else:
-        A = X1 * np.repeat(1/np.sqrt(theta),np.repeat(X1.shape[0],len(theta)))
-        B = X2 * np.repeat(1/np.sqrt(theta),np.repeat(X2.shape[0],len(theta)))
+        A = X1 * 1.0 / np.sqrt(theta)
+        B = X2 * 1.0 / np.sqrt(theta)
         return np.exp(-1.0*euclidean_dist(A,B))
