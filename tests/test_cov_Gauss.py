@@ -2,7 +2,7 @@ import sys
 sys.path.append('../')
 import pandas as pd
 import numpy as np
-from hetgpy.utils import *
+from hetgpy.covariance_functions import *
 
 def test_one_input():
 

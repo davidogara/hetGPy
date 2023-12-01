@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.linalg.lapack import dtrtri
-from hetgpy.utils import cov_gen, partial_cov_gen
+from hetgpy.covariance_functions import cov_gen, partial_cov_gen
 MACHINE_DOUBLE_EPS = np.sqrt(2.220446e-16) # From David's RStudio .Machine$double_eps
 
 class hetGP:
@@ -110,9 +110,8 @@ class hetGP:
                 for i in range(len(theta)):
                     # use i:i+1 to preserve vector structure -- see "An integer, i, returns the same values as i:i+1 except the dimensionality of the returned object is reduced by 1"
                     ## at: https://numpy.org/doc/stable/user/basics.indexing.html
-                    X1 = X0[:,i].reshape(-1,1)
                     # tmp1[i] <- k/2 * crossprod(KiZ0, dC_dthetak) %*% KiZ0 /((crossprod(Z) - crossprod(Z0 * mult, Z0))/g + psi) - 1/2 * trace_sym(Ki, dC_dthetak)
-                    dC_dthetak = partial_cov_gen(X1 = X1, theta = theta[i], type = covtype, arg = "theta_k") * C
+                    dC_dthetak = partial_cov_gen(X1 = X0[:,i:i+1], theta = theta[i], type = covtype, arg = "theta_k") * C
                     tmp1[i] = k/2 * (KiZ0.T @ dC_dthetak) @ KiZ0 /(((Z.T @ Z) - (Z0 * mult).T @ Z0)/g + psi) - 1/2 * np.trace(Ki @ dC_dthetak) # replaces trace_sym
         # Second component derivative with respect to g
         if "g" in components:
