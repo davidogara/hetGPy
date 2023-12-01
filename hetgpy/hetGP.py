@@ -1,4 +1,6 @@
 import numpy as np
+import warnings
+from time import time
 from scipy.linalg.lapack import dtrtri
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen
 MACHINE_DOUBLE_EPS = np.sqrt(2.220446e-16) # From David's RStudio .Machine$double_eps
@@ -7,6 +9,8 @@ class hetGP:
     def __init__(self):
         return
     
+    def auto_bounds(self):
+        pass
     def find_reps(self,X,Z, return_Zlist = True, rescale = False, normalize = False, inputBounds = None):
         
         if type(X) != np.ndarray:
@@ -118,3 +122,87 @@ class hetGP:
             tmp2 = k/2 * ((Z.T @ Z - (Z0 * mult).T @ Z0)/g**2 + np.sum(KiZ0**2/mult)) / ((Z.T @ Z - (Z0 * mult).T @ Z0)/g + psi) - (k - n)/ (2*g) - 1/2 * np.sum(np.diag(Ki)/mult)
             tmp2 = np.array(tmp2)
         return np.hstack((tmp1, tmp2))
+    
+    def mleHomGP(self,X, Z, lower = None, upper = None, known = None,
+                     noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
+                     init = dict(),
+                     covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
+                     maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
+        
+        if type(X) == dict:
+            X0 = X['X0']
+            Z0 = X['Z0']
+            mult = X['mult']
+            if sum(mult) != len(Z):    raise ValueError(f"Length(Z) should be equal to sum(mult): they are {len(Z)} \n and {sum(mult)}")
+            if len(X.shape) == 1:      warnings.warn(f"Coercing X0 to shape {len(X0)} x 1"); X0 = X0.reshape(-1,1)
+            if len(Z0) != X0.shape[0]: raise ValueError("Dimension mismatch between Z0 and X0")
+        else:
+            if len(X.shape) == 1:    warnings.warn(f"Coercing X to shape {len(X)} x 1"); X = X.reshape(-1,1)
+            if X.shape[0] != len(Z): raise ValueError("Dimension mismatch between Z and X")
+            elem = self.find_reps(X, Z, return_Zlist = False)
+            X0   = elem['X0']
+            Z0   = elem['Z0']
+            Z    = elem['Z']
+            mult = elem['mult']
+
+            # might need to change this
+            covtypes = ("Gaussian", "Matern5_2", "Matern3_2")
+            covtype = [c for c in covtypes if c in covtype][0]
+
+            if lower is None or upper is None:
+                auto_thetas = self.auto_bounds(X = X0, covtype = covtype)
+                if lower is None: lower = auto_thetas['lower']
+                if upper is None: upper = auto_thetas['upper']
+                if known.get("theta") is None and init.get('theta') is None:  init['theta'] = np.sqrt(upper * lower)
+            
+            if len(lower) != len(upper): raise ValueError("upper and lower should have the same size")
+
+            tic = time()
+
+            if settings.get('return.Ki') is None: settings['return_Ki'] = True
+            if noiseControl.get('g_bounds') is None: noiseControl['g_bounds'] = (MACHINE_DOUBLE_EPS, 1e2)
+            
+            g_min = noiseControl['g_bounds'][0]
+            g_max = noiseControl['g_bounds'][1]
+
+            beta0 = known['beta0']
+
+            N = len(Z)
+            n = X0.shape[0]
+
+            if len(X0.shape) == 1: raise ValueError("X0 should be a matrix. \n")
+
+            if known.get("theta") is None and init.get("theta") is None: init['theta'] = 0.9 * lower + 0.1 * upper # useful for mleHetGP
+            if known.get('g') is None and init.get('g'): 
+                if any(mult > 2):
+                    init['g'] <- np.mean(
+                        ((mult.T @ (Z.squeeze() - np.repeat(Z0,mult.astype(int)))^2)/mult)[np.where(mult > 2)]
+                        )/np.var(Z0) 
+                else:
+                    init['g'] = 0.1
+            trendtype = 'OK'
+            if beta0 is not None:
+               trendtype = 'SK'
+            
+            ## General definition of fn and gr
+            self.max_loglik = float('-inf')
+            self.arg_max = None
+            def fn(par, X0, Z0, Z, mult, beta0, theta, g, env):
+                idx = 0 # to store the first non used element of par
+    
+                if theta is None: 
+                    theta = par[0:len(init['theta'])]
+                    idx   = idx + len(init['theta'])
+                if g is None:
+                    g = par[idx]
+                
+                loglik = self.logLikHom(X0 = X0, Z0 = Z0, Z = Z, mult = mult, theta = theta, g = g, beta0 = beta0, covtype = covtype, eps = eps, env = env)
+                
+                if np.isnan(loglik) == False:
+                    if loglik > self.max_loglik:
+                        self.max_loglike = loglik
+                        self.arg_max = par
+                
+                return loglik
+            
+    
