@@ -3,15 +3,43 @@ import warnings
 from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
-from hetgpy.covariance_functions import cov_gen, partial_cov_gen
+from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
+#from scipy.stats.mstats import mquantiles
 MACHINE_DOUBLE_EPS = np.sqrt(2.220446e-16) # From David's RStudio .Machine$double_eps
 
 class hetGP:
     def __init__(self):
         return
     
-    def auto_bounds(self):
-        pass
+    def auto_bounds(self, X, min_cor = 0.01, max_cor = 0.5, covtype = "Gaussian", p = 0.05):
+        '''
+        Xsc <- find_reps(X, rep(1, nrow(X)), rescale = T) # rescaled distances
+  
+        dists <- distance_cpp(Xsc$X0) # find 2 closest points
+        repr_low_dist <- quantile(x = dists[lower.tri(dists)], probs = p) # (quantile on squared Euclidean distances)
+        repr_lar_dist <- quantile(x = dists[lower.tri(dists)], probs = 1-p)
+        
+        if(covtype == "Gaussian"){
+            theta_min <- - repr_low_dist/log(min_cor)
+            theta_max <- - repr_lar_dist/log(max_cor)
+            return(list(lower = theta_min * (Xsc$inputBounds[2,] - Xsc$inputBounds[1,])^2,
+                        upper = theta_max * (Xsc$inputBounds[2,] - Xsc$inputBounds[1,])^2))
+        }
+        '''
+
+        Xsc = self.find_reps(X,np.repeat(1,X.shape[0]), rescale=True) # rescaled distances
+        dists = euclidean_dist(Xsc['X0'],Xsc['X0'])
+        repr_low_dist = np.quantile(dists[np.tril(dists,k=-1)>0], q = p)
+        repr_lar_dist = np.quantile(dists[np.tril(dists,k=-1)>0], q = 1-p)
+        if covtype == "Gaussian":
+            theta_min = - repr_low_dist / np.log(min_cor)
+            theta_max = - repr_lar_dist / np.log(max_cor)
+            return dict(lower = theta_min * (Xsc['inputBounds'][1,:] - Xsc['inputBounds'][0,:])**2,
+                        upper = theta_max * (Xsc['inputBounds'][1,:] - Xsc['inputBounds'][0,:])**2)
+            
+        
+        else:
+            raise NotImplementedError(f"{covtype} not implemented yet")
     def find_reps(self,X,Z, return_Zlist = True, rescale = False, normalize = False, inputBounds = None):
         
         if type(X) != np.ndarray:
@@ -110,20 +138,20 @@ class hetGP:
             if len(theta)==1:
                 dC_dthetak = partial_cov_gen(X1 = X0, theta = theta, type = covtype, arg = "theta_k") * C
                 tmp1 = k/2 * (KiZ0.T @ dC_dthetak) @ KiZ0 /(((Z.T @ Z) - (Z0 * mult).T @ Z0)/g + psi) - 1/2 * np.trace(Ki @ dC_dthetak) # replaces trace_sym
-                tmp1 = np.array(tmp1)
+                tmp1 = np.array(tmp1).squeeze()
             else:
                 for i in range(len(theta)):
                     # use i:i+1 to preserve vector structure -- see "An integer, i, returns the same values as i:i+1 except the dimensionality of the returned object is reduced by 1"
                     ## at: https://numpy.org/doc/stable/user/basics.indexing.html
                     # tmp1[i] <- k/2 * crossprod(KiZ0, dC_dthetak) %*% KiZ0 /((crossprod(Z) - crossprod(Z0 * mult, Z0))/g + psi) - 1/2 * trace_sym(Ki, dC_dthetak)
                     dC_dthetak = partial_cov_gen(X1 = X0[:,i:i+1], theta = theta[i], type = covtype, arg = "theta_k") * C
-                    tmp1[i] = k/2 * (KiZ0.T @ dC_dthetak) @ KiZ0 /(((Z.T @ Z) - (Z0 * mult).T @ Z0)/g + psi) - 1/2 * np.trace(Ki @ dC_dthetak) # replaces trace_sym
+                    tmp1[i] = (k/2 * (KiZ0.T @ dC_dthetak) @ KiZ0 /(((Z.T @ Z) - (Z0 * mult).T @ Z0)/g + psi) - 1/2 * np.trace(Ki @ dC_dthetak)).squeeze() # replaces trace_sym
         # Second component derivative with respect to g
         if "g" in components:
             tmp2 = k/2 * ((Z.T @ Z - (Z0 * mult).T @ Z0)/g**2 + np.sum(KiZ0**2/mult)) / ((Z.T @ Z - (Z0 * mult).T @ Z0)/g + psi) - (k - n)/ (2*g) - 1/2 * np.sum(np.diag(Ki)/mult)
-            tmp2 = np.array(tmp2).reshape(-1,1)
+            tmp2 = np.array(tmp2).squeeze()
         
-        out = np.hstack((tmp1.reshape(-1,1), tmp2.reshape(-1,1)))
+        out = np.hstack((tmp1, tmp2)).reshape(-1,1)
         return out
     
     def mleHomGP(self,X, Z, lower = None, upper = None, known = dict(),
@@ -206,7 +234,6 @@ class hetGP:
             ## General definition of fn and gr
             self.max_loglik = float('-inf')
             self.arg_max = None
-            self.init = init # save this as a global variable for dLoglikeHom
             def fn(par, X0, Z0, Z, mult, beta0, theta, g):
                 idx = 0 # to store the first non used element of par
     
@@ -258,7 +285,9 @@ class hetGP:
                     lowerOpt = np.append(lowerOpt,g_min)
                     upperOpt = np.append(upperOpt,g_max)
                 # take max of mins and min of maxs
-                bounds = [[lowerOpt.max(), upperOpt.min()]]
+                #bounds = [[lowerOpt.max(), upperOpt.min()]]
+                bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
+                
                 out = optimize.minimize(
                     fun=fn, # for maximization
                     args = (X0, Z0, Z, mult, beta0, known.get('theta'), known.get('g')),
@@ -296,7 +325,7 @@ class hetGP:
                 ).T
             ki = dtrtri(ki)[0]
             Ki = ki @ ki.T
-
+            self.Ki = Ki
             if beta0 is None:
                 beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
             
@@ -313,5 +342,68 @@ class hetGP:
             
             if settings["return_Ki"]: res['Ki']  = Ki
             return res
-        def predict_hom_GP(self, object, x, xprime = NULL): return
+    def predict_hom_GP(self, object, x, xprime = None):
+
+        if len(x.shape) == 1:
+            x = x.reshape(-1,1)
+            if x.shape[1] != object['X0'].shape[1]: raise ValueError("x is not a matrix")
+        if xprime is not None and len(xprime.shape)==1:
+            xprime = xprime.reshape(-1,1)
+            if xprime.shape[1] != object['X0'].shape[1]: raise ValueError("xprime is not a matrix")
+        
+        if object.get('Ki') is None:
+            # these should be replaced with calls to self instead of object
+            ki = np.linalg.cholesky(
+            cov_gen(X1 = object['X0'], theta = object['theta'], type = object['covtype']) + np.diag(object['eps'] + object['g'] / object['mult'])
+            ).T
+            ki = dtrtri(ki)[0]
+            object['Ki'] = ki @ ki.T
+        object['Ki'] /= object['nu_hat']
+        kx = object['nu_hat'] * cov_gen(X1 = x, X2 = object['X0'], theta = object['theta'], type = object['covtype'])
+        nugs = np.repeat(object['nu_hat'] * object['g'], x.shape[0])
+        mean = object['beta0'] + kx @ (object['Ki'] @ (object['Z0'] - object['beta0']))
+        
+        if object['trendtype'] == 'SK':
+            sd2 = object['nu_hat'] - np.diag(kx @ (object['Ki'] @ kx.T))
+        else:
+            sd2 = object['nu_hat'] - np.diag(kx @ ((object['Ki'] @ kx.T) + (1-(object['Ki'].sum(axis=0) @ kx.T))**2/object['Ki'].sum()))
+        
+        if (sd2<0).any():
+            sd2[sd2<0] = 0
+            warnings.warn("Numerical errors caused some negative predictive variances to be thresholded to zero. Consider using ginv via rebuild.homGP")
+
+        if xprime is not None:
+            kxprime = object['nu_hat'] * cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype'])
+            if object['trendtype'] == 'SK':
+                if x.shape[0] < xprime.shape[0]:
+                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ object['Ki'] @ kxprime
+                    # object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% object$Ki %*% kxprime 
+                else:
+                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ (object['Ki'] @ kxprime)
+            else:
+                if x.shape[0] < xprime.shape[0]:
+                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ object['Ki'] @ kxprime + ((1-(object['Ki'].sum(axis=0)).T @ kx).T @ (1-object['Ki'].sum(axis=0) @ kxprime))/object['Ki'].sum() #crossprod(1 - tcrossprod(rowSums(object$Ki), kx), 1 - rowSums(object$Ki) %*% kxprime)/sum(object$Ki)
+        else:
+            cov = None
+        '''
+        if(!is.null(xprime))
+            kxprime <- object$nu_hat * cov_gen(X1 = object$X0, X2 = xprime, theta = object$theta, type = object$covtype)
+            if(object$trendtype == 'SK'){
+            if(nrow(x) < nrow(xprime)){
+                cov <- object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% object$Ki %*% kxprime 
+            }else{
+                cov <- object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% (object$Ki %*% kxprime)
+            }
+            }else{
+            if(nrow(x) < nrow(xprime)){
+                cov <- object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% object$Ki %*% kxprime + crossprod(1 - tcrossprod(rowSums(object$Ki), kx), 1 - rowSums(object$Ki) %*% kxprime)/sum(object$Ki)
+            }else{
+                cov <- object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% (object$Ki %*%  kxprime) + crossprod(1 - tcrossprod(rowSums(object$Ki), kx), 1 - rowSums(object$Ki) %*% kxprime)/sum(object$Ki)
+            }
+            }
+        else{
+            cov = NULL
+        '''
+        
+        return dict(mean = mean, sd2 = sd2, nugs = nugs, cov = cov)
 
