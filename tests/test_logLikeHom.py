@@ -96,8 +96,9 @@ def test_dll_Hom():
         g = 0.1
     )
 
-
-    assert np.allclose(target_dll,computed_dll)
+    print(target_dll)
+    print(computed_dll)
+    assert np.allclose(target_dll,computed_dll.squeeze())
 
 
 def test_ll_and_dll_hom_anisotropic():
@@ -140,7 +141,7 @@ def test_ll_and_dll_hom_anisotropic():
     )
     print(target_dll)
     print(computed_dll)
-    assert np.allclose(target_dll,computed_dll)
+    assert np.allclose(target_dll,computed_dll.squeeze())
 if __name__ == "__main__":
     test_ll_and_dll_hom_anisotropic()
 
