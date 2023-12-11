@@ -4,28 +4,18 @@ from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
+from hetgpy.utils import fast_tUY2
 #from scipy.stats.mstats import mquantiles
-MACHINE_DOUBLE_EPS = np.sqrt(2.220446e-16) # From David's RStudio .Machine$double_eps
+#MACHINE_DOUBLE_EPS = np.sqrt(2.220446e-16) # From David's RStudio .Machine$double_eps
+MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
+import copy
+
 
 class hetGP:
     def __init__(self):
         return
     
     def auto_bounds(self, X, min_cor = 0.01, max_cor = 0.5, covtype = "Gaussian", p = 0.05):
-        '''
-        Xsc <- find_reps(X, rep(1, nrow(X)), rescale = T) # rescaled distances
-  
-        dists <- distance_cpp(Xsc$X0) # find 2 closest points
-        repr_low_dist <- quantile(x = dists[lower.tri(dists)], probs = p) # (quantile on squared Euclidean distances)
-        repr_lar_dist <- quantile(x = dists[lower.tri(dists)], probs = 1-p)
-        
-        if(covtype == "Gaussian"){
-            theta_min <- - repr_low_dist/log(min_cor)
-            theta_max <- - repr_lar_dist/log(max_cor)
-            return(list(lower = theta_min * (Xsc$inputBounds[2,] - Xsc$inputBounds[1,])^2,
-                        upper = theta_max * (Xsc$inputBounds[2,] - Xsc$inputBounds[1,])^2))
-        }
-        '''
 
         Xsc = self.find_reps(X,np.repeat(1,X.shape[0]), rescale=True) # rescaled distances
         dists = euclidean_dist(Xsc['X0'],Xsc['X0'])
@@ -59,7 +49,9 @@ class hetGP:
         if normalize:
             outputStats = np.array([Z.mean(), Z.var()])
             Z = (Z - outputStats[0])/np.sqrt(outputStats[1])
-        X0 = np.unique(X, axis = 0)
+        #X0 = np.unique(X, axis = 0)
+        indices = np.unique(X, axis = 0, return_index=True)[1]
+        X0 = X[np.sort(indices),:]
         if X0.shape[0] == X.shape[0]:
             if return_Zlist:
                 return dict(X0 = X, Z0 = Z, mult = np.repeat(1, len(Z)), Z = Z, Zlist = Z,
@@ -73,12 +65,13 @@ class hetGP:
         Zlist = {}
         Z0    = np.zeros(X0.shape[0], dtype=X0.dtype)
         mult  = np.zeros(X0.shape[0], dtype=X0.dtype)
-        for ii in np.unique(corresp):
-            out = Z[(ii==corresp).nonzero()[0]]
-            
-            Zlist[ii] = out
-            Z0[ii]    = out.mean()
-            mult[ii]  = len(out)
+        idx = 0
+        for val in corresp[np.sort(indices)]: #start here
+            out = Z[(val==corresp).nonzero()[0]]
+            Zlist[idx] = out
+            Z0[idx]    = out.mean()
+            mult[idx]  = len(out)
+            idx+=1
   
         if return_Zlist:
             return dict(X0 = X0, Z0 = Z0, mult = mult, Z = Z,
@@ -156,7 +149,7 @@ class hetGP:
     
     def mleHomGP(self,X, Z, lower = None, upper = None, known = dict(),
                      noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
-                     init = dict(),
+                     init = {},
                      covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
                      maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
         
@@ -178,7 +171,7 @@ class hetGP:
 
             # might need to change this
             covtypes = ("Gaussian", "Matern5_2", "Matern3_2")
-            covtype = [c for c in covtypes if c in covtype][0]
+            covtype = [c for c in covtypes if c==covtype][0]
 
             if lower is None or upper is None:
                 auto_thetas = self.auto_bounds(X = X0, covtype = covtype)
@@ -205,18 +198,7 @@ class hetGP:
 
             if known.get("theta") is None and init.get("theta") is None: init['theta'] = 0.9 * lower + 0.1 * upper # useful for mleHetGP
             
-            def fast_tUY2(mult,Y2):
-                # to do: speed this up
-                res = np.zeros(shape=mult.shape[0])
-                idx = 0
-                idxtmp = 0
-                for i in range(len(Y2)):
-                    res[idx]+=Y2[i]
-                    idxtmp+=1
-                    if idxtmp == mult[idx]:
-                        idx+=1
-                        idxtmp = 0
-                return res
+            
             if known.get('g') is None and init.get('g') is None: 
                 if any(mult > 2):
                     #t1 = mult.T
@@ -284,8 +266,6 @@ class hetGP:
                     parinit = np.hstack((parinit,init.get('g')))
                     lowerOpt = np.append(lowerOpt,g_min)
                     upperOpt = np.append(upperOpt,g_max)
-                # take max of mins and min of maxs
-                #bounds = [[lowerOpt.max(), upperOpt.min()]]
                 bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
                 
                 out = optimize.minimize(
@@ -295,10 +275,10 @@ class hetGP:
                     jac=gr,
                     method="L-BFGS-B",
                     bounds = bounds,
-                    tol=1e-8,
+                    #tol=1e-8,
                     options=dict(maxiter=maxit, #,
-                                ftol = settings.get('factr') * np.finfo(float).eps,#,
-                                #gtol = settings.get('pgtol') # should map to pgtol
+                                ftol = settings.get('factr',10) * np.finfo(float).eps,#,
+                                gtol = settings.get('pgtol',0) # should map to pgtol
                                 )
                     )
                     # out <- try(optim(par = parinit, fn = fn, gr = gr, method = "L-BFGS-B", lower = lowerOpt, upper = upperOpt, theta = known[["theta"]], g = known$g,
@@ -358,7 +338,7 @@ class hetGP:
             ).T
             ki = dtrtri(ki)[0]
             object['Ki'] = ki @ ki.T
-        object['Ki'] /= object['nu_hat']
+        object['Ki'] /= object['nu_hat'] # this is a subtle difference between R and Python. 
         kx = object['nu_hat'] * cov_gen(X1 = x, X2 = object['X0'], theta = object['theta'], type = object['covtype'])
         nugs = np.repeat(object['nu_hat'] * object['g'], x.shape[0])
         mean = object['beta0'] + kx @ (object['Ki'] @ (object['Z0'] - object['beta0']))
@@ -366,7 +346,9 @@ class hetGP:
         if object['trendtype'] == 'SK':
             sd2 = object['nu_hat'] - np.diag(kx @ (object['Ki'] @ kx.T))
         else:
-            sd2 = object['nu_hat'] - np.diag(kx @ ((object['Ki'] @ kx.T) + (1-(object['Ki'].sum(axis=0) @ kx.T))**2/object['Ki'].sum()))
+            #sd2 <- as.vector(object$nu_hat - fast_diag(kx, tcrossprod(object$Ki, kx)) + (1 - tcrossprod(rowSums(object$Ki), kx))^2/sum(object$Ki))
+  
+            sd2 = object['nu_hat'] - np.diag(kx @ ((object['Ki'] @ kx.T))) + (1- (object['Ki'].sum(axis=0))@ kx.T)**2/object['Ki'].sum()
         
         if (sd2<0).any():
             sd2[sd2<0] = 0
@@ -385,25 +367,31 @@ class hetGP:
                     cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ object['Ki'] @ kxprime + ((1-(object['Ki'].sum(axis=0)).T @ kx).T @ (1-object['Ki'].sum(axis=0) @ kxprime))/object['Ki'].sum() #crossprod(1 - tcrossprod(rowSums(object$Ki), kx), 1 - rowSums(object$Ki) %*% kxprime)/sum(object$Ki)
         else:
             cov = None
-        '''
-        if(!is.null(xprime))
-            kxprime <- object$nu_hat * cov_gen(X1 = object$X0, X2 = xprime, theta = object$theta, type = object$covtype)
-            if(object$trendtype == 'SK'){
-            if(nrow(x) < nrow(xprime)){
-                cov <- object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% object$Ki %*% kxprime 
-            }else{
-                cov <- object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% (object$Ki %*% kxprime)
-            }
-            }else{
-            if(nrow(x) < nrow(xprime)){
-                cov <- object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% object$Ki %*% kxprime + crossprod(1 - tcrossprod(rowSums(object$Ki), kx), 1 - rowSums(object$Ki) %*% kxprime)/sum(object$Ki)
-            }else{
-                cov <- object$nu_hat * cov_gen(X1 = x, X2 = xprime, theta = object$theta, type = object$covtype) - kx %*% (object$Ki %*%  kxprime) + crossprod(1 - tcrossprod(rowSums(object$Ki), kx), 1 - rowSums(object$Ki) %*% kxprime)/sum(object$Ki)
-            }
-            }
-        else{
-            cov = NULL
-        '''
         
+
+        # re-modify object so Ki is preserved (because R does not modify lists in place)
+        object['Ki']*=object['nu_hat']
         return dict(mean = mean, sd2 = sd2, nugs = nugs, cov = cov)
+    
+    def rebuild_homGP(self, object, robust = False):
+        if robust :
+            object['Ki'] <- np.linalg.pinv(
+                cov_gen(X1 = object['X0'], theta = object['theta'], type = object['covtype']) + np.diag(object['eps'] + object['g'] / object['mult'])
+            ).T
+            object['Ki'] /= object['nu_hat']
+        else:
+            ki = np.linalg.cholesky(
+            cov_gen(X1 = object['X0'], theta = object['theta'], type = object['covtype']) + np.diag(object['eps'] + object['g'] / object['mult'])
+            ).T
+            ki = dtrtri(ki)[0]
+            object['Ki'] = ki @ ki.T
+        return object
+    
+    def strip(self,object):
+        keys  = ('Ki','Kgi','modHom','modNugs')
+        for key in keys:
+            if key in object.keys():
+                del object[key]
+        return object
+
 
