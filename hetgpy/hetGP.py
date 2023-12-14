@@ -31,6 +31,61 @@ class hetGP:
         else:
             raise NotImplementedError(f"{covtype} not implemented yet")
     def find_reps(self,X,Z, return_Zlist = True, rescale = False, normalize = False, inputBounds = None):
+        r"""Prepare data for use with `mleHomGP`and `mleHetGP`
+        
+        Several sentence description here. in particular to find replicated observations
+
+        Parameters
+        ----------
+
+        X : array_like
+            matrix of design locations, one point per row
+        Z : array_like
+            vector of observations at `X`
+        return_Zlist: bool 
+            to return \code{Zlist}, see below
+        
+        rescale: bool
+            if `True`, the inputs are rescaled to the unit hypercube
+        normalize: bool 
+            if `True`, the outputs are centered and normalized
+        inputBounds: array_like 
+            optional matrix of known boundaries in original input space, of size 2 times X.shape[1].If not provided, and \code{rescale == TRUE}, it is estimated from the data.   
+        
+        Returns
+        ----------
+        dict
+            dictionary of outputs
+        type
+            explain types
+        out
+            dictionary of 
+            \itemize{
+            \item `X0` matrix with unique designs locations, one point per row,
+            \item `Z0` vector of averaged observations at \code{X0},
+            \item `mult` number of replicates at \code{X0},
+            \item `Z` vector with all observations, sorted according to \code{X0},
+            \item `Zlist` optional list, each element corresponds to observations at a design in \code{X0},
+            \item `inputBounds` optional matrix, to rescale back to the original input space,
+            \item `outputStats` optional vector, with mean and variance of the original outputs.
+            }
+        References
+        ----------
+
+        Binois et. al (2018)
+
+
+        Examples
+        --------
+        >>> from hetgpy.data import mcycle
+        >>> from hetgpy.hetGP import hetGP
+        >>> X = mcycle['times']
+        >>> Z = mcycle['accel']
+
+        >>> model = hetGP()
+        >>> out = model.find_reps(X, Z)
+        >>> print(out)
+        """
         
         if type(X) != np.ndarray:
             raise ValueError(f"X must be a numpy array, is currently: {type(X)}")
@@ -50,8 +105,11 @@ class hetGP:
             outputStats = np.array([Z.mean(), Z.var()])
             Z = (Z - outputStats[0])/np.sqrt(outputStats[1])
         #X0 = np.unique(X, axis = 0)
-        indices = np.unique(X, axis = 0, return_index=True)[1]
-        X0 = X[np.sort(indices),:]
+        _, indices, corresp = np.unique(X, axis = 0, return_index=True, return_inverse=True)
+        # np.unique sorts by default -- explicit sorting of the *indices* preserves the order of
+        # observations in X
+        indices.sort() 
+        X0 = X[indices,:]
         if X0.shape[0] == X.shape[0]:
             if return_Zlist:
                 return dict(X0 = X, Z0 = Z, mult = np.repeat(1, len(Z)), Z = Z, Zlist = Z,
@@ -60,18 +118,14 @@ class hetGP:
                 inputBounds = inputBounds, outputStats = outputStats)
         
         # TODO: consider numba-ing this part. Replicating *split* in R is a bit tricky
-        # consider something like: Zsplit = np.split(Z, np.unique(corresp, return_index=True)[1][1:])
-        _, corresp = np.unique(X,axis=0,return_inverse=True)
         Zlist = {}
         Z0    = np.zeros(X0.shape[0], dtype=X0.dtype)
         mult  = np.zeros(X0.shape[0], dtype=X0.dtype)
-        idx = 0
-        for val in corresp[np.sort(indices)]: #start here
+        for idx, val in enumerate(corresp[indices]): 
             out = Z[(val==corresp).nonzero()[0]]
             Zlist[idx] = out
             Z0[idx]    = out.mean()
             mult[idx]  = len(out)
-            idx+=1
   
         if return_Zlist:
             return dict(X0 = X0, Z0 = Z0, mult = mult, Z = Z,
