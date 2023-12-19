@@ -41,7 +41,7 @@ def partial_d_Cg_Gaussian_d_k_theta_g(X1,theta,k_theta_g):
     ## Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
     ## 1-dimensional/isotropic case
     if len(theta) == 1:
-        return(euclidean_dist(X1,X1)/(theta*k_theta_g^2))
+        return(euclidean_dist(X1,X1)/(theta*k_theta_g**2))
     xx1 = X1 * 1 / np.sqrt(theta)
     return euclidean_dist(xx1, xx1)/k_theta_g**2
 
@@ -49,7 +49,7 @@ def partial_d_kg_Gaussian_d_k_theta_g(X1,X2,theta, k_theta_g):
     ## Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
     ## 1-dimensional/isotropic case
     if len(theta) == 1:
-        return(euclidean_dist(X1,X2)/(theta*k_theta_g^2))
+        return(euclidean_dist(X1,X2)/(theta*k_theta_g**2))
     xx1 = X1 * 1 / np.sqrt(theta)
     xx2 = X2 * 1 / np.sqrt(theta)
     return euclidean_dist(xx1, xx2)/k_theta_g**2
@@ -90,13 +90,13 @@ def partial_d_dist_dX1_i1_i2_X2(X1, X2, i1, i2):
         s[i1 - 1, i] = -2 * (X1[i1-1, i2-1] - X2[i, i2-1])
     return s
 
-def partial_cov_gen(X1,X2 = None, theta = None, type = "Gaussian", arg = None, i1 = None, i2 = None):
+def partial_cov_gen(X1,X2 = None, theta = None,k_theta_g = None, type = "Gaussian", arg = None, i1 = None, i2 = None):
     if X2 is None:
         if type== "Gaussian":
             if arg == "theta_k":
                 return partial_d_C_Gaussian_dtheta_k(X1 = X1, theta = theta)
             if arg == "k_theta_g":
-                return partial_d_Cg_Gaussian_d_k_theta_g(X1 = X1, theta = theta )
+                return partial_d_Cg_Gaussian_d_k_theta_g(X1 = X1, theta = theta, k_theta_g=k_theta_g)
             if arg == "X_i_j":
                 return partial_d_C_Gaussian_dX_i_j(X1 = X1, theta = theta, i1 = i1, i2 = i2)
     else:
@@ -104,6 +104,6 @@ def partial_cov_gen(X1,X2 = None, theta = None, type = "Gaussian", arg = None, i
             if arg == "theta_k":
                 return partial_d_k_Gaussian_dtheta_k(X1 = X1, X2 = X2, theta = theta)
             if arg == "k_theta_g":
-                return partial_d_kg_Gaussian_d_k_theta_g(X1 = X1, X2 = X2, theta = theta)
+                return partial_d_kg_Gaussian_d_k_theta_g(X1 = X1, X2 = X2, theta = theta,k_theta_g=k_theta_g)
             if arg == "X_i_j":
                 return partial_d_k_Gaussian_dX_i_j(X1 = X1, X2 = X2, theta = theta,i1 = i1, i2 = i2)
