@@ -8,7 +8,7 @@ def cov_gen(X1, X2 = None, theta = None, type = None):
     return dists
 
 def euclidean_dist(X1,X2):
-    dists = np.sum(np.square(X1)[:,np.newaxis,:], axis=2) - 2 * X1.dot(X2.T) + np.sum(np.square(X2), axis=1)
+    dists = np.sum(np.square(X1)[:,np.newaxis,:], axis=2) - 2.0 * X1.dot(X2.T) + np.sum(np.square(X2), axis=1)
     return dists
 
 # numba this

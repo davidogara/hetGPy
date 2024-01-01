@@ -31,3 +31,6 @@ def rho_AN(xx, X0, theta_g, g, sigma = 1, type = "Gaussian", SiNK_eps = 1e-4, ep
   Kinv = dtrtri(np.linalg.cholesky(K).T)[0]
   Kinv = Kinv @ Kinv.T
   return np.amax(SiNK_eps, np.sqrt(np.diag(k @ Kinv @ k.T))/sigma**2)
+
+def crossprod(X,Y):
+      return X.T @ Y

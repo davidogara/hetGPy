@@ -34,6 +34,7 @@ class homGP():
             psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
             psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
             loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.sum(np.log(mult)) - (N / 2.0)
+            #print('loglik: ', loglik,'\n')
             return loglik
         
     def dlogLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian",
@@ -72,6 +73,7 @@ class homGP():
             tmp2 = np.array(tmp2).squeeze()
         
         out = np.hstack((tmp1, tmp2)).reshape(-1,1)
+        #print('dll', out, '\n')
         return out
 
     def mleHomGP(self,X, Z, lower = None, upper = None, known = dict(),
@@ -194,7 +196,7 @@ class homGP():
                 lowerOpt = np.append(lowerOpt,g_min)
                 upperOpt = np.append(upperOpt,g_max)
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
-            
+            print(50*'*' + '\nnew opt: \n')
             out = optimize.minimize(
                 fun=fn, # for maximization
                 args = (X0, Z0, Z, mult, beta0, known.get('theta'), known.get('g')),
@@ -231,7 +233,7 @@ class homGP():
         if beta0 is None:
             beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
         
-        psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
+        psi_0 = ((Z0 - beta0).T @ Ki) @ (Z0 - beta0)
 
         nu = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g_out) + psi_0)
 

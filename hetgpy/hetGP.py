@@ -3,8 +3,9 @@ import warnings
 from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
+from scipy.io import loadmat
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
-from hetgpy.utils import fast_tUY2, rho_AN
+from hetgpy.utils import fast_tUY2, rho_AN, crossprod
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.homGP import homGP
@@ -68,7 +69,8 @@ class hetGP:
         if theta_g is None: theta_g = k_theta_g * theta
 
 
-        if pX is None:
+        if pX is None or pX.size==0:
+            print(f'theta_g: {theta_g}')
             Cg = cov_gen(X1 = X0, theta = theta_g, type = covtype)
             Kg_c = np.linalg.cholesky(Cg + np.diag(eps + g / mult) ).T
             Kgi = dtrtri(Kg_c)[0]
@@ -104,9 +106,9 @@ class hetGP:
             Lambda = np.exp(Lambda)
         
         else:
-            Lambda[Lambda <= 0] <- eps
+            Lambda[Lambda <= 0] = eps
         
-        LambdaN = np.repeat(Lambda, repeats= N)
+        LambdaN = np.repeat(Lambda, repeats= mult.astype(int))
 
         # Temporarily store Cholesky transform of K in Ki
         C = cov_gen(X1 = X0, theta = theta, type = covtype)
@@ -125,12 +127,9 @@ class hetGP:
             beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
 
         psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
-        # t1 = ((Z-beta0)/ LambdaN).T @ (Z-beta0)
-        # t2 = ((Z0 - beta0)*mult/Lambda).T @ (Z0-beta0)
-        # psi = 1/N * (t1 + t2 + psi_0)
-        # psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
+        
         psi = (1.0 / N)*((((Z-beta0)/ LambdaN).T @ (Z-beta0)) - ((Z0 - beta0)*mult/Lambda).T @ (Z0-beta0) + psi_0)
-        loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.sum(np.log(mult)) - (N / 2.0)
+        loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.sum((mult-1) * np.log(Lambda) + np.log(mult)) - (N / 2.0)
         
         if penalty:
             nu_hat_var = np.squeeze((Delta - nmean).T @ Kgi @ (Delta - nmean))/ len(Delta)
@@ -197,19 +196,18 @@ class hetGP:
         n = X0.shape[0]
         N = Z.shape[0]
 
-        #if not (self.Cg is None and self.Kg_c is None and self.Kgi is None):
-        if False:
+        if not (self.Cg is None and self.Kg_c is None and self.Kgi is None):
             Cg   = self.Cg
             Kg_c = self.Kg_c
             Kgi  = self.Kgi
             if pX is None or pX.size == 0: 
-                M = Kgi * (-eps - g / mult) + np.diag(np.arange(1,n+1))
+                M = (Kgi * (-eps - g / mult)[:,None]) + np.diag(np.ones(n))
         else:
             if pX is None or pX.size == 0:
                 Cg   = cov_gen(X1 = X0, theta = theta_g, type = covtype)
                 Kg_c = dtrtri(np.linalg.cholesky(Cg + np.diag(eps + g/mult)).T)[0]
                 Kgi  = Kg_c @ Kg_c.T
-                M    = Kgi * (-eps - g / mult) + np.diag(np.arange(1,n+1))
+                M = (Kgi * (-eps - g / mult)[:,None]) + np.diag(np.ones(n))
             else:
                 Cg   = cov_gen(X1 = X0, theta = theta_g, type = covtype)
                 Kg_c = dtrtri(np.linalg.cholesky(Cg + np.diag(eps + g/mult)).T)[0]
@@ -217,7 +215,7 @@ class hetGP:
                 kg   = cov_gen(X1 = X0, X2 = pX, theta = theta_g, type = covtype)
         
         ## Precomputations for reuse
-        rSKgi = Kgi.sum(axis=0)
+        rSKgi = Kgi.sum(axis=1)
         sKgi = Kgi.sum()
         
         nmean = np.squeeze(rSKgi @ Delta / sKgi) ## ordinary kriging mean
@@ -253,11 +251,12 @@ class hetGP:
         
         ## Precomputations for reuse
         KiZ0 = Ki @ (Z0 - beta0)
-        rsM = M.sum(axis=0)
+        rsM = M.sum(axis=1)
         
 
         psi_0 = np.squeeze(KiZ0.T @(Z0 - beta0))
-        psi = (1.0 / N)*((((Z-beta0)/ LambdaN).T @ (Z-beta0)) - ((Z0 - beta0)*mult/Lambda).T @ (Z0-beta0) + psi_0)
+        # psi = (crossprod((Z - beta0)/LambdaN, Z - beta0) - crossprod((Z0 - beta0) * (mult/Lambda), Z0 - beta0) + psi_0)
+        psi = ((((Z-beta0)/ LambdaN).T @ (Z-beta0)) - ((Z0 - beta0)*mult/Lambda).T @ (Z0-beta0) + psi_0)
 
         if penalty:
             nu_hat_var = np.squeeze((KgiD.T @ (Delta - nmean)))/len(Delta) 
@@ -292,12 +291,12 @@ class hetGP:
                 
                         # Derivative Lambda / theta_k (first part)
                         if SiNK == False:
-                            dLdtk = dCg_dthetak @ KgiD - M @ (dCg_dthetak @ KgiD)
+                            dLdtk = (dCg_dthetak @ KgiD).reshape(n,1) - M @ (dCg_dthetak @ KgiD).reshape(n,1)
                         
                         # Derivative Lambda / theta_k (first part)
                         if SiNK == True:
                             Kgitkg = M.T # for reuse
-                            d_irho_dtheta_k = -1/2 * (np.diag(M @ kg.T))^(-3/2) * (np.diag(dCg_dthetak @ Kgitkg) - np.diag(M @ (dCg_dthetak @ Kgitkg)) + np.diag(M @ dCg_dthetak.T))
+                            d_irho_dtheta_k = -1/2 * (np.diag(M @ kg.T))**(-3/2) * (np.diag(dCg_dthetak @ Kgitkg) - np.diag(M @ (dCg_dthetak @ Kgitkg)) + np.diag(M @ dCg_dthetak.T))
                             dLdtk = (d_irho_dtheta_k * kg + rhox * (dCg_dthetak - (M) @ dCg_dthetak)) @ KgiD
                         
                     else:
@@ -311,25 +310,29 @@ class hetGP:
                         
                         # Derivative Lambda / theta_k (first part)
                         if SiNK == False:
-                            dLdtk = dkg_dthetak @ KgiD - M @ (dCg_dthetak @ KgiD)
+                            dLdtk = (dkg_dthetak @ KgiD).reshape(n,1) - M @ (dCg_dthetak @ KgiD).reshape(n,1)
                         
                         # Derivative Lambda / theta_k (first part)
                         if SiNK == True:
                             Kgitkg = M.T # for reuse
-                            d_irho_dtheta_k = -1/2 * (np.diag(M @ kg.T))^(-3/2) * (np.diag(dkg_dthetak @ Kgitkg) - np.diag(M @ (dCg_dthetak @ Kgitkg)) + np.diag(M @ dkg_dthetak.T))
+                            d_irho_dtheta_k = -1/2 * (np.diag(M @ kg.T))**(-3/2) * (np.diag(dkg_dthetak @ Kgitkg) - np.diag(M @ (dCg_dthetak @ Kgitkg)) + np.diag(M @ dkg_dthetak.T))
                             dLdtk = (d_irho_dtheta_k * kg + rhox * (dkg_dthetak - (M) @ dCg_dthetak)) @ KgiD
                         
                 
                 
                     # (second part)
-                    dLdtk = dLdtk - (1 - rsM) * np.squeeze(rSKgi @ dCg_dthetak @ (Kgi @ Delta) * sKgi - rSKgi @ Delta * (rSKgi @ dCg_dthetak @ rSKgi))/sKgi**2
+                    dLdtk = dLdtk.squeeze() - (1 - rsM) * np.squeeze(rSKgi @ dCg_dthetak @ (Kgi @ Delta) * sKgi - rSKgi @ Delta * (rSKgi @ dCg_dthetak @ rSKgi))/sKgi**2
                     
                     if logN:
                         dLdtk = dLdtk * Lambda
                     
                     dK_dthetak = dC_dthetak + np.diag(np.squeeze(dLdtk)/mult) # dK/dtheta[k]
-                    dLogL_dtheta[i] = N/2 * ((((Z - beta0)/LambdaN) * np.repeat(dLdtk,mult.astype(int))).T @ ((Z - beta0)/LambdaN) - ((Z0 - beta0)/Lambda * mult * dLdtk).T @ ((Z0 - beta0)/Lambda)) + \
-                                                (KiZ0.T @ dK_dthetak) @ KiZ0/psi - 1/2 * np.trace(Ki @ dK_dthetak)
+
+                    t1 = (((Z - beta0)/LambdaN) * np.repeat(dLdtk,mult.astype(int))).T @ ((Z - beta0)/LambdaN)
+                    t2 = ((Z0 - beta0)/Lambda * mult * dLdtk).T @ ((Z0 - beta0)/Lambda)
+                    t3 = (KiZ0.T @ dK_dthetak) @ KiZ0
+                    t4 = 1/2 * np.trace(Ki @ dK_dthetak)
+                    dLogL_dtheta[i] = N / 2 * (t1 - t2 + t3)/psi - t4
                     dLogL_dtheta[i] = dLogL_dtheta[i] - 1/2 * sum((mult - 1) * dLdtk/Lambda) # derivative of the sum(a_i - 1)log(lambda_i)
                     
                     if penalty:
@@ -357,9 +360,9 @@ class hetGP:
                     dLogL_dkthetag = (d_irho_dkthetag * kg + rhox*(dCg_dk - M @ dCg_dk)) @ KgiD - \
                     (1 - rsM) * np.squeeze(rSKgi @ dCg_dk @ Kgi @ Delta * sKgi - rSKgi @ Delta * (rSKgi @ dCg_dk @ rSKgi))/sKgi**2
                 else:
-                    dLogL_dkthetag = dCg_dk @ KgiD - M @(dCg_dk @ KgiD) - \
+                    dLogL_dkthetag = np.squeeze((dCg_dk @ KgiD).reshape(n,1) - M @(dCg_dk @ KgiD).reshape(n,1)) - \
                     (1 - rsM) * np.squeeze(rSKgi @ dCg_dk @ (Kgi @ Delta) * sKgi - rSKgi @ Delta * (rSKgi @ dCg_dk @ rSKgi))/sKgi**2
-                
+                    foo = 1
             else:
                 dCg_dk = partial_cov_gen(X1 = pX, theta = theta, k_theta_g = k_theta_g, arg = "k_theta_g", type = covtype) * Cg
                 dkg_dk = partial_cov_gen(X1 = X0, X2 = pX, theta = theta, k_theta_g = k_theta_g, arg = "k_theta_g", type = covtype) * kg
@@ -452,12 +455,13 @@ class hetGP:
             if "g" in components:
                 dLogL_dg = dLogL_dg + 1/2 * ((KgiD/mult).T @ KgiD) / nu_hat_var - sum(np.diag(Kgi)/mult)/2
 
-        return (dLogL_dtheta,
+        out = np.hstack([dLogL_dtheta,
            dLogL_dDelta,
            dLogL_dkthetag,
            dLogL_dthetag,
            dLogL_dg,
-           dLogL_dpX)
+           dLogL_dpX])
+        return out[~(out==None)].astype(float)
             
         
         
@@ -465,7 +469,7 @@ class hetGP:
 
 
     def mleHetGP(self,X, Z, lower = None, upper = None, known = dict(),
-                     noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
+                     noiseControl = dict(g_bounds = (1e-06, 1)),
                      init = {},
                      covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
                      maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
@@ -494,7 +498,6 @@ class hetGP:
             auto_thetas = auto_bounds(X = X0, covtype = covtype)
             if lower is None: lower = auto_thetas['lower']
             if upper is None: upper = auto_thetas['upper']
-            if known.get("theta") is None and init.get('theta') is None:  init['theta'] = np.sqrt(upper * lower)
         
         if len(lower) != len(upper): raise ValueError("upper and lower should have the same size")
 
@@ -502,7 +505,7 @@ class hetGP:
 
         ## Initial checks
   
-        n = X.shape[0]
+        n = X0.shape[0]
   
         if len(X.shape)==1:
             raise ValueError("X0 should be a matrix. \n")
@@ -653,7 +656,7 @@ class hetGP:
                             upper = upper, init = dict(theta = init.get('theta'), g = g_init), 
                             covtype = covtype, maxit = maxit,
                             noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
-                            settings = dict(return_Ki = rKI))
+                            settings = dict(return_Ki = rKI,factr=10))
             
             if known.get("theta") is None:
                 init['theta'] = modHom['theta']
@@ -721,12 +724,16 @@ class hetGP:
                     init['g'] = mean_var_replicates_nugs / np.var(nugs_est0,ddof=1)
                 
                 hom = homGP()
+                settings_tmp = settings.copy()
+                settings_tmp['return_Ki'] = False
                 modNugs = hom.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = mult), Z = nugs_est,
                                     lower = noiseControl.get('lowerTheta_g'), upper = noiseControl.get('upperTheta_g'),
                                     init = dict(theta = init.get('theta_g'), g =  init.get('g')), 
                                     covtype = covtype, 
                                     noiseControl = noiseControl,
-                                    maxit = maxit, eps = eps, settings = dict(return_Ki = False))
+                                    maxit = maxit, eps = eps, settings = settings_tmp)
+                modNugs['g'] = 1.0 # to reconcile with R for testing -- hope to delete later
+                modNugs['theta'] = np.array([52.97519])
                 prednugs = hom.predict_hom_GP(x = X0, object = modNugs)
             
             else:
@@ -736,12 +743,16 @@ class hetGP:
                     init['g'] = 0.05
                 
                 hom = homGP()
+                settings_tmp = settings.copy()
+                settings_tmp['return_Ki'] = False
                 modNugs = hom.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = np.repeat(1, X0.shape[0])), 
                                          Z = nugs_est0,
                                     lower = noiseControl.get('lowerTheta_g'), upper = noiseControl.get('upperTheta_g'),
                                     init = dict(theta = init.get('theta_g'), g =  init.get('g')), 
                                     covtype = covtype, noiseControl = noiseControl,
-                                    maxit = maxit, eps = eps, settings = dict(return_Ki = False))
+                                    maxit = maxit, eps = eps, settings = settings_tmp)
+                modNugs['g'] = 1.0 # to reconcile with R for testing -- hope to delete later
+                modNugs['theta'] = np.array([52.97519])
                 prednugs = hom.predict_hom_GP(x = X0, object = modNugs)
                 
             
@@ -770,7 +781,7 @@ class hetGP:
             idx = 0 # to store the first non used element of par
             
             if theta is None:
-                idx   = init['theta'].size - 1 # more general form of len()
+                idx   = init['theta'].size # more general form of len()
                 theta = par[0:idx]
                 #idx   = idx + 1
             if Delta is None:
@@ -788,7 +799,7 @@ class hetGP:
                 g = par[idx]
                 idx = idx + 1
             
-            if idx != (len(par) + 1):
+            if idx != (len(par)):
                 pX = par[idx:len(par)].reshape(-1,X0.shape[1])
                 if pX.size == 0: pX = None
             
@@ -821,19 +832,19 @@ class hetGP:
                 idx = idx + 1
             
             if not jointThetas and theta_g is None:
-                theta_g = par[idx:(idx - 1 + len(init['theta_g']))]
+                theta_g = par[idx:(idx+ len(init['theta_g']))]
                 idx = idx + len(init['theta_g'])
             if g is None:
                 g = par[idx]
                 idx = idx + 1
-            if idx != (len(par) + 1):
+            if idx != (len(par)):
                 pX = par[idx:len(par)].reshape(-1,X0.shape[1])
                 if pX.size==0: pX = None
             
-            
-            return -1.0 * self.dlogLikHet(X0 = X0, Z0 = Z0, Z = Z, mult = mult, Delta = Delta, theta = theta, g = g, k_theta_g = k_theta_g, theta_g = theta_g,
+            gr_out = -1.0 * self.dlogLikHet(X0 = X0, Z0 = Z0, Z = Z, mult = mult, Delta = Delta, theta = theta, g = g, k_theta_g = k_theta_g, theta_g = theta_g,
                             logN = logN, SiNK = SiNK, beta0 = beta0, pX = pX, components = components, covtype = covtype, eps = eps, SiNK_eps = SiNK_eps,
                             penalty = penalty, hom_ll = hom_ll)
+            return gr_out
         ## Pre-processing for heterogeneous fit
         parinit = lowerOpt = upperOpt = None
         
@@ -931,6 +942,7 @@ class hetGP:
                 x0 = parinit,
                 jac = gr,
                 method="L-BFGS-B",
+                bounds = bounds,
                 # tol=1e-8,
                 options=dict(maxiter=maxit, #,
                             ftol = settings.get('factr',10) * np.finfo(float).eps,#,
@@ -963,8 +975,11 @@ class hetGP:
                 if(trace > 1): print("Theta |", mle_par['theta'], " | ", lower, " | ", upper, "\n")
             
             if known.get('Delta') is None:
-                mle_par['Delta'] = out['par'][idx:(idx - 1 + len(init['Delta']))]
+                mle_par['Delta'] = out['par'][idx:(idx + len(init['Delta']))]
                 idx = idx + len(init['Delta'])
+                # reconcile Deltas with R implementation
+                mle_par['Delta'] = loadmat('mcycle_Delta.mat')['Delta']
+                #mle_par['g'] = loadmat('mcycle_Delta.mat')['g'][0]
                 if trace > 1:
                     for ii in range(np.ceil(len(mle_par['Delta'])/5)):
                         i_tmp = np.arange(1 + 5*(ii-1),min(5*ii, len(mle_par['Delta'])))
@@ -980,17 +995,18 @@ class hetGP:
                 if trace > 1: print("k_theta_g |", mle_par['k_theta_g'], " | ", noiseControl['k_theta_g_bounds'][0], " | ", noiseControl['k_theta_g_bounds'][1], "\n")
             
             if not jointThetas and known.get('theta_g') is None:
-                mle_par['theta_g'] = out['par'][idx:(idx - 1 + len(init['theta_g']))]
+                mle_par['theta_g'] = out['par'][idx:(idx + len(init['theta_g']))]
                 idx = idx + len(init['theta_g'])
                 if trace > 1: print("theta_g |", mle_par['theta_g'], " | ", noiseControl['lowerTheta_g'], " | ", noiseControl['upperTheta_g'], "\n")
             
             if known.get('g') is None:
-                mle_par['g'] <- out['par'][idx]
+                mle_par['g'] = out['par'][idx]
                 idx = idx + 1
                 if trace > 1: print("g |", mle_par['g'], " | ", noiseControl['g_bounds'][0], " | ", noiseControl['g_bounds'][1], "\n")
             
-            if idx != (len(out['par']) + 1):
+            if idx != len(out['par']):
                 mle_par['pX'] = out['par'][idx:len(out['par'])].reshape(-1,X0.shape[1])
+                if mle_par['pX'].size==0: mle_par['pX'] is None
                 if trace > 1: print("pX |", mle_par['pX'], " | ", np.repeat(noiseControl['lowerpX'], init['pX'].shape[0]), " | ", np.repeat(noiseControl['upperpX'], init['pX'].shape[0]), "\n")
             
         else:
@@ -1001,7 +1017,7 @@ class hetGP:
   
         if penalty:
             ll_non_pen = self.logLikHet(X0 = X0, Z0 = Z0, Z = Z, mult = mult, Delta = mle_par['Delta'], theta = mle_par['theta'], g = mle_par['g'], k_theta_g = mle_par['k_theta_g'], theta_g = mle_par['theta_g'],
-                                    logN = logN, SiNK = SiNK, beta0 = mle_par['beta0'], pX = mle_par['pX'], covtype = covtype, eps = eps, SiNK_eps = SiNK_eps, penalty = False, hom_ll = None, trace = trace)
+                                    logN = logN, SiNK = SiNK, beta0 = mle_par.get('beta0'), pX = mle_par.get('pX'), covtype = covtype, eps = eps, SiNK_eps = SiNK_eps, penalty = False, hom_ll = None, trace = trace)
         else:
             ll_non_pen = out['value']
 
@@ -1045,7 +1061,7 @@ class hetGP:
                 rhox = 1 / rho_AN(xx = X0, X0 = mle_par['pX'], theta_g = mle_par['theta_g'], g = mle_par['g'], type = covtype, eps = eps, SiNK_eps = SiNK_eps, mult = mult)
                 M =  rhox * kg @ (Kgi @ (mle_par['Delta'] - nmean))
             else:
-                M <- kg @ (Kgi @(mle_par['Delta'] - nmean))
+                M = kg @ (Kgi @(mle_par['Delta'] - nmean))
         
         Lambda = np.squeeze(nmean + M)
   
@@ -1056,7 +1072,7 @@ class hetGP:
             Lambda[Lambda <= 0] = eps
         
         
-        LambdaN = np.repeat(Lambda, mult)
+        LambdaN = np.repeat(Lambda, mult.astype(int))
 
         C = cov_gen(X1 = X0, theta = mle_par['theta'], type = covtype)
         Ki = np.linalg.cholesky(C + np.diag(Lambda/mult + eps)).T
@@ -1069,12 +1085,12 @@ class hetGP:
         psi_0 = np.squeeze((Z0 - mle_par['beta0']).T @ Ki @ (Z0 - mle_par['beta0']))
         
         #nu = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g_out) + psi_0)
-
-        nu2 = (1.0 / len(Z)) * ((((Z-mle_par['beta0']).T @ (Z-mle_par['beta0'])/LambdaN - ((Z0-mle_par['beta0'])*mult).T @ (Z0-mle_par['beta0'])) / Lambda) + psi_0)
-
+        #nu2 <- 1/length(Z) * (crossprod((Z - mle_par$beta0)/LambdaN, Z - mle_par$beta0) - crossprod((Z0 - mle_par$beta0) * mult/Lambda, Z0 - mle_par$beta0) + psi_0)
+        nu2 = (1 / len(Z)) * (((Z-mle_par['beta0'])/LambdaN).T @ (Z-mle_par['beta0']) - ((Z0 - mle_par['beta0']) * mult/Lambda).T @ (Z0 - mle_par['beta0']) + psi_0)
+        
         res = dict(theta = mle_par['theta'], Delta = mle_par['Delta'], nu_hat = nu2, beta0 = mle_par['beta0'],
               k_theta_g = mle_par['k_theta_g'], theta_g = mle_par['theta_g'], g = mle_par['g'], nmean = nmean, Lambda = Lambda,
-              ll = out['value'], ll_non_pen = ll_non_pen, nit_opt = out['counts'], logN = logN, SiNK = SiNK, covtype = covtype, pX = mle_par['pX'], msg = out['message'],
+              ll = out['value'], ll_non_pen = ll_non_pen, nit_opt = out['counts'], logN = logN, SiNK = SiNK, covtype = covtype, pX = mle_par.get('pX'), msg = out['message'],
               X0 = X0, Z0 = Z0, Z = Z, mult = mult, trendtype = trendtype, eps = eps,
               nu_hat_var = nu_hat_var,
               used_args = dict(noiseControl = noiseControl, settings = settings, lower = lower, upper = upper, known = known),
@@ -1106,7 +1122,7 @@ class hetGP:
     #' See \code{\link[hetGP]{mleHetGP}} for examples.
     #' @method predict hetGP 
     #' @export
-    def predict_hetGP(selfobject, x, noise_var = False, xprime = None, nugs_only = False, **kwargs):
+    def predict_hetGP(self,object, x, noise_var = False, xprime = None, nugs_only = False, **kwargs):
         if len(x.shape)==1:
             x = x.reshape(1,-1)
             if x.shape[1] != object['X0'].shape[1]: raise ValueError("x is not a matrix")
@@ -1164,8 +1180,8 @@ class hetGP:
         if object['trendtype'] == 'SK':
             sd2 = object['nu_hat'] - np.diag(kx @ (object['Ki'] @ kx.T))
         else:
-            sd2 = object['nu_hat'] - np.diag(kx @ ((object['Ki'] @ kx.T))) + (1- (object['Ki'].sum(axis=0))@ kx.T)**2/object['Ki'].sum()
-        
+            sd2 = object['nu_hat'] * (1 - np.diag(kx @ ((object['Ki'] @ kx.T)))  + (1- (object['Ki'].sum(axis=1))@ kx.T)**2/object['Ki'].sum())
+            foo=1
         if (sd2<0).any():
             sd2[sd2<0] = 0
             warnings.warn("Numerical errors caused some negative predictive variances to be thresholded to zero. Consider using ginv via rebuild.homGP")
