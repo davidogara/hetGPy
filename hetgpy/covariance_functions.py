@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.spatial.distance import cdist
 
 def cov_gen(X1, X2 = None, theta = None, type = None):
     if type=='Gaussian':
@@ -8,7 +9,14 @@ def cov_gen(X1, X2 = None, theta = None, type = None):
     return dists
 
 def euclidean_dist(X1,X2):
-    dists = np.sum(np.square(X1)[:,np.newaxis,:], axis=2) - 2.0 * X1.dot(X2.T) + np.sum(np.square(X2), axis=1)
+    #dists = np.sum(np.square(X1)[:,np.newaxis,:], axis=2) - 2.0 * X1.dot(X2.T) + np.sum(np.square(X2), axis=1)
+    
+    # a faster implementation
+    dists = cdist(X1,X2, metric='euclidean')**2
+    return dists
+
+def abs_dist(X1,X2):
+    dists = cdist(X1,X2,metric='minkowski', p =1)
     return dists
 
 # numba this
@@ -107,3 +115,35 @@ def partial_cov_gen(X1,X2 = None, theta = None,k_theta_g = None, type = "Gaussia
                 return partial_d_kg_Gaussian_d_k_theta_g(X1 = X1, X2 = X2, theta = theta,k_theta_g=k_theta_g)
             if arg == "X_i_j":
                 return partial_d_k_Gaussian_dX_i_j(X1 = X1, X2 = X2, theta = theta,i1 = i1, i2 = i2)
+            
+
+def matern_32(X1, X2, theta):
+    #dlist = [abs_dist(X1[:,i],X2[:,i], theta = theta[i]) for i in np.arange(X1.shape[1])]
+    dlist = [
+        abs_dist(X1[:,i:i+1],X2[:,i:i+1]) 
+        for i in range(X1.shape[1])
+        ]
+    klist = [
+        (1 + np.sqrt(3)/theta[i] * dlist[i]) * np.exp(-1.0*np.sqrt(3)*dlist[i]/theta[i])
+        for i in range(X1.shape[1])
+        ]
+    out = np.prod(klist,axis=0)
+    return out
+
+def matern_52(X1, X2, theta):
+    abs_dist_list = [
+        abs_dist(X1[:,i:i+1],X2[:,i:i+1]) 
+        for i in range(X1.shape[1])
+        ]
+    euclid_dist_list = [
+        euclidean_dist(X1[:,i:i+1],X2[:,i:i+1]) 
+        for i in range(X1.shape[1])
+    ]
+    klist = [
+        (1 + np.sqrt(5)/theta[i] * abs_dist_list[i] + 5 * euclid_dist_list[i]/(3*theta[i]**2)) * np.exp(-1.0*np.sqrt(5)*abs_dist_list[i]/theta[i])
+        for i in range(X1.shape[1])
+        ]
+    
+    out = np.prod(klist,axis=0)
+    return out
+    
