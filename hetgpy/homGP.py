@@ -72,7 +72,8 @@ class homGP():
             tmp2 = k/2 * ((Z.T @ Z - (Z0 * mult).T @ Z0)/g**2 + np.sum(KiZ0**2/mult)) / ((Z.T @ Z - (Z0 * mult).T @ Z0)/g + psi) - (k - n)/ (2*g) - 1/2 * np.sum(np.diag(Ki)/mult)
             tmp2 = np.array(tmp2).squeeze()
         
-        out = np.hstack((tmp1, tmp2)).reshape(-1,1)
+        out = np.hstack((tmp1, tmp2)).squeeze()
+        out = out[~(out==None)].astype(float).reshape(-1,1)
         #print('dll', out, '\n')
         return out
 

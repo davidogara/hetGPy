@@ -70,7 +70,6 @@ class hetGP:
 
 
         if pX is None or pX.size==0:
-            print(f'theta_g: {theta_g}')
             Cg = cov_gen(X1 = X0, theta = theta_g, type = covtype)
             Kg_c = np.linalg.cholesky(Cg + np.diag(eps + g / mult) ).T
             Kgi = dtrtri(Kg_c)[0]
@@ -129,7 +128,8 @@ class hetGP:
         psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
         
         psi = (1.0 / N)*((((Z-beta0)/ LambdaN).T @ (Z-beta0)) - ((Z0 - beta0)*mult/Lambda).T @ (Z0-beta0) + psi_0)
-        loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.sum((mult-1) * np.log(Lambda) + np.log(mult)) - (N / 2.0)
+        loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi) + 1/2 * ldetKi - 1/2 * np.sum((mult - 1) * np.log(Lambda) + np.log(mult)) - N/2
+        
         
         if penalty:
             nu_hat_var = np.squeeze((Delta - nmean).T @ Kgi @ (Delta - nmean))/ len(Delta)
@@ -139,7 +139,8 @@ class hetGP:
                 return loglik
     
             pen = - n/2 * np.log(nu_hat_var) - np.sum(np.log(np.diag(Kg_c))) - n/2*np.log(2*np.pi) - n/2
-    
+            with open('Py_loglik_iterates.csv',"a") as file:
+                file.write(f"{loglik},{pen},{theta[0]},{g},{theta_g[0]},\n")
             if(loglik < hom_ll and pen > 0):
                 if trace > 0: warnings.warn("Penalty is deactivated when unpenalized likelihood is lower than its homGP equivalent")
                 return loglik
@@ -372,7 +373,7 @@ class hetGP:
                     dLogL_dkthetag = (d_irho_dkthetag * kg + rhox*(dkg_dk - M @ dCg_dk)) @ KgiD - \
                     (1 - rsM) * np.squeeze(rSKgi @ dCg_dk @ Kgi @ Delta * sKgi - rSKgi @ Delta * (rSKgi @ dCg_dk @ rSKgi))/sKgi**2
                 else:
-                    dLogL_dkthetag <- dkg_dk @ KgiD - M @ (dCg_dk @ KgiD) - \
+                    dLogL_dkthetag = dkg_dk @ KgiD - M @ (dCg_dk @ KgiD) - \
                     (1 - rsM) * np.squeeze(rSKgi @ dCg_dk @ (Kgi @ Delta) * sKgi - rSKgi @ Delta * (rSKgi @ dCg_dk @ rSKgi))/sKgi**2
                 
             
@@ -408,15 +409,15 @@ class hetGP:
                     
                     
                     if SiNK:
-                        d_irho_dtheta_gk <- -1/2 * (np.diag(M @(kg.T))**(-3/2) * (np.diag(dkg_dthetagk @ Kgitkg) - np.diag(M @ (dCg_dthetagk @ Kgitkg)) + np.diag(M @ dkg_dthetagk.T)))
-                        dLogL_dthetag[i] <- ((d_irho_dtheta_gk * kg + rhox * (dkg_dthetagk - M @ dCg_dthetagk)) @ KgiD - \
+                        d_irho_dtheta_gk = -1/2 * (np.diag(M @(kg.T))**(-3/2) * (np.diag(dkg_dthetagk @ Kgitkg) - np.diag(M @ (dCg_dthetagk @ Kgitkg)) + np.diag(M @ dkg_dthetagk.T)))
+                        dLogL_dthetag[i] = ((d_irho_dtheta_gk * kg + rhox * (dkg_dthetagk - M @ dCg_dthetagk)) @ KgiD - \
                                                     (1 - rsM) * (rSKgi @ dCg_dthetagk @ Kgi @ Delta * sKgi - rSKgi @ Delta * (rSKgi @ dCg_dthetagk @ rSKgi))/sKgi**2).T @ dLogLdLambda #chain rule
                     else:
-                        dLogL_dthetag[i] <- (dkg_dthetagk @ KgiD - M @ (dCg_dthetagk @ KgiD) - \
+                        dLogL_dthetag[i] = (dkg_dthetagk @ KgiD - M @ (dCg_dthetagk @ KgiD) - \
                                                     (1 - rsM) * np.squeeze(rSKgi @ dCg_dthetagk @ (Kgi @ Delta) * sKgi - rSKgi @ Delta * (rSKgi @ dCg_dthetagk @ rSKgi))/sKgi**2).T @ dLogLdLambda #chain rule
         
                 # Penalty term
-                if penalty: dLogL_dthetag[i] <- dLogL_dthetag[i] + 1/2 * (KgiD.T @ dCg_dthetagk) @ KgiD/nu_hat_var - np.trace(Kgi @ dCg_dthetagk)/2 
+                if penalty: dLogL_dthetag[i] = dLogL_dthetag[i] + 1/2 * (KgiD.T @ dCg_dthetagk) @ KgiD/nu_hat_var - np.trace(Kgi @ dCg_dthetagk)/2 
             
         ## Derivative Lambda / g
         if "g" in components:
@@ -460,7 +461,7 @@ class hetGP:
            dLogL_dkthetag,
            dLogL_dthetag,
            dLogL_dg,
-           dLogL_dpX])
+           dLogL_dpX]).squeeze()
         return out[~(out==None)].astype(float)
             
         
@@ -656,7 +657,7 @@ class hetGP:
                             upper = upper, init = dict(theta = init.get('theta'), g = g_init), 
                             covtype = covtype, maxit = maxit,
                             noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
-                            settings = dict(return_Ki = rKI,factr=10))
+                            settings = dict(return_Ki = rKI))
             
             if known.get("theta") is None:
                 init['theta'] = modHom['theta']
@@ -666,11 +667,11 @@ class hetGP:
                 nugs_est = (Z.squeeze() - np.repeat(predHom, mult.astype(int)))**2 #squared deviation from the homoskedastic prediction mean to the actual observations
                 nugs_est =  nugs_est / modHom['nu_hat'].squeeze()  # to be homegeneous with Delta
             
-            if logN:
-                #nugs_est = np.max(nugs_est, MACHINE_DOUBLE_EPS) # to avoid problems on deterministic test functions
-                nugs_est[nugs_est<MACHINE_DOUBLE_EPS] = MACHINE_DOUBLE_EPS
-                nugs_est = np.log(nugs_est)
-                nugs_est0 = np.squeeze(fast_tUY2(mult, nugs_est))/mult # average
+                if logN:
+                    #nugs_est = np.max(nugs_est, MACHINE_DOUBLE_EPS) # to avoid problems on deterministic test functions
+                    nugs_est[nugs_est<MACHINE_DOUBLE_EPS] = MACHINE_DOUBLE_EPS
+                    nugs_est = np.log(nugs_est)
+                    nugs_est0 = np.squeeze(fast_tUY2(mult, nugs_est))/mult # average
             
             else:
                 nugs_est0 = init['Delta']
@@ -732,8 +733,6 @@ class hetGP:
                                     covtype = covtype, 
                                     noiseControl = noiseControl,
                                     maxit = maxit, eps = eps, settings = settings_tmp)
-                modNugs['g'] = 1.0 # to reconcile with R for testing -- hope to delete later
-                modNugs['theta'] = np.array([52.97519])
                 prednugs = hom.predict_hom_GP(x = X0, object = modNugs)
             
             else:
@@ -751,8 +750,6 @@ class hetGP:
                                     init = dict(theta = init.get('theta_g'), g =  init.get('g')), 
                                     covtype = covtype, noiseControl = noiseControl,
                                     maxit = maxit, eps = eps, settings = settings_tmp)
-                modNugs['g'] = 1.0 # to reconcile with R for testing -- hope to delete later
-                modNugs['theta'] = np.array([52.97519])
                 prednugs = hom.predict_hom_GP(x = X0, object = modNugs)
                 
             
@@ -781,9 +778,9 @@ class hetGP:
             idx = 0 # to store the first non used element of par
             
             if theta is None:
-                idx   = init['theta'].size # more general form of len()
+                idx   = idx + len(init['theta'])
                 theta = par[0:idx]
-                #idx   = idx + 1
+                
             if Delta is None:
                 Delta = par[idx:(idx + len(init['Delta']))]
                 idx   = idx + len(init['Delta'])
@@ -915,6 +912,7 @@ class hetGP:
             upperOpt = np.append(upperOpt, np.repeat(noiseControl['upperpX'], init['pX'].shape[0]).squeeze())
             if(trace > 2): print("pX: ", init['pX'], "\n")
         
+        
         ## Case when some parameters need to be estimated
         mle_par = known # Store infered and known parameters
 
@@ -930,7 +928,9 @@ class hetGP:
                                     settings = dict(return_Ki = False))
             
                 hom_ll = modHom_tmp['ll']
-            
+            parinit  = parinit[parinit!=None].astype(float)
+            lowerOpt = lowerOpt[lowerOpt!=None].astype(float)
+            upperOpt = upperOpt[upperOpt!=None].astype(float)
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
             out = optimize.minimize(
                 fun = fn,
@@ -944,7 +944,7 @@ class hetGP:
                 method="L-BFGS-B",
                 bounds = bounds,
                 # tol=1e-8,
-                options=dict(maxiter=maxit, #,
+                options=dict(maxiter=maxit,iprint = 1, #,
                             ftol = settings.get('factr',10) * np.finfo(float).eps,#,
                             gtol = settings.get('pgtol',0) # should map to pgtol
                             )
@@ -978,8 +978,6 @@ class hetGP:
                 mle_par['Delta'] = out['par'][idx:(idx + len(init['Delta']))]
                 idx = idx + len(init['Delta'])
                 # reconcile Deltas with R implementation
-                mle_par['Delta'] = loadmat('mcycle_Delta.mat')['Delta']
-                #mle_par['g'] = loadmat('mcycle_Delta.mat')['g'][0]
                 if trace > 1:
                     for ii in range(np.ceil(len(mle_par['Delta'])/5)):
                         i_tmp = np.arange(1 + 5*(ii-1),min(5*ii, len(mle_par['Delta'])))
@@ -1011,12 +1009,12 @@ class hetGP:
             
         else:
             
-            out <- dict(message = "All hyperparameters given, no optimization \n", count = 0, value = None)
+            out = dict(message = "All hyperparameters given, no optimization \n", count = 0, value = None)
         
         ## Computation of nu2
   
         if penalty:
-            ll_non_pen = self.logLikHet(X0 = X0, Z0 = Z0, Z = Z, mult = mult, Delta = mle_par['Delta'], theta = mle_par['theta'], g = mle_par['g'], k_theta_g = mle_par['k_theta_g'], theta_g = mle_par['theta_g'],
+            ll_non_pen = self.logLikHet(X0 = X0, Z0 = Z0, Z = Z, mult = mult, Delta = mle_par.get('Delta'), theta = mle_par.get('theta'), g = mle_par.get('g'), k_theta_g = mle_par.get('k_theta_g'), theta_g = mle_par.get('theta_g'),
                                     logN = logN, SiNK = SiNK, beta0 = mle_par.get('beta0'), pX = mle_par.get('pX'), covtype = covtype, eps = eps, SiNK_eps = SiNK_eps, penalty = False, hom_ll = None, trace = trace)
         else:
             ll_non_pen = out['value']
