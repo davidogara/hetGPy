@@ -1,32 +1,73 @@
-from hetgpy import hetGP
+from hetgpy.find_reps import find_reps
+from rpy2.robjects import default_converter, numpy2ri
 import numpy as np
-import pandas as pd
+from time import time
+from scipy.io import loadmat
+from rpy2.robjects.packages import importr
+hetGP_R = importr('hetGP')
+
 
 def test_find_reps_on_mcycle():
 
-    model = hetGP.hetGP()
-    mcycle = pd.read_csv('tests/data/mcycle.csv',index_col=False)
-    X = mcycle['times'].values.reshape(-1,1)
-    Z = mcycle['accel'].values
-    test = model.find_reps(X,Z,rescale=False, return_Zlist=True,normalize=False,
-                           inputBounds=None)
-    # get data from R output
-    X0   = pd.read_csv('tests/data/X0_no_normal_no_rescale.csv')['V1'].values.reshape(-1,1)
-    Z0   = pd.read_csv('tests/data/Z0_no_normal_no_rescale.csv')['.'].values
-    Z    = pd.read_csv('tests/data/Z_no_normal_no_rescale.csv')['.'].values
-    mult = pd.read_csv('tests/data/mult_no_normal_no_rescale.csv')['.'].values
-    assert np.allclose(X0,test['X0'])
-    assert np.allclose(Z0,test['Z0'])
-    assert np.allclose(Z,test['Z'])
-    assert np.allclose(mult,test['mult'])
-
+    mcycle = loadmat('tests/data/mcycle.mat')
+    X = mcycle['times'].reshape(-1,1)
+    Z = mcycle['accel']
+    test = find_reps(
+        X = X,
+        Z = Z,
+        rescale=False, 
+        return_Zlist=True,
+        normalize=False
+    )
     
-    Zlist = pd.read_csv('tests/data/Zlist_no_normal_no_rescale.csv')['.'].str.split('|').values
-    # Zlist has a funky structure, so need to go row by row
-    checkList = np.full(fill_value=False, dtype=bool,shape=len(Zlist))
-    for zz in range(len(Zlist)):
-        checkList[zz] = np.allclose(np.array(Zlist[zz]).astype(float), test['Zlist'][zz])
-    assert checkList.mean()==1.0
+    # run in R
+    np_cv_rules = default_converter + numpy2ri.converter
+    with np_cv_rules.context():
+        test_R = hetGP_R.find_reps(
+            X = X,
+            Z = Z,
+            rescale=False, 
+            return_Zlist=True,
+            normalize=False
+        )
+        
+    for key in ('X0', 'Z0', 'mult', 'Z', 'Zlist'):
+        if key=="Zlist":
+            for k in test[key]:
+                assert np.allclose(test[key][k], test_R[key][str(k+1)])
+        else:
+            assert np.allclose(test[key], test_R[key])
+
+def test_find_reps_SIR():
+    SIR = loadmat('tests/data/SIR.mat')
+    X = SIR['X']
+    Z = SIR['Y']
+    test = find_reps(
+        X = X,
+        Z = Z,
+        rescale=False, 
+        return_Zlist=True,
+        normalize=False
+    )
+    
+    # run in R
+    np_cv_rules = default_converter + numpy2ri.converter
+    with np_cv_rules.context():
+        test_R = hetGP_R.find_reps(
+            X = X,
+            Z = Z,
+            rescale=False, 
+            return_Zlist=True,
+            normalize=False
+        )
+        
+    for key in ('X0', 'Z0', 'mult', 'Z', 'Zlist'):
+        if key=="Zlist":
+            for k in test[key]:
+                assert np.allclose(test[key][k], test_R[key][str(k+1)])
+        else:
+            assert np.allclose(test[key], test_R[key])
+
 
 if __name__ == "__main__":
     test_find_reps_on_mcycle()
