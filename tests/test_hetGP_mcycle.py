@@ -22,8 +22,8 @@ def test_hetGP_mcycle():
         X = X,
         Z = Z,
         init = {},
-        covtype="Gaussian",
-        settings={'factr': 10} # high quality solution
+        covtype='Gaussian',
+        settings={'factr': 10e7} # high quality solution
     )
 
     
@@ -49,7 +49,7 @@ def test_hetGP_mcycle():
     #assert np.allclose(preds['mean'],preds_mean_R,atol=1e-6)
     #assert np.allclose(preds['sd2'],preds_sd_R,atol=1e-6)
     #make_plot(preds,mat,xgrid,X,Z,save_plot=True)
-    same_plot(preds,mat,xgrid,X,Z, save_plot = True)
+    #same_plot(preds,mat,xgrid,X,Z, save_plot = True)
     return
 
      
