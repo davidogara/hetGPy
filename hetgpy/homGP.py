@@ -197,7 +197,6 @@ class homGP():
                 lowerOpt = np.append(lowerOpt,g_min)
                 upperOpt = np.append(upperOpt,g_max)
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
-            print(50*'*' + '\nnew opt: \n')
             out = optimize.minimize(
                 fun=fn, # for maximization
                 args = (X0, Z0, Z, mult, beta0, known.get('theta'), known.get('g')),
@@ -239,7 +238,7 @@ class homGP():
         nu = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g_out) + psi_0)
 
         res = dict(theta = theta_out, g = g_out, nu_hat = nu,
-                    ll = -1.0 * out['fun'], nit_opt = out['counts'],
+                    ll = -1.0 * out['value'], nit_opt = out['counts'],
                     beta0 = beta0, trendtype = trendtype, covtype = covtype, msg = out['message'], eps = eps,
             X0 = X0, Z0 = Z0, Z = Z, mult = mult,
             used_args = dict(lower = lower, upper = upper, known = known, noiseControl = noiseControl),

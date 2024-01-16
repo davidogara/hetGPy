@@ -10,6 +10,8 @@ def cov_gen(X1, X2 = None, theta = None, type = None):
         dists  = cov_Gaussian(X1,X2,theta)
     elif type=="Matern5_2":
         dists = cov_Matern5_2(X1,X2,theta)
+    elif type=="Matern3_2":
+        dists = cov_Matern3_2(X1,X2,theta)
     else:
         raise ValueError(f"type: {type} not yet implemented")
     return dists
@@ -261,13 +263,13 @@ def partial_d_k_Matern3_2_dtheta_k(X1, X2, theta):
 
 ## Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
 def partial_d_Cg_Matern3_2_d_k_theta_g(X1, theta, k_theta_g):
-  if len(theta) == 1: return matern.d_matern3_2_1args_kthetag(X1/theta, k_theta_g)
-  return matern.d_matern3_2_1args_kthetag(X1 * 1/theta, k_theta_g)
+    if(isinstance(theta,np.floating) or len(theta) == 1): return matern.d_matern3_2_1args_kthetag(X1/theta, k_theta_g)
+    return matern.d_matern3_2_1args_kthetag(X1 * 1/theta, k_theta_g)
 
 
 ## Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
 def partial_d_kg_Matern3_2_d_k_theta_g(X1, X2, theta, k_theta_g):
-  if len(theta) == 1: return matern.d_matern3_2_2args_kthetag(X1/theta, X2/theta, k_theta_g)
+  if(isinstance(theta,np.floating) or len(theta) == 1): return matern.d_matern3_2_2args_kthetag(X1/theta, X2/theta, k_theta_g)
   return matern.d_matern3_2_2args_kthetag(X1/theta, X2/theta, k_theta_g)
 
 

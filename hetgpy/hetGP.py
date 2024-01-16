@@ -9,11 +9,13 @@ from hetgpy.utils import fast_tUY2, rho_AN, crossprod
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.homGP import homGP
+from hetgpy.plot import plot_optimization_iterates
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
 class hetGP:
     def __init__(self):
+        self.iterates = [] # for saving iterates during MLE
         return
     
     # Part II: hetGP functions
@@ -473,7 +475,7 @@ class hetGP:
                      noiseControl = dict(g_bounds = (1e-06, 1)),
                      init = {},
                      covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
-                     maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
+                     maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9)):
         
         if type(X) == dict:
             X0 = X['X0']
@@ -772,6 +774,7 @@ class hetGP:
         ### Start of optimization of the log-likelihood
         self.max_loglik = float('-inf')
         self.arg_max = None
+        if settings.get('save_iterates',False): self.iterates = []
         def fn(par, X0, Z0, Z, mult, Delta = None, theta = None, g = None, k_theta_g = None, theta_g = None, logN = False, SiNK = False,
                         beta0 = None, pX = None, hom_ll = None):
             
@@ -808,6 +811,10 @@ class hetGP:
                 if loglik > self.max_loglik:
                     self.max_loglik = loglik
                     self.arg_max = par
+                    if settings.get('save_iterates',False): 
+                        self.iterates.append({'ll':loglik,
+                                              'theta':theta,'g':g,
+                                              'k_theta_g':k_theta_g,'theta_g':theta_g,'Delta':Delta})
             
             return -1.0 * loglik # for maximization
         # gradient
@@ -932,6 +939,8 @@ class hetGP:
             lowerOpt = lowerOpt[lowerOpt!=None].astype(float)
             upperOpt = upperOpt[upperOpt!=None].astype(float)
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
+            
+            
             out = optimize.minimize(
                 fun = fn,
                 args = (X0, Z0, Z, mult, known.get('Delta'), 
@@ -944,7 +953,7 @@ class hetGP:
                 method="L-BFGS-B",
                 bounds = bounds,
                 # tol=1e-8,
-                options=dict(maxiter=maxit,iprint = 1, #,
+                options=dict(maxiter=maxit,iprint = settings.get('iprint',-1), #,
                             ftol = settings.get('factr',10) * np.finfo(float).eps,#,
                             gtol = settings.get('pgtol',0) # should map to pgtol
                             )
@@ -952,13 +961,14 @@ class hetGP:
             python_kws_2_R_kws = {
                 'x':'par',
                 'fun': 'value',
-                'nit': 'counts'
+                'nfev': 'counts'
             }
             for key, val in python_kws_2_R_kws.items():
                 out[val] = out[key]
             if out.success == False:
-                out = dict(par = self.arg_max, value = self.max_loglik, counts = np.nan,
-                message = "Optimization stopped due to NAs, use best value so far")
+                out = dict(par = self.arg_max, value = -1.0 * self.max_loglik, counts = out['nfev'],
+                iterates = self.iterates,
+                message = out['message'])
             
             ## Temporary
             if trace > 0:
@@ -1088,10 +1098,11 @@ class hetGP:
         
         res = dict(theta = mle_par['theta'], Delta = mle_par['Delta'], nu_hat = nu2, beta0 = mle_par['beta0'],
               k_theta_g = mle_par['k_theta_g'], theta_g = mle_par['theta_g'], g = mle_par['g'], nmean = nmean, Lambda = Lambda,
-              ll = out['value'], ll_non_pen = ll_non_pen, nit_opt = out['counts'], logN = logN, SiNK = SiNK, covtype = covtype, pX = mle_par.get('pX'), msg = out['message'],
+              ll = -1.0 * out['value'], ll_non_pen = ll_non_pen, nit_opt = out['counts'], logN = logN, SiNK = SiNK, covtype = covtype, pX = mle_par.get('pX'), msg = out['message'],
               X0 = X0, Z0 = Z0, Z = Z, mult = mult, trendtype = trendtype, eps = eps,
               nu_hat_var = nu_hat_var,
               used_args = dict(noiseControl = noiseControl, settings = settings, lower = lower, upper = upper, known = known),
+              iterates = self.iterates,
               time = time() - tic)
         if SiNK:
             res['SiNK_eps'] = SiNK_eps
@@ -1203,6 +1214,9 @@ class hetGP:
               nugs = nugs,
               sd2var = sd2var,
               cov = cov)
+    def plot(self,object,type='iterates',**kwargs):
+        if type=='iterates':
+            return plot_optimization_iterates(object,**kwargs)
         
         
         
