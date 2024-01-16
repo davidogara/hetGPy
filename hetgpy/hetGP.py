@@ -10,12 +10,14 @@ from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.homGP import homGP
 from hetgpy.plot import plot_optimization_iterates
+import torch
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
 class hetGP:
     def __init__(self):
         self.iterates = [] # for saving iterates during MLE
+        self.use_torch = False
         return
     
     # Part II: hetGP functions
@@ -76,7 +78,7 @@ class hetGP:
             Kg_c = np.linalg.cholesky(Cg + np.diag(eps + g / mult) ).T
             Kgi = dtrtri(Kg_c)[0]
             Kgi = Kgi @ Kgi.T
-            
+            if type(Cg)==torch.Tensor: Kgi = torch.from_numpy(Kgi)
             nmean = np.squeeze(Kgi.sum(axis=0) @ Delta / Kgi.sum()) # oridinary kriging mean
         
             if SiNK:
@@ -109,7 +111,7 @@ class hetGP:
         else:
             Lambda[Lambda <= 0] = eps
         
-        LambdaN = np.repeat(Lambda, repeats= mult.astype(int))
+        LambdaN = np.repeat(Lambda, repeats= mult)
 
         # Temporarily store Cholesky transform of K in Ki
         C = cov_gen(X1 = X0, theta = theta, type = covtype)
@@ -141,8 +143,6 @@ class hetGP:
                 return loglik
     
             pen = - n/2 * np.log(nu_hat_var) - np.sum(np.log(np.diag(Kg_c))) - n/2*np.log(2*np.pi) - n/2
-            with open('Py_loglik_iterates.csv',"a") as file:
-                file.write(f"{loglik},{pen},{theta[0]},{g},{theta_g[0]},\n")
             if(loglik < hom_ll and pen > 0):
                 if trace > 0: warnings.warn("Penalty is deactivated when unpenalized likelihood is lower than its homGP equivalent")
                 return loglik
@@ -237,7 +237,7 @@ class hetGP:
         else:
             Lambda[Lambda <= 0] = eps
         
-        LambdaN = np.repeat(Lambda, mult.astype(int))
+        LambdaN = np.repeat(Lambda, mult)
 
         if not (self.C is None and self.Ki is None and self.ldetKi is None):
             C = self.C
@@ -331,7 +331,7 @@ class hetGP:
                     
                     dK_dthetak = dC_dthetak + np.diag(np.squeeze(dLdtk)/mult) # dK/dtheta[k]
 
-                    t1 = (((Z - beta0)/LambdaN) * np.repeat(dLdtk,mult.astype(int))).T @ ((Z - beta0)/LambdaN)
+                    t1 = (((Z - beta0)/LambdaN) * np.repeat(dLdtk,mult)).T @ ((Z - beta0)/LambdaN)
                     t2 = ((Z0 - beta0)/Lambda * mult * dLdtk).T @ ((Z0 - beta0)/Lambda)
                     t3 = (KiZ0.T @ dK_dthetak) @ KiZ0
                     t4 = 1/2 * np.trace(Ki @ dK_dthetak)
@@ -475,7 +475,7 @@ class hetGP:
                      noiseControl = dict(g_bounds = (1e-06, 1)),
                      init = {},
                      covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
-                     maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9)):
+                     maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9),use_torch=False):
         
         if type(X) == dict:
             X0 = X['X0']
@@ -487,7 +487,7 @@ class hetGP:
         else:
             if len(X.shape) == 1:    warnings.warn(f"Coercing X to shape {len(X)} x 1"); X = X.reshape(-1,1)
             if X.shape[0] != len(Z): raise ValueError("Dimension mismatch between Z and X")
-            elem = find_reps(X, Z, return_Zlist = False)
+            elem = find_reps(X, Z, return_Zlist = False,use_torch=use_torch)
             X0   = elem['X0']
             Z0   = elem['Z0']
             Z    = elem['Z']
@@ -628,11 +628,12 @@ class hetGP:
                 g_init = init.get('g_H')
             ## Initial value for g of the homoskedastic process: based on the mean variance at replicates compared to the variance of Z0
             if any(mult > 5):
-                mean_var_replicates = np.mean(
-                    (
-                        (fast_tUY2(mult.T,(Z.squeeze() - np.repeat(Z0,mult.astype(int)))**2)/mult)[np.where(mult > 5)]
-                    ))
-                if g_init is None: g_init = mean_var_replicates/np.var(Z0,ddof=1)
+                mean_var_replicates = (
+                        (fast_tUY2(mult.T,(Z.squeeze() - np.repeat(Z0,mult))**2)/mult)[np.where(mult > 5)]
+                    ).mean()
+                if g_init is None: 
+                    denom = Z0.var(correction=1) if type(Z0)==torch.Tensor else Z0.var(ddof=1)
+                    g_init = mean_var_replicates / denom
                 
                 if noiseControl.get('g_max') is None:
                     noiseControl['g_max'] = max(1e2, 100 * g_init)
@@ -666,7 +667,7 @@ class hetGP:
             
             if init.get('Delta') is None:
                 predHom  = hom.predict_hom_GP(x = X0, object = modHom)['mean']
-                nugs_est = (Z.squeeze() - np.repeat(predHom, mult.astype(int)))**2 #squared deviation from the homoskedastic prediction mean to the actual observations
+                nugs_est = (Z.squeeze() - np.repeat(predHom, mult))**2 #squared deviation from the homoskedastic prediction mean to the actual observations
                 nugs_est =  nugs_est / modHom['nu_hat'].squeeze()  # to be homegeneous with Delta
             
                 if logN:
@@ -723,7 +724,7 @@ class hetGP:
             if "nugs_est" in locals():
             
                 if init.get('g') is None:
-                    mean_var_replicates_nugs = np.mean((fast_tUY2(mult, (nugs_est - np.repeat(nugs_est0, mult.astype(int)))**2)/mult))
+                    mean_var_replicates_nugs = np.mean((fast_tUY2(mult, (nugs_est - np.repeat(nugs_est0, mult))**2)/mult))
                     init['g'] = mean_var_replicates_nugs / np.var(nugs_est0,ddof=1)
                 
                 hom = homGP()
@@ -1080,7 +1081,7 @@ class hetGP:
             Lambda[Lambda <= 0] = eps
         
         
-        LambdaN = np.repeat(Lambda, mult.astype(int))
+        LambdaN = np.repeat(Lambda, mult)
 
         C = cov_gen(X1 = X0, theta = mle_par['theta'], type = covtype)
         Ki = np.linalg.cholesky(C + np.diag(Lambda/mult + eps)).T

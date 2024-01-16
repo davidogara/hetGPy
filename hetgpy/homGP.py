@@ -7,6 +7,8 @@ from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.utils import fast_tUY2, rho_AN
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
+from hetgpy.find_reps import find_reps
+import torch
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 class homGP():
@@ -17,7 +19,7 @@ class homGP():
             n = X0.shape[0]
             N = Z.shape[0]
 
-            C = cov_gen(X1 = X0, theta = theta, type = covtype)
+            C = cov_gen(X1 = X0, theta = theta, type = covtype,)
             self.C = C
             Ki = np.linalg.cholesky(C + np.diag(eps + g / mult) ).T
             ldetKi = - 2.0 * np.sum(np.log(np.diag(Ki)))
@@ -26,6 +28,7 @@ class homGP():
             # use result to compute Ki (should match chol2inv)
             Ki = dtrtri(Ki)[0] #  -- equivalent of chol2inv -- see https://stackoverflow.com/questions/6042308/numpy-inverting-an-upper-triangular-matrix
             Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
+            if type(C) == torch.Tensor: Ki = torch.from_numpy(Ki)
             self.Ki = Ki
             if beta0 is None:
                 beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
@@ -33,7 +36,7 @@ class homGP():
 
             psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
             psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
-            loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.sum(np.log(mult)) - (N / 2.0)
+            loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.log(mult).sum() - (N / 2.0)
             #print('loglik: ', loglik,'\n')
             return loglik
         
@@ -93,7 +96,7 @@ class homGP():
         else:
             if len(X.shape) == 1:    warnings.warn(f"Coercing X to shape {len(X)} x 1"); X = X.reshape(-1,1)
             if X.shape[0] != len(Z): raise ValueError("Dimension mismatch between Z and X")
-            elem = self.find_reps(X, Z, return_Zlist = False)
+            elem = find_reps(X, Z, return_Zlist = False)
             X0   = elem['X0']
             Z0   = elem['Z0']
             Z    = elem['Z']
@@ -132,10 +135,10 @@ class homGP():
         if known.get('g') is None and init.get('g') is None: 
             if any(mult > 2):
                 #t1 = mult.T
-                #t2 = (Z.squeeze() - np.repeat(Z0,mult.astype(int)))**2
+                #t2 = (Z.squeeze() - np.repeat(Z0,mult))**2
                 init['g'] = np.mean(
                     (
-                        (fast_tUY2(mult.T,(Z.squeeze() - np.repeat(Z0,mult.astype(int)))**2)/mult)[np.where(mult > 2)]
+                        (fast_tUY2(mult.T,(Z.squeeze() - np.repeat(Z0,mult))**2)/mult)[np.where(mult > 2)]
                     ))/np.var(Z0,ddof=1) 
             else:
                 init['g'] = 0.1
