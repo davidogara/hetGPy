@@ -12,11 +12,25 @@ For project progress, please see `TODO.md`
 
 ## Installing and Environments
 
-* `hetGPy` is not yet available as a compiled package
+* `hetGPy` is not yet available as a compiled package, but you can build the package by doing the following:
 * At the moment, we use [poetry](https://python-poetry.org/) so dependencies can be installed with:
+
+1. Install dependencies with [poetry](https://python-poetry.org/)
 ```
 poetry install
 ```
+2. Activate the virtual environment:
+```
+poetry shell
+```
+
+3. Compile the `c++` files that underlie the kernel functions. `cd` into `hetgpy` and run:
+
+```
+python -m cppimport build
+```
+
+After this you should be able to run the examples in the `notebooks` folder.
 
 ## Contact
 For questions regarding this package, please contact:  
@@ -25,7 +39,6 @@ Division of Computational and Data Sciences, Washington University in St. Louis
 david.ogara@wustl.edu
 
 ## References
-`hetGP` first appeared in:
 
 Binois M, Gramacy RB (2021). “hetGP: Heteroskedastic Gaussian Process Modeling and Sequential Design in R.” _Journal of Statistical Software_,
   *98*(13), 1-44. doi:10.18637/jss.v098.i13 <https://doi.org/10.18637/jss.v098.i13>
