@@ -1,4 +1,10 @@
+import os
 import cppimport
 
-cppimport.imp_from_filepath('matern.cpp')
-cppimport.imp_from_filepath('gauss.cpp')
+PROJECT_DIR = os.getcwd()
+if PROJECT_DIR.endswith('notebooks'):
+    folder = '../hetgpy/'
+else:
+    folder = ''
+cppimport.imp_from_filepath(f'{folder}matern.cpp')
+cppimport.imp_from_filepath(f'{folder}gauss.cpp')
