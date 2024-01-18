@@ -30,7 +30,10 @@ poetry shell
 python -m cppimport build
 ```
 
-After this you should be able to run the examples in the `notebooks` folder.
+After this you should be able to run the examples in the `notebooks` folder. It is suggested to use:
+```
+poetry run jupyter notebook
+```
 
 ## Contact
 For questions regarding this package, please contact:  
