@@ -1,5 +1,6 @@
 import numpy as np
-def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inputBounds = None):
+import torch
+def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inputBounds = None, use_torch=False):
         r"""Prepare data for use with `mleHomGP`and `mleHetGP`
         
         Several sentence description here. in particular to find replicated observations
@@ -88,13 +89,12 @@ def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inpu
         # TODO: consider numba-ing this part. Replicating *split* in R is a bit tricky
         Zlist = {}
         Z0    = np.zeros(X0.shape[0], dtype=X0.dtype)
-        mult  = np.zeros(X0.shape[0], dtype=X0.dtype)
+        mult  = np.zeros(X0.shape[0], dtype=int)
         for idx, val in enumerate(corresp[indices]): 
             out = Z[(val==corresp).nonzero()[0]]
             Zlist[idx] = out
             Z0[idx]    = out.mean()
             mult[idx]  = len(out)
-  
         if return_Zlist:
             return dict(X0 = X0, Z0 = Z0, mult = mult, Z = Z,
                 Zlist = Zlist, inputBounds = inputBounds, outputStats = outputStats)

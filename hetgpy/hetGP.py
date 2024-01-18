@@ -19,6 +19,12 @@ class hetGP:
         self.iterates = [] # for saving iterates during MLE
         self.use_torch = False
         return
+    def __getitem__(self, key):
+        return self.__dict__[key]
+    def __setitem__(self,item,value):
+        self.__dict__[item] = value
+    def get(self,key):
+        return self.__dict__.get(key)
     
     # Part II: hetGP functions
 
@@ -474,9 +480,11 @@ class hetGP:
     def mleHetGP(self,X, Z, lower = None, upper = None, known = dict(),
                      noiseControl = dict(g_bounds = (1e-06, 1)),
                      init = {},
-                     covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
+                     covtype = "Gaussian",
                      maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9),use_torch=False):
-        
+        # copy dicts upon import to make sure they aren't passed around between model runs
+        known = known.copy()
+        init  = init.copy()
         if type(X) == dict:
             X0 = X['X0']
             Z0 = X['Z0']
@@ -495,8 +503,13 @@ class hetGP:
 
             
         covtypes = ("Gaussian", "Matern5_2", "Matern3_2")
-        covtype = [c for c in covtypes if c==covtype][0]
+        if covtype not in covtypes:
+            raise ValueError(f"covtype must be one of {covtypes}")
 
+        if isinstance(lower,float) or isinstance(lower,int):
+            lower = np.array(lower)
+        if isinstance(upper,float) or isinstance(upper,int):
+            upper = np.array(upper)
         if lower is None or upper is None:
             auto_thetas = auto_bounds(X = X0, covtype = covtype)
             if lower is None: lower = auto_thetas['lower']
@@ -653,20 +666,20 @@ class hetGP:
                 rKI = True #return.Ki
             else:
                 rKI = False
-            hom = homGP()
-            modHom = hom.mleHomGP(
-                            X = dict(X0 = X0, Z0 = Z0, mult = mult), Z = Z, lower = lower,
-                            known = dict(theta = known.get("theta"), g = known.get('g_H'), beta0 = known.get('beta0')),
-                            upper = upper, init = dict(theta = init.get('theta'), g = g_init), 
-                            covtype = covtype, maxit = maxit,
-                            noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
-                            settings = dict(return_Ki = rKI))
+            modHom = homGP()
+            modHom.mleHomGP(
+                        X = dict(X0 = X0, Z0 = Z0, mult = mult), Z = Z, lower = lower,
+                        known = dict(theta = known.get("theta"), g = known.get('g_H'), beta0 = known.get('beta0')),
+                        upper = upper, init = dict(theta = init.get('theta'), g = g_init), 
+                        covtype = covtype, maxit = maxit,
+                        noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
+                        settings = dict(return_Ki = rKI))
             
             if known.get("theta") is None:
                 init['theta'] = modHom['theta']
             
             if init.get('Delta') is None:
-                predHom  = hom.predict_hom_GP(x = X0, object = modHom)['mean']
+                predHom  = modHom.predict(x = X0)['mean']
                 nugs_est = (Z.squeeze() - np.repeat(predHom, mult))**2 #squared deviation from the homoskedastic prediction mean to the actual observations
                 nugs_est =  nugs_est / modHom['nu_hat'].squeeze()  # to be homegeneous with Delta
             
@@ -727,16 +740,17 @@ class hetGP:
                     mean_var_replicates_nugs = np.mean((fast_tUY2(mult, (nugs_est - np.repeat(nugs_est0, mult))**2)/mult))
                     init['g'] = mean_var_replicates_nugs / np.var(nugs_est0,ddof=1)
                 
-                hom = homGP()
+                modNugs = homGP()
                 settings_tmp = settings.copy()
                 settings_tmp['return_Ki'] = False
-                modNugs = hom.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = mult), Z = nugs_est,
+                modNugs.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = mult), Z = nugs_est,
                                     lower = noiseControl.get('lowerTheta_g'), upper = noiseControl.get('upperTheta_g'),
                                     init = dict(theta = init.get('theta_g'), g =  init.get('g')), 
+                                    known = dict(),
                                     covtype = covtype, 
                                     noiseControl = noiseControl,
                                     maxit = maxit, eps = eps, settings = settings_tmp)
-                prednugs = hom.predict_hom_GP(x = X0, object = modNugs)
+                prednugs = modNugs.predict(x = X0)
             
             else:
                 if "nugs_est0" not in locals(): nugs_est0 = init['Delta']
@@ -744,16 +758,16 @@ class hetGP:
                 if init.get('g') is None:
                     init['g'] = 0.05
                 
-                hom = homGP()
+                modNugs = homGP()
                 settings_tmp = settings.copy()
                 settings_tmp['return_Ki'] = False
-                modNugs = hom.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = np.repeat(1, X0.shape[0])), 
+                modNugs.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = np.repeat(1, X0.shape[0])), 
                                          Z = nugs_est0,
                                     lower = noiseControl.get('lowerTheta_g'), upper = noiseControl.get('upperTheta_g'),
                                     init = dict(theta = init.get('theta_g'), g =  init.get('g')), 
                                     covtype = covtype, noiseControl = noiseControl,
                                     maxit = maxit, eps = eps, settings = settings_tmp)
-                prednugs = hom.predict_hom_GP(x = X0, object = modNugs)
+                prednugs = modNugs.predict(x = X0)
                 
             
             if settings.get('initStrategy') == 'smoothed':
@@ -931,7 +945,7 @@ class hetGP:
                 ## Compute reference homoskedastic likelihood, with fixed theta for speed
                 hom = homGP()
                 modHom_tmp = hom.mleHomGP(X = dict(X0 = X0, Z0 = Z0, mult = mult), Z = Z, lower = lower, upper = upper,
-                                    known = dict(theta = known["theta"], g = known['g_H'], beta0 = known['beta0']), covtype = covtype, init = init,
+                                    known = dict(theta = known["theta"], g = known.get('g_H'), beta0 = known['beta0']), covtype = covtype, init = init,
                                     noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
                                     settings = dict(return_Ki = False))
             
@@ -1097,25 +1111,47 @@ class hetGP:
         #nu2 <- 1/length(Z) * (crossprod((Z - mle_par$beta0)/LambdaN, Z - mle_par$beta0) - crossprod((Z0 - mle_par$beta0) * mult/Lambda, Z0 - mle_par$beta0) + psi_0)
         nu2 = (1 / len(Z)) * (((Z-mle_par['beta0'])/LambdaN).T @ (Z-mle_par['beta0']) - ((Z0 - mle_par['beta0']) * mult/Lambda).T @ (Z0 - mle_par['beta0']) + psi_0)
         
-        res = dict(theta = mle_par['theta'], Delta = mle_par['Delta'], nu_hat = nu2, beta0 = mle_par['beta0'],
-              k_theta_g = mle_par['k_theta_g'], theta_g = mle_par['theta_g'], g = mle_par['g'], nmean = nmean, Lambda = Lambda,
-              ll = -1.0 * out['value'], ll_non_pen = ll_non_pen, nit_opt = out['counts'], logN = logN, SiNK = SiNK, covtype = covtype, pX = mle_par.get('pX'), msg = out['message'],
-              X0 = X0, Z0 = Z0, Z = Z, mult = mult, trendtype = trendtype, eps = eps,
-              nu_hat_var = nu_hat_var,
-              used_args = dict(noiseControl = noiseControl, settings = settings, lower = lower, upper = upper, known = known),
-              iterates = self.iterates,
-              time = time() - tic)
-        if SiNK:
-            res['SiNK_eps'] = SiNK_eps
-        if settings['return_hom']:
-            res['modHom'] = modHom
-            res['modNugs'] = modNugs
         
-        return res
+        # output
+        self.theta = mle_par['theta'] 
+        self.Delta = mle_par['Delta'] 
+        self.nu_hat = nu2
+        self.beta0 = mle_par['beta0']
+        self.k_theta_g = mle_par['k_theta_g']
+        self.theta_g = mle_par['theta_g'] 
+        self.g = mle_par['g'] 
+        self.nmean = nmean, 
+        self.Lambda = Lambda,
+        self.ll = -1.0 * out['value'] 
+        self.ll_non_pen = ll_non_pen 
+        self.nit_opt = out['counts'] 
+        self.logN = logN 
+        self.SiNK = SiNK 
+        self.covtype = covtype
+        self.pX = mle_par.get('pX') 
+        self.msg = out['message']
+        self.X0 = X0
+        self.Z0 = Z0
+        self.Z = Z 
+        self.mult = mult
+        self.trendtype = trendtype 
+        self.eps = eps
+        self.nu_hat_var = nu_hat_var
+        self.used_args = dict(noiseControl = noiseControl, settings = settings, lower = lower, upper = upper, known = known)
+        self.iterates = self.iterates
+        self.time = time() - tic
+              
+        if SiNK:
+            self.SiNK_eps = SiNK_eps
+        if settings['return_hom']:
+            self.modHom = modHom
+            self.modNugs = modNugs
+        
+        return self
     
-    #'Gaussian process predictions using a heterogeneous noise GP object (of class \code{hetGP}) 
+    #'Gaussian process predictions using a heterogeneous noise GP self (of class \code{hetGP}) 
     #' @param x matrix of designs locations to predict at (one point per row)
-    #' @param object an object of class \code{hetGP}; e.g., as returned by \code{\link[hetGP]{mleHetGP}}
+    #' @param self an self of class \code{hetGP}; e.g., as returned by \code{\link[hetGP]{mleHetGP}}
     #' @param noise.var should the variance of the latent variance process be returned?
     #' @param xprime optional second matrix of predictive locations to obtain the predictive covariance matrix between \code{x} and \code{xprime}
     #' @param nugs.only if \code{TRUE}, only return noise variance prediction
@@ -1132,93 +1168,95 @@ class hetGP:
     #' See \code{\link[hetGP]{mleHetGP}} for examples.
     #' @method predict hetGP 
     #' @export
-    def predict_hetGP(self,object, x, noise_var = False, xprime = None, nugs_only = False, **kwargs):
+    def predict(self,x, noise_var = False, xprime = None, nugs_only = False, **kwargs):
         if len(x.shape)==1:
             x = x.reshape(1,-1)
-            if x.shape[1] != object['X0'].shape[1]: raise ValueError("x is not a matrix")
+            if x.shape[1] != self['X0'].shape[1]: raise ValueError("x is not a matrix")
         
         
         if xprime is not None and len(xprime.shape)==1:
             xprime = xprime.reshape(1,-1)
-            if xprime.shape[1] != object['X0'].shape[1]: raise ValueError("xprime is not a matrix")
+            if xprime.shape[1] != self['X0'].shape[1]: raise ValueError("xprime is not a matrix")
 
-        if object.get('Kgi') is None:
-            if object.get('pX') is None:
-                Cg = cov_gen(X1 = object['X0'], theta = object['theta_g'], type = object['covtype'])
+        if self.get('Kgi') is None:
+            if self.get('pX') is None:
+                Cg = cov_gen(X1 = self['X0'], theta = self['theta_g'], type = self['covtype'])
             else:
-                Cg = cov_gen(X1 = object['pX'], theta = object['theta_g'], type = object['covtype'])
+                Cg = cov_gen(X1 = self['pX'], theta = self['theta_g'], type = self['covtype'])
             
-            Kgi = np.linalg.cholesky(Cg + np.diag(object['eps'] + object['g']/object['mult'])).T
+            Kgi = np.linalg.cholesky(Cg + np.diag(self['eps'] + self['g']/self['mult'])).T
             Kgi = dtrtri(Kgi)[0]
             Kgi = Kgi @ Kgi.T
-            object['Kgi'] = Kgi
+            self['Kgi'] = Kgi
         
-        if object.get('pX') is None:
-            kg = cov_gen(X1 = x, X2 = object['X0'], theta = object['theta_g'], type = object['covtype'])
+        if self.get('pX') is None:
+            kg = cov_gen(X1 = x, X2 = self['X0'], theta = self['theta_g'], type = self['covtype'])
         else:
-            kg = cov_gen(X1 = x, X2 = object['pX'], theta = object['theta_g'], type = object['covtype'])
+            kg = cov_gen(X1 = x, X2 = self['pX'], theta = self['theta_g'], type = self['covtype'])
         
-        if object.get('Ki') is None:
-            C = cov_gen(X1 = object['X0'], theta = object['theta'], type = object['covtype'])
-            Ki = np.linalg.cholesky(C + np.diag(object['Lambda']/object['mult'] + object['eps'])).T
+        if self.get('Ki') is None:
+            C = cov_gen(X1 = self['X0'], theta = self['theta'], type = self['covtype'])
+            Ki = np.linalg.cholesky(C + np.diag(self['Lambda']/self['mult'] + self['eps'])).T
             Ki = dtrtri(Ki)[0]
             Ki = Ki @ Ki.T
-            object['Ki'] = Ki
-        if object['SiNK']:
-            M =  1/rho_AN(xx = x, X0 = object['pX'], theta_g = object['theta_g'], g = object['g'],
-                        type = object['covtype'], SiNK_eps = object['SiNK_eps'], eps = object['eps'], mult = object['mult']) * kg @ (object['Kgi'] @ (object['Delta'] - object['nmean']))
+            self['Ki'] = Ki
+        if self['SiNK']:
+            M =  1/rho_AN(xx = x, X0 = self['pX'], theta_g = self['theta_g'], g = self['g'],
+                        type = self['covtype'], SiNK_eps = self['SiNK_eps'], eps = self['eps'], mult = self['mult']) * kg @ (self['Kgi'] @ (self['Delta'] - self['nmean']))
         else:
-            M = kg @ (object['Kgi'] @ (object['Delta'] - object['nmean']))
+            M = kg @ (self['Kgi'] @ (self['Delta'] - self['nmean']))
         
-        if object['logN']:
-            nugs = object['nu_hat'] * np.exp(np.squeeze(object['nmean'] + M))
+        if self['logN']:
+            nugs = self['nu_hat'] * np.exp(np.squeeze(self['nmean'] + M))
         else:
-            nugs = object['nu_hat'] * np.max(0, np.squeeze(object['nmean'] + M))
+            nugs = self['nu_hat'] * np.max(0, np.squeeze(self['nmean'] + M))
         
         if nugs_only:
             return dict(nugs = nugs)
         
         if noise_var:
-            if object.get('nu_hat_var') is None:
-                object['nu_hat_var'] = max(object['eps'], np.squeeze(((object['Delta'] - object['nmean']).T @ object['Kgi'])) @ (object['Delta'] - object['nmean'])/len(object['Delta'])) ## To avoid 0 variance
-                sd2var = object['nu_hat'] * object['nu_hat_var']* np.squeeze(1 - np.diag(kg @ (object['Kgi']@ kg.T)) + (1 - ((object['Kgi'].sum(axis=0))@ kg.T))**2/sum(object['Kgi']))
+            if self.get('nu_hat_var') is None:
+                self['nu_hat_var'] = max(self['eps'], np.squeeze(((self['Delta'] - self['nmean']).T @ self['Kgi'])) @ (self['Delta'] - self['nmean'])/len(self['Delta'])) ## To avoid 0 variance
+                sd2var = self['nu_hat'] * self['nu_hat_var']* np.squeeze(1 - np.diag(kg @ (self['Kgi']@ kg.T)) + (1 - ((self['Kgi'].sum(axis=0))@ kg.T))**2/sum(self['Kgi']))
         else:
             sd2var = None
         
-        kx = cov_gen(X1 = x, X2 = object['X0'], theta = object['theta'], type = object['covtype'])
+        kx = cov_gen(X1 = x, X2 = self['X0'], theta = self['theta'], type = self['covtype'])
 
-        if object['trendtype'] == 'SK':
-            sd2 = object['nu_hat'] - np.diag(kx @ (object['Ki'] @ kx.T))
+        if self['trendtype'] == 'SK':
+            sd2 = self['nu_hat'] - np.diag(kx @ (self['Ki'] @ kx.T))
         else:
-            sd2 = object['nu_hat'] * (1 - np.diag(kx @ ((object['Ki'] @ kx.T)))  + (1- (object['Ki'].sum(axis=1))@ kx.T)**2/object['Ki'].sum())
+            sd2 = self['nu_hat'] * (1 - np.diag(kx @ ((self['Ki'] @ kx.T)))  + (1- (self['Ki'].sum(axis=1))@ kx.T)**2/self['Ki'].sum())
             foo=1
         if (sd2<0).any():
             sd2[sd2<0] = 0
             warnings.warn("Numerical errors caused some negative predictive variances to be thresholded to zero. Consider using ginv via rebuild.homGP")
 
         if xprime is not None:
-            kxprime = object['nu_hat'] * cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype'])
-            if object['trendtype'] == 'SK':
+            kxprime = self['nu_hat'] * cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype'])
+            if self['trendtype'] == 'SK':
                 if x.shape[0] < xprime.shape[0]:
-                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ object['Ki'] @ kxprime
+                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime
                 else:
-                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ (object['Ki'] @ kxprime)
+                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ (self['Ki'] @ kxprime)
             else:
                 if x.shape[0] < xprime.shape[0]:
-                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ object['Ki'] @ kxprime + ((1-(object['Ki'].sum(axis=0)).T @ kx).T @ (1-object['Ki'].sum(axis=0) @ kxprime))/object['Ki'].sum() #crossprod(1 - tcrossprod(rowSums(object$Ki), kx), 1 - rowSums(object$Ki) %*% kxprime)/sum(object$Ki)
+                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime + ((1-(self['Ki'].sum(axis=0)).T @ kx).T @ (1-self['Ki'].sum(axis=0) @ kxprime))/self['Ki'].sum() #crossprod(1 - tcrossprod(rowSums(self$Ki), kx), 1 - rowSums(self$Ki) %*% kxprime)/sum(self$Ki)
         else:
             cov = None
         
 
-        return dict(mean = np.squeeze(object['beta0'] + kx @ (object['Ki'] @ (object['Z0'] - object['beta0']))),
+        return dict(mean = np.squeeze(self['beta0'] + kx @ (self['Ki'] @ (self['Z0'] - self['beta0']))),
               sd2 = sd2,
               nugs = nugs,
               sd2var = sd2var,
               cov = cov)
-    def plot(self,object,type='iterates',**kwargs):
+    def plot(self,type='iterates',**kwargs):
         if type=='iterates':
-            return plot_optimization_iterates(object,**kwargs)
-        
+            return plot_optimization_iterates(self,**kwargs)
+
+class hetTP():
+    pass
         
         
   

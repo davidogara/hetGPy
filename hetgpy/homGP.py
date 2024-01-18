@@ -14,6 +14,13 @@ MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 class homGP():
     def __init__(self):
         return
+    def __getitem__(self, key):
+        return self.__dict__[key]
+    def __setitem__(self,item,value):
+        self.__dict__[item] = value
+    def get(self,key):
+        return self.__dict__.get(key)
+    
     def logLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS, env = None):
         
             n = X0.shape[0]
@@ -65,7 +72,7 @@ class homGP():
                 tmp1 = np.array(tmp1).squeeze()
             else:
                 for i in range(len(theta)):
-                    # use i:i+1 to preserve vector structure -- see "An integer, i, returns the same values as i:i+1 except the dimensionality of the returned object is reduced by 1"
+                    # use i:i+1 to preserve vector structure -- see "An integer, i, returns the same values as i:i+1 except the dimensionality of the returned self is reduced by 1"
                     ## at: https://numpy.org/doc/stable/user/basics.indexing.html
                     # tmp1[i] <- k/2 * crossprod(KiZ0, dC_dthetak) %*% KiZ0 /((crossprod(Z) - crossprod(Z0 * mult, Z0))/g + psi) - 1/2 * trace_sym(Ki, dC_dthetak)
                     dC_dthetak = partial_cov_gen(X1 = X0[:,i:i+1], theta = theta[i], type = covtype, arg = "theta_k") * C
@@ -85,7 +92,8 @@ class homGP():
                         init = {},
                         covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
                         maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
-        
+        known = known.copy()
+        init = init.copy()
         if type(X) == dict:
             X0 = X['X0']
             Z0 = X['Z0']
@@ -240,80 +248,94 @@ class homGP():
 
         nu = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g_out) + psi_0)
 
-        res = dict(theta = theta_out, g = g_out, nu_hat = nu,
-                    ll = -1.0 * out['value'], nit_opt = out['counts'],
-                    beta0 = beta0, trendtype = trendtype, covtype = covtype, msg = out['message'], eps = eps,
-            X0 = X0, Z0 = Z0, Z = Z, mult = mult,
-            used_args = dict(lower = lower, upper = upper, known = known, noiseControl = noiseControl),
-            time = time() - tic)
+
+        self.theta = theta_out
+        self.g = g_out
+        self.nu_hat = nu
+        self.ll = -1.0 * out['value']
+        self.nit_opt = out['counts']
+        self.beta0 = beta0
+        self.trendtype = trendtype
+        self.covtype = covtype 
+        self.msg = out['message'] 
+        self.eps = eps
+        self.X0 = X0
+        self.Z0 = Z0 
+        self.Z = Z
+        self.mult = mult
+        self.used_args = dict(lower = lower, upper = upper, known = known, noiseControl = noiseControl)
+        self.time = time() - tic
         
-        if settings["return_Ki"]: res['Ki']  = Ki
-        return res
-    def predict_hom_GP(self, object, x, xprime = None):
+        if settings["return_Ki"]: self.Ki  = Ki
+        return self
+    def predict(self, x, xprime = None):
 
         if len(x.shape) == 1:
             x = x.reshape(-1,1)
-            if x.shape[1] != object['X0'].shape[1]: raise ValueError("x is not a matrix")
+            if x.shape[1] != self['X0'].shape[1]: raise ValueError("x is not a matrix")
         if xprime is not None and len(xprime.shape)==1:
             xprime = xprime.reshape(-1,1)
-            if xprime.shape[1] != object['X0'].shape[1]: raise ValueError("xprime is not a matrix")
+            if xprime.shape[1] != self['X0'].shape[1]: raise ValueError("xprime is not a matrix")
         
-        if object.get('Ki') is None:
-            # these should be replaced with calls to self instead of object
+        if self.get('Ki') is None:
+            # these should be replaced with calls to self instead of self
             ki = np.linalg.cholesky(
-            cov_gen(X1 = object['X0'], theta = object['theta'], type = object['covtype']) + np.diag(object['eps'] + object['g'] / object['mult'])
+            cov_gen(X1 = self['X0'], theta = self['theta'], type = self['covtype']) + np.diag(self['eps'] + self['g'] / self['mult'])
             ).T
             ki = dtrtri(ki)[0]
-            object['Ki'] = ki @ ki.T
-        object['Ki'] /= object['nu_hat'] # this is a subtle difference between R and Python. 
-        kx = object['nu_hat'] * cov_gen(X1 = x, X2 = object['X0'], theta = object['theta'], type = object['covtype'])
-        nugs = np.repeat(object['nu_hat'] * object['g'], x.shape[0])
-        mean = object['beta0'] + kx @ (object['Ki'] @ (object['Z0'] - object['beta0']))
+            self['Ki'] = ki @ ki.T
+        self['Ki'] /= self['nu_hat'] # this is a subtle difference between R and Python. 
+        kx = self['nu_hat'] * cov_gen(X1 = x, X2 = self['X0'], theta = self['theta'], type = self['covtype'])
+        nugs = np.repeat(self['nu_hat'] * self['g'], x.shape[0])
+        mean = self['beta0'] + kx @ (self['Ki'] @ (self['Z0'] - self['beta0']))
         
-        if object['trendtype'] == 'SK':
-            sd2 = object['nu_hat'] - np.diag(kx @ (object['Ki'] @ kx.T))
+        if self['trendtype'] == 'SK':
+            sd2 = self['nu_hat'] - np.diag(kx @ (self['Ki'] @ kx.T))
         else:
-            sd2 = object['nu_hat'] - np.diag(kx @ ((object['Ki'] @ kx.T))) + (1- (object['Ki'].sum(axis=0))@ kx.T)**2/object['Ki'].sum()
+            sd2 = self['nu_hat'] - np.diag(kx @ ((self['Ki'] @ kx.T))) + (1- (self['Ki'].sum(axis=0))@ kx.T)**2/self['Ki'].sum()
         
         if (sd2<0).any():
             sd2[sd2<0] = 0
             warnings.warn("Numerical errors caused some negative predictive variances to be thresholded to zero. Consider using ginv via rebuild.homGP")
 
         if xprime is not None:
-            kxprime = object['nu_hat'] * cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype'])
-            if object['trendtype'] == 'SK':
+            kxprime = self['nu_hat'] * cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype'])
+            if self['trendtype'] == 'SK':
                 if x.shape[0] < xprime.shape[0]:
-                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ object['Ki'] @ kxprime
+                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime
                 else:
-                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ (object['Ki'] @ kxprime)
+                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ (self['Ki'] @ kxprime)
             else:
                 if x.shape[0] < xprime.shape[0]:
-                    cov = object['nu_hat'] *  cov_gen(X1 = object['X0'], X2 = xprime, theta = object['theta'], type = object['covtype']) - kx @ object['Ki'] @ kxprime + ((1-(object['Ki'].sum(axis=0)).T @ kx).T @ (1-object['Ki'].sum(axis=0) @ kxprime))/object['Ki'].sum() #crossprod(1 - tcrossprod(rowSums(object$Ki), kx), 1 - rowSums(object$Ki) %*% kxprime)/sum(object$Ki)
+                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime + ((1-(self['Ki'].sum(axis=0)).T @ kx).T @ (1-self['Ki'].sum(axis=0) @ kxprime))/self['Ki'].sum() #crossprod(1 - tcrossprod(rowSums(self$Ki), kx), 1 - rowSums(self$Ki) %*% kxprime)/sum(self$Ki)
         else:
             cov = None
         
 
-        # re-modify object so Ki is preserved (because R does not modify lists in place)
-        object['Ki']*=object['nu_hat']
+        # re-modify self so Ki is preserved (because R does not modify lists in place)
+        self['Ki']*=self['nu_hat']
         return dict(mean = mean, sd2 = sd2, nugs = nugs, cov = cov)
 
-    def rebuild_homGP(self, object, robust = False):
+    def rebuild_homGP(self, robust = False):
         if robust :
-            object['Ki'] <- np.linalg.pinv(
-                cov_gen(X1 = object['X0'], theta = object['theta'], type = object['covtype']) + np.diag(object['eps'] + object['g'] / object['mult'])
+            self['Ki'] <- np.linalg.pinv(
+                cov_gen(X1 = self['X0'], theta = self['theta'], type = self['covtype']) + np.diag(self['eps'] + self['g'] / self['mult'])
             ).T
-            object['Ki'] /= object['nu_hat']
+            self['Ki'] /= self['nu_hat']
         else:
             ki = np.linalg.cholesky(
-            cov_gen(X1 = object['X0'], theta = object['theta'], type = object['covtype']) + np.diag(object['eps'] + object['g'] / object['mult'])
+            cov_gen(X1 = self['X0'], theta = self['theta'], type = self['covtype']) + np.diag(self['eps'] + self['g'] / self['mult'])
             ).T
             ki = dtrtri(ki)[0]
-            object['Ki'] = ki @ ki.T
-        return object
+            self['Ki'] = ki @ ki.T
+        return self
 
-    def strip(self,object):
+    def strip(self):
         keys  = ('Ki','Kgi','modHom','modNugs')
         for key in keys:
-            if key in object.keys():
-                del object[key]
-        return object
+            if key in self.keys():
+                del self[key]
+        return self
+
+class homTP():
+    pass

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from hetgpy import matern ## high performance c++ functions
 from hetgpy import gauss
+import torch
 
 TYPE = type # for checking types
 
