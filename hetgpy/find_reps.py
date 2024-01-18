@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inputBounds = None, use_torch=False):
         r"""Prepare data for use with `mleHomGP`and `mleHetGP`
         
