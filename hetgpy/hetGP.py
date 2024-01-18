@@ -10,7 +10,6 @@ from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.homGP import homGP
 from hetgpy.plot import plot_optimization_iterates
-import torch
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
@@ -84,7 +83,6 @@ class hetGP:
             Kg_c = np.linalg.cholesky(Cg + np.diag(eps + g / mult) ).T
             Kgi = dtrtri(Kg_c)[0]
             Kgi = Kgi @ Kgi.T
-            if type(Cg)==torch.Tensor: Kgi = torch.from_numpy(Kgi)
             nmean = np.squeeze(Kgi.sum(axis=0) @ Delta / Kgi.sum()) # oridinary kriging mean
         
             if SiNK:
@@ -645,7 +643,7 @@ class hetGP:
                         (fast_tUY2(mult.T,(Z.squeeze() - np.repeat(Z0,mult))**2)/mult)[np.where(mult > 5)]
                     ).mean()
                 if g_init is None: 
-                    denom = Z0.var(correction=1) if type(Z0)==torch.Tensor else Z0.var(ddof=1)
+                    denom = Z0.var(ddof=1)
                     g_init = mean_var_replicates / denom
                 
                 if noiseControl.get('g_max') is None:

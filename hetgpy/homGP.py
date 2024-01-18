@@ -8,7 +8,6 @@ from hetgpy.utils import fast_tUY2, rho_AN
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.find_reps import find_reps
-import torch
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 class homGP():
@@ -35,7 +34,7 @@ class homGP():
             # use result to compute Ki (should match chol2inv)
             Ki = dtrtri(Ki)[0] #  -- equivalent of chol2inv -- see https://stackoverflow.com/questions/6042308/numpy-inverting-an-upper-triangular-matrix
             Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
-            if type(C) == torch.Tensor: Ki = torch.from_numpy(Ki)
+            
             self.Ki = Ki
             if beta0 is None:
                 beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()

@@ -56,7 +56,8 @@ def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inpu
         >>> out = model.find_reps(X, Z)
         >>> print(out)
         """
-        
+        if use_torch:
+            raise NotImplementedError("torch implementation is not yet available.")
         if type(X) != np.ndarray:
             raise ValueError(f"X must be a numpy array, is currently: {type(X)}")
         if X.shape[0] == 1:
