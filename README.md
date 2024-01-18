@@ -8,13 +8,23 @@ This package is designed to be a "pure" Python implementation of `hetGP`, with t
 
 The motivation for such a package is due to the rising popularity of implementing simulation models (also known as computer experiments) in Python. 
 
+For project progress, please see `TODO.md`
 
+## Installing and Environments
+
+* `hetGPy` is not yet available as a compiled package
+* At the moment, we use [poetry](https://python-poetry.org/) so dependencies can be installed with:
+```
+poetry install
+```
+
+## Contact
 For questions regarding this package, please contact:  
 David O'Gara  
 Division of Computational and Data Sciences, Washington University in St. Louis  
 david.ogara@wustl.edu
 
-
+## References
 `hetGP` first appeared in:
 
 Binois M, Gramacy RB (2021). “hetGP: Heteroskedastic Gaussian Process Modeling and Sequential Design in R.” _Journal of Statistical Software_,
