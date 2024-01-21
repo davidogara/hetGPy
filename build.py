@@ -2,17 +2,17 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 def build(setup_kwargs):
     ext_modules = [
         Pybind11Extension(
-            "gauss",
+            "hetgpy.gauss",
             ["hetgpy/gauss.cpp"],
-            include_dirs=[".", "eigen/"],
+            include_dirs=["hetgpy", "eigen/"],
             extra_compile_args=['-O3'],
             language='c++',
             cxx_std=17
         ),
         Pybind11Extension(
-            "matern",
+            "hetgpy.matern",
             ["hetgpy/matern.cpp"],
-            include_dirs=[".", "eigen/"],
+            include_dirs=["hetgpy", "eigen/"],
             extra_compile_args=['-O3'],
             language='c++',
             cxx_std=17
