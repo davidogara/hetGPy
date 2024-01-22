@@ -5,7 +5,6 @@ description = "Python implementation of hetGP"
 authors = ["David O'Gara <david.ogara@wustl.edu>"]
 readme = "README.md"
 packages = [ { include = "**/*.py", from = "."  }]
-build = "build.py"
 
 include = [
     "hetgpy/*",
