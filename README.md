@@ -27,8 +27,10 @@ poetry shell
 3. Compile the `c++` files that underlie the kernel functions. `cd` into `hetgpy` and run:
 
 ```
-python -m cppimport build
+python setup_cpp.py
 ```
+
+Note that you may need to run `poetry install` or `poetry build` a second time.
 
 After this you should be able to run the examples in the `notebooks` folder. It is suggested to use:
 ```
