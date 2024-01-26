@@ -96,8 +96,8 @@ def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inpu
             Z0[idx]    = out.mean()
             mult[idx]  = len(out)
         if return_Zlist:
-            return dict(X0 = X0, Z0 = Z0, mult = mult, Z = Z,
+            return dict(X0 = X0, Z0 = Z0, mult = mult, Z = np.concatenate(list(Zlist.values())),
                 Zlist = Zlist, inputBounds = inputBounds, outputStats = outputStats)
-        return dict(X0 = X0, Z0 = Z0, mult = mult, Z = Z, inputBounds = inputBounds,
+        return dict(X0 = X0, Z0 = Z0, mult = mult, Z = np.concatenate(list(Zlist.values())), inputBounds = inputBounds,
               outputStats = outputStats)
     

@@ -137,7 +137,7 @@ class hetGP:
         
         psi = (1.0 / N)*((((Z-beta0)/ LambdaN).T @ (Z-beta0)) - ((Z0 - beta0)*mult/Lambda).T @ (Z0-beta0) + psi_0)
         loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi) + 1/2 * ldetKi - 1/2 * np.sum((mult - 1) * np.log(Lambda) + np.log(mult)) - N/2
-        
+        foo=1
         
         if penalty:
             nu_hat_var = np.squeeze((Delta - nmean).T @ Kgi @ (Delta - nmean))/ len(Delta)
@@ -476,7 +476,7 @@ class hetGP:
 
 
     def mleHetGP(self,X, Z, lower = None, upper = None, known = dict(),
-                     noiseControl = dict(g_bounds = (1e-06, 1)),
+                     noiseControl = dict(k_theta_g_bounds = (1, 100), g_max = 100, g_bounds = (1e-06, 1)),
                      init = {},
                      covtype = "Gaussian",
                      maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9),use_torch=False):
@@ -613,7 +613,7 @@ class hetGP:
             trendtype = 'SK'
 
         if noiseControl.get('g_bounds') is None:
-            noiseControl['g_bounds'] <- (1e-6, 1)
+            noiseControl['g_bounds'] = (1e-6, 1)
         
         if len(components)==0 and known.get('theta_g') is None:
             known['theta_g'] = known['k_theta_g'] * known['theta']
@@ -640,7 +640,7 @@ class hetGP:
             ## Initial value for g of the homoskedastic process: based on the mean variance at replicates compared to the variance of Z0
             if any(mult > 5):
                 mean_var_replicates = (
-                        (fast_tUY2(mult.T,(Z.squeeze() - np.repeat(Z0,mult))**2)/mult)[np.where(mult > 5)]
+                        (fast_tUY2(mult.T,(Z - np.repeat(Z0,mult))**2)/mult)[np.where(mult > 5)]
                     ).mean()
                 if g_init is None: 
                     denom = Z0.var(ddof=1)

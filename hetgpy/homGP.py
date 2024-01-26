@@ -25,7 +25,7 @@ class homGP():
             n = X0.shape[0]
             N = Z.shape[0]
 
-            C = cov_gen(X1 = X0, theta = theta, type = covtype,)
+            C = cov_gen(X1 = X0, theta = theta, type = covtype)
             self.C = C
             Ki = np.linalg.cholesky(C + np.diag(eps + g / mult) ).T
             ldetKi = - 2.0 * np.sum(np.log(np.diag(Ki)))
@@ -169,7 +169,7 @@ class homGP():
             
             if np.isnan(loglik) == False:
                 if loglik > self.max_loglik:
-                    self.max_loglike = loglik
+                    self.max_loglik = loglik
                     self.arg_max = par
             
             return -1.0 * loglik # for maximization
@@ -228,7 +228,7 @@ class homGP():
             for key, val in python_kws_2_R_kws.items():
                 out[val] = out[key]
             if out.success == False:
-                out = dict(par = self.arg_max, value = self.max_loglik, counts = np.nan,
+                out = dict(par = self.arg_max, value = -1.0 * self.max_loglik, counts = np.nan,
                 message = "Optimization stopped due to NAs, use best value so far")
 
             g_out = out['par'][-1] if known.get('g') is None else known.get('g')
