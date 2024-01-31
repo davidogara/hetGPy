@@ -137,7 +137,6 @@ class hetGP:
         
         psi = (1.0 / N)*((((Z-beta0)/ LambdaN).T @ (Z-beta0)) - ((Z0 - beta0)*mult/Lambda).T @ (Z0-beta0) + psi_0)
         loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi) + 1/2 * ldetKi - 1/2 * np.sum((mult - 1) * np.log(Lambda) + np.log(mult)) - N/2
-        foo=1
         
         if penalty:
             nu_hat_var = np.squeeze((Delta - nmean).T @ Kgi @ (Delta - nmean))/ len(Delta)
@@ -154,32 +153,54 @@ class hetGP:
         return loglik
             
         
-    ## ' derivative of log-likelihood for logLikHet_Wood with respect to theta and Lambda with all observations
-    ## ' Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information
-    ## ' nu2 is replaced by its plugin estimator in the likelihood
-    ## ' @param X0 unique designs
-    ## ' @param Z0 averaged observations
-    ## ' @param Z replicated observations (sorted with respect to X0)
-    ## ' @param mult number of replicates at each Xi
-    ## ' @param Delta vector of nuggets corresponding to each X0i or pXi, that are smoothed to give Lambda
-    ## ' @param logN should exponentiated variance be used
-    ## ' @param SiNK should the smoothing come from the SiNK predictor instead of the kriging one
-    ## ' @param theta scale parameter for the mean process, either one value (isotropic) or a vector (anistropic)
-    ## ' @param k_theta_g constant used for linking nuggets lengthscale to mean process lengthscale, i.e., theta_g[k] = k_theta_g * theta[k], alternatively theta_g can be used
-    ## ' @param theta_g either one value (isotropic) or a vector (anistropic), alternative to using k_theta_g
-    ## ' @param g nugget of the nugget process
-    ## ' @param pX matrix of pseudo inputs locations of the noise process for Delta (could be replaced by a vector to avoid double loop)
-    ## ' @param components to determine which variable are to be taken in the derivation:
-    ## ' NULL for all, otherwise list with elements from 'theta', 'Delta', 'theta_g', 'k_theta_g', 'pX' and 'g'.
-    ## ' @param beta0 mean, if not provided, the MLE estimator is used
-    ## ' @param eps minimal value of elements of Lambda
-    ## ' @param covtype covariance kernel type
-    ## ' @param penalty should a penalty term on Delta be used?
-    ## ' @param hom_ll: reference homoskedastic likelihood
-    ## ' @export
+    
     def dlogLikHet(self,X0, Z0, Z, mult, Delta, theta, g, k_theta_g = None, theta_g = None, beta0 = None, pX = None,
                     logN = True, SiNK = False, components = None, eps = MACHINE_DOUBLE_EPS, covtype = "Gaussian", SiNK_eps = 1e-4,
                     penalty = True, hom_ll = None, env = None):
+        '''
+        derivative of log-likelihood for logLikHet_Wood with respect to theta and Lambda with all observations
+        Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information 
+        nu2 is replaced by its plugin estimator in the likelihood
+
+        Parameters
+        ----------
+        X0 : ndarray_like
+            unique designs
+        Z0 : ndarray_like
+            averaged observations
+        Z  : ndarray_like
+            replicated observations (sorted with respect to X0)
+        mult : ndarray_like 
+            number of replicates at each Xi
+        Delta : ndarray_like
+          vector of nuggets corresponding to each X0i or pXi, that are smoothed to give Lambda
+        logN : bool
+            should exponentiated variance be used
+        SiNK : bool
+            should the smoothing come from the SiNK predictor instead of the kriging one
+        theta : ndarray_like
+            scale parameter for the mean process, either one value (isotropic) or a vector (anistropic)
+        k_theta_g: ndarray_like
+            constant used for linking nuggets lengthscale to mean process lengthscale, i.e., theta_g[k] = k_theta_g * theta[k], alternatively theta_g can be used
+        theta_g : ndarray_like
+            either one value (isotropic) or a vector (anistropic), alternative to using k_theta_g
+        g : ndarray_like
+            nugget of the nugget process
+        pX : ndarray_like
+            matrix of pseudo inputs locations of the noise process for Delta (could be replaced by a vector to avoid double loop)
+        components : ndarray_like
+            components to determine which variable are to be taken in the derivation: None for all, otherwise list with elements from 'theta', 'Delta', 'theta_g', 'k_theta_g', 'pX' and 'g'.
+        beta0 : float
+            mean, if not provided, the MLE estimator is used
+        eps : float
+            minimal value of elements of Lambda
+        covtype: str
+            covariance kernel type
+        penalty : bool 
+            should a penalty term on Delta be used?
+        hom_ll : float 
+            reference homoskedastic likelihood
+        '''
         ## Verifications
         if k_theta_g is None and theta_g is None:
             print("Either k_theta_g or theta_g must be provided \n")
