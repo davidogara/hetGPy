@@ -1,8 +1,13 @@
+"""
+docstring for find_reps
+"""
+
+
 import numpy as np
 def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inputBounds = None, use_torch=False):
-        r"""Prepare data for use with `mleHomGP`and `mleHetGP`
+        """Prepare data for use with ``mleHomGP`` and ``mleHetGP``
         
-        Several sentence description here. in particular to find replicated observations
+        In particular to find replicated observations
 
         Parameters
         ----------
@@ -10,34 +15,34 @@ def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inpu
         X : array_like
             matrix of design locations, one point per row
         Z : array_like
-            vector of observations at `X`
+            vector of observations at ``X``
         return_Zlist: bool 
             to return `Zlist`, see below
         
         rescale: bool
-            if `True`, the inputs are rescaled to the unit hypercube
+            if ``True``, the inputs are rescaled to the unit hypercube
         normalize: bool 
-            if `True`, the outputs are centered and normalized
+            if ``True``, the outputs are centered and normalized
         inputBounds: array_like 
-            optional matrix of known boundaries in original input space, of size 2 times X.shape[1].If not provided, and \code{rescale == TRUE}, it is estimated from the data.   
+            optional matrix of known boundaries in original input space, of size 2 times `X.shape[1]`. If not provided, and ``rescale == True``, it is estimated from the data.   
         
         Returns
-        ----------
+        -------
         dict
             dictionary of outputs
         type
             explain types
         out
             dictionary of 
-            \itemize{
-            \item `X0` matrix with unique designs locations, one point per row,
-            \item `Z0` vector of averaged observations at \code{X0},
-            \item `mult` number of replicates at \code{X0},
-            \item `Z` vector with all observations, sorted according to \code{X0},
-            \item `Zlist` optional list, each element corresponds to observations at a design in `X0`,
-            \item `inputBounds` optional matrix, to rescale back to the original input space,
-            \item `outputStats` optional vector, with mean and variance of the original outputs.
-            }
+
+                - ``X0`` matrix with unique designs locations, one point per row
+                - ``Z0`` vector of averaged observations at ``X0``
+                - ``mult`` number of replicates at ``X0``                
+                - ``Z`` vector with all observations, sorted according to ``X0``
+                - ``Zlist`` optional list, each element corresponds to observations at a design in ``X0``
+                - ``inputBounds`` optional matrix, to rescale back to the original input space
+                -  ``outputStats`` optional vector, with mean and variance of the original outputs.
+        
         References
         ----------
 
