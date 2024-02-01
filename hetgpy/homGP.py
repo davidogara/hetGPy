@@ -91,6 +91,90 @@ class homGP():
                         init = {},
                         covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
                         maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
+        '''
+        Gaussian process modeling with homoskedastic noise
+
+        Gaussian process regression under homoskedastic noise based on maximum likelihood estimation of the hyperparameters. This function is enhanced to deal with replicated observations.
+        
+        Parameters
+        ----------
+        X : ndarray_like
+            matrix of all designs, one per row, or list with elements:
+            - ``X0`` matrix of unique design locations, one point per row
+            - ``Z0`` vector of averaged observations, of length ``len(X0)``
+            - ``mult`` number of replicates at designs in ``X0``, of length ``len(X0)``
+        Z : ndarray_like
+            Z vector of all observations. If using a list with ``X``, ``Z`` has to be ordered with respect to ``X0``, and of length ``sum(mult)``
+        lower,upper : ndarray_like 
+            optional bounds for the ``theta`` parameter (see :func: covariance_functions.cov_gen for the exact parameterization).
+            In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)
+        noiseControl : dict
+            dict with element:
+            - ``g_bounds`` vector providing minimal and maximal noise to signal ratio (default to ``(sqrt(MACHINE_DOUBLE_EPS), 100)``).
+        settings : dict 
+                dict for options about the general modeling procedure, with elements:
+                - ``return_Ki`` boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
+                - ``factr`` (default to 1e9) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
+        eps : float
+            jitter used in the inversion of the covariance matrix for numerical stability
+        known : dict
+            optional dict of known parameters (e.g. ``beta0``, ``theta``, ``g``)
+        init :  dict
+            optional lists of starting values for mle optimization:
+            - ``theta_init`` initial value of the theta parameters to be optimized over (default to 10% of the range determined with ``lower`` and ``upper``)
+            - ``g_init`` vector of nugget parameter to be optimized over
+        covtype : str 
+                covariance kernel type, either ``'Gaussian'``, ``'Matern5_2'`` or ``'Matern3_2'``, see :func: ``~covariance_functions.cov_gen``
+        maxit : int
+                maximum number of iterations for `L-BFGS-B` of :func: ``scipy.optimize.minimize`` dedicated to maximum likelihood optimization
+    
+        Details
+        -------
+        The global covariance matrix of the model is parameterized as ``nu_hat * (C + g * diag(1/mult)) = nu_hat * K``,
+        with ``C`` the correlation matrix between unique designs, depending on the family of kernel used (see :func: `~hetgpy.covariance_functions.cov_gen` for available choices) and values of lengthscale parameters.
+        ``nu_hat`` is the plugin estimator of the variance of the process.
+
+        It is generally recommended to use :func: ``~find_reps.find_reps`` to pre-process the data, to rescale the inputs to the unit cube and to normalize the outputs.
+        
+        The noise process lengthscales can be set in several ways:
+            - using ``k_theta_g`` (``settings['linkThetas'] == 'joint'``), supposed to be greater than one by default. In this case lengthscales of the noise process are multiples of those of the mean process.
+            - if ``settings['linkThetas'] == 'constr``, then the lower bound on ``theta_g`` correspond to estimated values of a homoskedastic GP fit.
+            - else lengthscales between the mean and noise process are independent (both either anisotropic or not).
+        
+        When no starting nor fixed parameter values are provided with ``init`` or ``known``, 
+        the initialization process consists of fitting first an homoskedastic model of the data, called ``modHom``.
+        ``init['theta']``, initial lengthscales are taken at 10\% of the range determined with ``lower`` and ``upper``,
+        while ``init['g_H']`` may be use to pass an initial nugget value.
+        The resulting lengthscales provide initial values for ``theta`` (or update them if given in ``init``).
+    
+    
+
+        Returns
+        -------
+        self, with the following attributes: 
+
+            - ``theta``: unless given, maximum likelihood estimate (mle) of the lengthscale parameter(s),
+            - ``nu_hat``: plugin estimator of the variance,
+            - ``g``: unless given, mle of the nugget of the noise/log-noise process,
+            - ``trendtype``: either ``"SK"`` if ``beta0`` is provided, else ``"OK"``,
+            - ``beta0``: constant trend of the mean process, plugin-estimator unless given,
+            - ``ll``: log-likelihood value, (``ll_non_pen``) is the value without the penalty,
+            - ``nit_opt``, ``msg``: counts and message returned by :func:``scipy.optimize.minimize``
+            - ``used_args``: list with arguments provided in the call to the function,
+                - ``Ki``, ``Kgi``: inverse of the covariance matrices of the mean and noise processes (not scaled by ``nu_hat`` and ``nu_hat_var``),  
+                - ``X0``, ``Z0``, ``Z``, ``eps``, ``logN``, ``covtype``: values given in input,
+            - ``time``: time to train the model, in seconds.
+            
+            See also `~hetgpy.homGP.homGP.predict` for predictions, `~hetgpy.homGP.update` for updating an existing model.
+            ``summary`` and ``plot`` functions are available as well.
+            `~homTP.mleHomTP` provide a Student-t equivalent.
+        
+        References
+        ----------
+        M. Binois, Robert B. Gramacy, M. Ludkovski (2018), Practical heteroskedastic Gaussian process modeling for large simulation experiments,
+        Journal of Computational and Graphical Statistics, 27(4), 808--821.
+        Preprint available on arXiv:1611.05902.
+        '''
         known = known.copy()
         init = init.copy()
         if type(X) == dict:

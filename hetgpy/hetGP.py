@@ -625,9 +625,9 @@ class hetGP:
             - ``X0``, ``Z0``, ``Z``, ``eps``, ``logN``, ``covtype``: values given in input,
         - ``time``: time to train the model, in seconds.
         
-        See also :func: `~hetGP.predict` for predictions, :func: ``~hetGP.update`` for updating an existing model.
+        See also `~hetgpy.hetGP.hetGP.predict` for predictions, `~hetgpy.hetGP.update` for updating an existing model.
         ``summary`` and ``plot`` functions are available as well.
-        :func: ``~hetTP.mleHetTP`` provide a Student-t equivalent.
+        `~hetTP.mleHetTP` provide a Student-t equivalent.
         
         References
         ----------
@@ -660,9 +660,9 @@ class hetGP:
         if covtype not in covtypes:
             raise ValueError(f"covtype must be one of {covtypes}")
 
-        if isinstance(lower,float) or isinstance(lower,int):
+        if isinstance(lower,float) or isinstance(lower,int) or isinstance(lower,float):
             lower = np.array(lower)
-        if isinstance(upper,float) or isinstance(upper,int):
+        if isinstance(upper,float) or isinstance(upper,int) or isinstance(upper,float):
             upper = np.array(upper)
         if lower is None or upper is None:
             auto_thetas = auto_bounds(X = X0, covtype = covtype)
