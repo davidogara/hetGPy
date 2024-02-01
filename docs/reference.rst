@@ -6,3 +6,6 @@
 
 .. autoclass:: hetgpy.hetGP.hetGP
    :members:
+
+.. autoclass:: hetgpy.homGP.homGP
+   :members:

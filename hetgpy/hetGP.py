@@ -1303,26 +1303,38 @@ class hetGP:
         
         return self
     
-    #'Gaussian process predictions using a heterogeneous noise GP self (of class \code{hetGP}) 
-    #' @param x matrix of designs locations to predict at (one point per row)
-    #' @param self an self of class \code{hetGP}; e.g., as returned by \code{\link[hetGP]{mleHetGP}}
-    #' @param noise.var should the variance of the latent variance process be returned?
-    #' @param xprime optional second matrix of predictive locations to obtain the predictive covariance matrix between \code{x} and \code{xprime}
-    #' @param nugs.only if \code{TRUE}, only return noise variance prediction
-    #' @param ... no other argument for this method.
-    #' @return list with elements
-    #' \itemize{
-    #' \item \code{mean}: kriging mean;
-    #' \item \code{sd2}: kriging variance (filtered, e.g. without the nugget values)
-    #' \item \code{nugs}: noise variance prediction
-    #' \item \code{sd2_var}: (returned if \code{noise.var = TRUE}) kriging variance of the noise process (i.e., on log-variances if \code{logN = TRUE})
-    #' \item \code{cov}: (returned if \code{xprime} is given) predictive covariance matrix between \code{x} and \code{xprime}
-    #' }
-    #' @details The full predictive variance corresponds to the sum of \code{sd2} and \code{nugs}.
-    #' See \code{\link[hetGP]{mleHetGP}} for examples.
-    #' @method predict hetGP 
-    #' @export
     def predict(self,x, noise_var = False, xprime = None, nugs_only = False, **kwargs):
+        '''
+        Gaussian process predictions using a heterogeneous noise GP object (of ``hetGP``) 
+
+        Parameters
+        ----------
+        x : ndarray_like
+            matrix of designs locations to predict at (one point per row)
+        noise_var: bool (default False)
+            should the variance of the latent variance process be returned?
+        xprime : ndarray_like
+            optional second matrix of predictive locations to obtain the predictive covariance matrix between ``x`` and ``xprime``
+        nugs_only : bool (default False)  
+            if ``True``, only return noise variance prediction
+        kwargs : dict
+            optional additional elements (not used)
+
+        Returns
+        -------
+
+        dict with elements:
+            - ``mean``: kriging mean;
+            - ``sd2``: kriging variance (filtered, e.g. without the nugget values)
+            - ``nugs``: noise variance prediction
+            - ``sd2_var``: (returned if ``noise_var = True``) kriging variance of the noise process (i.e., on log-variances if ``logN = TRUE``)
+            - ``cov``: (returned if ``xprime`` is given) predictive covariance matrix between ``x`` and ``xprime``
+        
+        Details
+        -------
+        The full predictive variance corresponds to the sum of \code{sd2} and \code{nugs}.
+        See :func: `~hetgpy.hetGP.mleHetGP` for examples.
+        '''
         if len(x.shape)==1:
             x = x.reshape(1,-1)
             if x.shape[1] != self['X0'].shape[1]: raise ValueError("x is not a matrix")
@@ -1408,6 +1420,34 @@ class hetGP:
     def plot(self,type='iterates',**kwargs):
         if type=='iterates':
             return plot_optimization_iterates(self,**kwargs)
+    def summary(self):
+        
+        print("N = ", len(self.Z), " n = ", len(self.Z0), " d = ", self.X0.shape[1], "\n")
+        print(self.covtype, " covariance lengthscale values of the main process: ", self.theta, "\n")
+        print("Variance/scale hyperparameter: ", self.nu_hat, "\n")
+        
+        print("Summary of Lambda values: \n")
+        keys = ['Min','1st Qu.', 'Median', '3rd Qu.', 'Max']
+        vals = np.quantile(self.Lambda,(0,0.25,0.5,0.75,1))
+        vals = ['{:.2e}'.format(v) for v in vals]
+        print(dict(zip(keys,vals)))
+        if self.trendtype == "SK":
+            print("Given constant trend value: ", self.beta0, "\n")
+        else:
+            print("Estimated constant trend value: ", self.beta0, "\n")
+        
+        if self.logN:
+            print(self.covtype, " covariance lengthscale values of the log-noise process: ", self.theta_g, "\n")
+            print("Nugget of the log-noise process: ", self.g, "\n")
+            print("Estimated constant trend value of the log-noise process: ", self.nmean, "\n")
+        else:
+            print(self.covtype, " covariance lengthscale values of the log-noise process: ", self.theta_g, "\n")
+            print("Nugget of the noise process: ", self.g, "\n")
+            print("Estimated constant trend value of the noise process: ", self.nmean, "\n")
+        
+        print("MLE optimization: \n", "Log-likelihood = ", self.ll, "; Nb of evaluations (obj, gradient) by L-BFGS-B: ", self.nit_opt, "; message: ", self.msg, "\n")
+  
+
 
 class hetTP():
     pass
