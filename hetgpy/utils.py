@@ -34,3 +34,19 @@ def rho_AN(xx, X0, theta_g, g, sigma = 1, type = "Gaussian", SiNK_eps = 1e-4, ep
 
 def crossprod(X,Y):
       return X.T @ Y
+def duplicated(X):
+      '''
+      Function to match `duplicated` in base R
+
+      Examples
+      --------
+      from rpy2.robjects import r
+      r("x <- c(9:20, 1:5, 3:7, 0:8)")
+      x = np.array(r("x"))
+      
+      (duplicated(x) == np.array(r("duplicated(x)"))).all()
+      '''
+      _, i   = np.unique(X,return_index=True)
+      arr    = np.ones_like(X, dtype = bool)
+      arr[i] = False
+      return arr
