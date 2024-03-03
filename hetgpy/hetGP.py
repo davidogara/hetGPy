@@ -4,8 +4,9 @@ from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
 from scipy.io import loadmat
+from scipy.special import digamma, polygamma
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
-from hetgpy.utils import fast_tUY2, rho_AN, crossprod
+from hetgpy.utils import fast_tUY2, rho_AN, crossprod, duplicated
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.homGP import homGP
@@ -1417,6 +1418,137 @@ class hetGP:
               nugs = nugs,
               sd2var = sd2var,
               cov = cov)
+    
+    def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
+                         known = None, maxit = 100, method = 'quick'):
+        # first reduce Xnew/Znew in case of potential replicates
+        newdata = find_reps(Xnew, Znew, normalize = False, rescale = False)
+  
+        # 'mixed' requires new data
+        if np.isnan(Znew).any(): method = 'quick'
+  
+        # copy object for update 
+        m_new = self
+        if duplicated(np.vstack([m_new.X0, newdata['X0']])).any():
+            id_exists = []
+            for i in range(newdata['X0']):
+                tmp = duplicated(np.vstack([newdata['X0'][i,:], m_new.X0]))
+                if tmp.any():
+                    id_exists.append(i)
+                    id_X0 = np.where(tmp).nonzero()[0] - 1
+                    m_new.Z0[id_X0] = (m_new.mult[id_X0] * m_new.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(m_new.mult[id_X0] + newdata['mult'][i])
+                    idZ = np.cumsum(m_new.mult)
+                    m_new.Z = np.insert(m_new.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
+                    
+                    ## Inverse matrices are updated if MLE is not performed 
+                    if maxit == 0:
+                        m_new.Ki  = update_Ki_rep(id_X0, m_new, nrep = newdata.mult[i])
+                        m_new.Kgi = update_Kgi_rep(id_X0, m_new, nrep = newdata.mult[i])
+                    
+                    
+                    m_new.mult[id_X0] = m_new.mult[id_X0] + newdata.mult[i]
+                    
+                    ### Update Delta value depending on the selected scheme
+                    
+                    # if method == 'quick': nothing to be done for replicates
+                    
+                    # use object to use previous predictions of Lambda/mean
+                    if(method == 'mixed'):
+                        # model predictions
+                        delta_loo = LOO_preds_nugs(self, id_X0) ## LOO mean and variance at X0[id_X0,] (only variance is used)
+                        
+                        # empirical estimates
+                        sd2h = np.mean((m_new.Z[idZ[id_X0]:(idZ[id_X0] + m_new.mult[id_X0] - 1)] - self.predict(newdata['X0'][i:i:1,:])['mean'])**2)/self.nu_hat
+                        sd2sd2h = 2*sd2h**2/m_new.mult[id_X0] #variance of the estimator of the variance
+                        
+                        if self.logN:
+                            ## Add correction terms for the log transform
+                            sd2h = np.log(sd2h) - digamma((m_new.mult[id_X0] - 1)/2) - np.log(2) + np.log(m_new.mult[id_X0] - 1)
+                            sd2sd2h = polygamma(1,(m_new.mult[id_X0] - 1)/2)
+                        
+                    
+                        delta_loo['mean'] = m_new.Delta[id_X0]
+                        newdelta_sd2 = 1/(1/delta_loo['sd2'] + 1/sd2sd2h)
+                        new_delta_mean = (delta_loo['mean']/delta_loo['sd2'] + sd2h/sd2sd2h) * newdelta_sd2 
+                        newdata['Delta'][id_X0] = new_delta_mean
+                    
+            # remove duplicates now
+            idxs = ~np.isin(newdata['X0'],id_exists)
+            newdata['X0']    = newdata['X0'][idxs,:]
+            newdata['Z0']    = newdata['Z0'][idxs]
+            newdata['mult']  = newdata['mult'][idxs]
+            newdata['Zlist'] = {k:v for k,v in newdata['Zlist'].items() if k in idxs}
+        
+        ## Now deal with new data
+        if newdata['X0'].shape[0] > 0:
+            if method == 'quick':
+                delta_new_init = self.predict(x = newdata['X0'], nugs_only = True)['nugs']/self.nu_hat
+                if self.logN: delta_new_init = np.log(delta_new_init)
+            if method == 'mixed':
+                delta_new_init = np.repeat(np.nan, newdata['X0'].shape[0])
+                pred_deltas = self.predict(x = newdata['X0'], noise_var = True)
+                
+                for i in range(newdata['X0'].shape[0]):
+                    sd2h = np.mean((newdata['Zlist'][[i]] - self.predict(newdata['X0'][i:i+1,:])['mean'])**2)/self.nu_hat
+                    sd2sd2h = 2*sd2h**2/newdata['mult'][i] #variance of the estimator of the variance
+                    
+                    pdelta = pred_deltas['nugs'][i]/self.nu_hat
+                    if self.logN:
+                        pdelta = np.log(pdelta)
+                    
+                        ## Correction terms for the log transform
+                        sd2h = np.log(sd2h) - digamma(newdata['mult'][i]/2) - np.log(2) + np.log(newdata['mult'][i])
+                        sd2sd2h = polygamma(1,newdata['mult'][i]/2)
+
+                    newdelta_sd2 = 1/(self.nu_hat/pred_deltas['sd2var'][i] + 1/sd2sd2h)
+                    delta_new_init[i] = (self.nu_hat*pdelta/pred_deltas['sd2var'][i] + sd2h/sd2sd2h) * newdelta_sd2
+            if maxit == 0:
+                for i in range(newdata['X0'].shape[0]):
+                    if self.logN: 
+                        m_new.Ki = update_Ki(newdata['X0'][i:i+1,:], m_new, nrep = newdata['mult'][i], new_lambda = np.exp(delta_new_init[i]))
+                    else:
+                        m_new.Ki = update_Ki(newdata['X0'][i:i+1,:], m_new, new_lambda = delta_new_init[i], nrep = newdata['mult'][i])
+                    
+                    m_new.Kgi = update_Kgi(newdata['X0'][i:i+1,:], m_new, nrep = newdata['mult'][i])
+                    m_new.X0 = np.vstack([m_new.X0, newdata['X0'][i:i+1,:]])
+                
+                if self.logN: 
+                    m_new.Lambda = np.hstack(m_new.Lambda, np.exp(delta_new_init))
+                else:
+                    m_new.Lambda = np.hstack(m_new.Lambda, delta_new_init)
+                
+            else:
+                m_new.X0 = np.vstack([m_new['X0'], newdata['X0']])        
+            
+            m_new.Z0    = np.hstack([m_new.Z0, newdata['Z0']])
+            m_new.mult  = np.hstack([m_new.mult, newdata['mult']])
+            m_new.Z     = np.hstack([m_new.Z, np.hstack(list(newdata['Zlist'].values()))])
+            m_new.Delta = np.hstack([m_new.Delta, delta_new_init])    
+        
+        if maxit == 0:
+            m_new.nit_opt = 0
+            m_new.msg = "Not optimized \n"
+            
+        else:
+            
+            if upper is None: upper = self.used_args['upper']
+            if lower is None: lower = self.used_args['lower']
+            if noiseControl is None:
+                noiseControl <- self.used_args['noiseControl']
+                noiseControl['lowerDelta'] = None
+                noiseControl['upperDelta'] = None ## must be given to noiseControl in update
+             
+            if settings is None: settings = self.used_args['settings']
+            if known is None: known = self.used_args['known']
+            
+            m_new = self.mleHetGP(X = dict(X0 = m_new.X0, Z0 = m_new.Z0, mult = m_new.mult), Z = m_new.Z,
+                            noiseControl = noiseControl, lower = lower, upper = upper, covtype = self.covtype, settings = settings,
+                            init = dict(theta = self.theta, theta_g = self.theta_g, k_theta_g = self.k_theta_g,
+                                         Delta = m_new.Delta, g = np.max(self.g, ginit)),
+                            known = known, eps = self.eps, maxit = maxit)
+        
+        return m_new
+
     def plot(self,type='iterates',**kwargs):
         if type=='iterates':
             return plot_optimization_iterates(self,**kwargs)
