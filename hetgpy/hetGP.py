@@ -3,14 +3,16 @@ import warnings
 from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
-from scipy.io import loadmat
 from scipy.special import digamma, polygamma
-from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
-from hetgpy.utils import fast_tUY2, rho_AN, crossprod, duplicated
+from hetgpy.covariance_functions import cov_gen, partial_cov_gen
+from hetgpy.utils import fast_tUY2, rho_AN, duplicated
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.homGP import homGP
 from hetgpy.plot import plot_optimization_iterates
+from hetgpy.LOO import LOO_preds
+from hetgpy.update_covar import update_Ki, update_Ki_rep, update_Kgi, update_Kgi_rep
+
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
@@ -1455,7 +1457,7 @@ class hetGP:
                     # use object to use previous predictions of Lambda/mean
                     if(method == 'mixed'):
                         # model predictions
-                        delta_loo = LOO_preds_nugs(self, id_X0) ## LOO mean and variance at X0[id_X0,] (only variance is used)
+                        delta_loo = self.LOO_preds_nugs(id_X0) ## LOO mean and variance at X0[id_X0,] (only variance is used)
                         
                         # empirical estimates
                         sd2h = np.mean((m_new.Z[idZ[id_X0]:(idZ[id_X0] + m_new.mult[id_X0] - 1)] - self.predict(newdata['X0'][i:i:1,:])['mean'])**2)/self.nu_hat
@@ -1548,7 +1550,30 @@ class hetGP:
                             known = known, eps = self.eps, maxit = maxit)
         
         return m_new
+    
+    def LOO_preds_nugs(self, i):
+        '''
+        Leave-out-out predictions for the nugget
+        
+        Parameters
+        ----------
+        self : hetGP object
+        i    : int
+            index of the point to remove
+        
+        Returns
+        -------
+        LOO preds
+        '''
+        self.Kgi = self.Kgi - (self.Kgi.sum(axis=0).reshape(-1,1) @ self.Kgi.sum(axis=0).reshape(1,-1)) / self.Kgi.sum()
+        yih = self.Delta[i] - (self.Kgi @ (self.Delta - self.nmean))[i]/self.Kgi[i,i]
+        sih = 1/self.Kgi[i,i] - self.g  
+    
+        return(dict(mean = yih, sd2 = sih))
 
+    
+    
+    
     def plot(self,type='iterates',**kwargs):
         if type=='iterates':
             return plot_optimization_iterates(self,**kwargs)
@@ -1582,7 +1607,8 @@ class hetGP:
 
 
 class hetTP():
-    pass
+    def __init__():
+        raise NotImplementedError(f"hetTP not available yet.")
         
         
   
