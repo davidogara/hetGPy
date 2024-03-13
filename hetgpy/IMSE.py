@@ -276,6 +276,88 @@ def phiP(design,p=50):
     fi_p = np.sum(D)**(1/p)
     return fi_p
 
+def lhs_EP(m, seed = None):
+    '''
+    From DiceDesign: FUNCTION PERFORMING ELEMENTARY PERMUTATION (EP) IN LHD USED IN SA ALGORITHMS
+
+    Parameters
+    ----------
+    m : nd_arraylike
+        the design
+    
+    Returns
+    -------
+    out : tuple
+        list including design after EP, ligns and columns defining EP
+    '''
+    rand = np.random.default_rng(seed)
+    G = m
+    d = G.shape[1]
+    n = G.shape[0]
+    ligns  = (rand.uniform(size=2,low=0,high=n)).astype(int)+1      
+    column = (rand.uniform(size=1,low=0,high=d)).astype(int)+1
+    x = G[ligns[0],column]
+    G[ligns[0],column] = G[ligns[1],column]
+    G[ligns[1],column] = x 
+    l = (G,ligns[0],ligns[1],column)   
+    return l
+
+def maximinSA_LHS(design,T0=10,c=0.95,it=2000,p=50,profile="GEOM",Imax=100, seed = None):
+    '''
+    Implementation of maximinSA_LHS from DiceDesign
+    Only profile="GEOM" is implemented (like in hetGP)
+
+    #####maximinSA_LHS#####
+    #####Maximin LHS VIA SIMULATED ANNEALING OPTIMIZATION#####
+
+    #---------------------------------------------------------------------------|
+    #args :  m     : the design                                                 |
+    #        T0    : the initial temperature                                    |
+    #        c     : parameter regulating the temperature                       |
+    #        it    : the number of iterations                                   |
+    #        p     : power required in phiP criterion                           |
+    #      profile : temperature down profile                                   |
+    #                "GEOM" or "GEOM_MORRIS" or "LINEAR". By default : "GEOM"   |
+    #output        : a list containing all the input arguments plus:            |
+    #       a mindist optimized design                                          |
+    #       vector of criterion values along the iterations                     |
+    #       vector of temperature values along the iterations                   |
+    #       vector of acceptation probability values along the iterations       |
+    #depends :  phiP,lhs_EP                                                     |
+    #---------------------------------------------------------------------------|
+    
+    '''
+    crit = None ; temp = None ; proba = None
+  
+    if profile=="GEOM":
+        m = design
+        i = 0
+        T = T0
+        fi_p = phiP(m,p)
+        crit = fi_p
+  
+        while T>0 & i<it:       
+            
+            G = lhs_EP(m)[[0]]
+            fi_p_ep = phiP(G,p)
+            diff = min(np.exp((fi_p-fi_p_ep)/T),1)
+            if (diff == 1):
+                m = G
+                fi_p = fi_p_ep
+            else:
+                Bernoulli = np.random.default_rng(seed)(1,1,diff)
+                if Bernoulli==1:
+                    m = G
+                    fi_p = fi_p_ep
+            i = i+1
+            crit = (crit,fi_p) ; temp = (temp,T) ; proba = (proba,diff)
+            T = (c**i)*(T0)
+            
+    vals = (design,T0,c,it,p,profile,Imax,m,crit,temp,proba)
+    keys = ("InitialDesign","TO","c","it","p","profile","Imax","design","critValues","tempValues","probaValues") 
+    
+    
+    return {k:v for k,v in zip(keys,vals)}
 
 def IMSPE_search(model, replicate = False, Xcand = None, 
                         control = dict(tol_dist = 1e-6, tol_diff = 1e-6, multi_start = 20,
