@@ -7,17 +7,17 @@ from hetgpy.covariance_functions import cov_gen
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 def fast_tUY2(mult,Y2):
-                # to do: speed this up
-                res = np.zeros(shape=mult.shape[0])
-                idx = 0
-                idxtmp = 0
-                for i in range(len(Y2)):
-                    res[idx]+=Y2[i]
-                    idxtmp+=1
-                    if idxtmp == mult[idx]:
-                        idx+=1
-                        idxtmp = 0
-                return res
+  # to do: speed this up
+  res = np.zeros(shape=mult.shape[0])
+  idx = 0
+  idxtmp = 0
+  for i in range(len(Y2)):
+      res[idx]+=Y2[i]
+      idxtmp+=1
+      if idxtmp == mult[idx]:
+          idx+=1
+          idxtmp = 0
+  return res
 
 # Rho function for SiNK prediction, anistropic case
 ## @param covtype covariance kernel type, either 'Gaussian' or 'Matern5_2'
