@@ -483,3 +483,117 @@ def IMSPE_search(model, replicate = False, Xcand = None,
         if len(tmp) > 0: 
             return(dict(par = Xcand[[np.argmin(res)],:,], value = min(res), new = False, id = tmp))
         return(dict(par = Xcand[[np.argmin(res)],:], value = min(res), new = True, id = None))
+
+def allocate_mult(model = None, N = None, Wijs = None, use_Ki = False):
+    '''
+    Allocation of replicates on existing design locations, based on (29) from (Ankenman et al, 2010)
+   
+    Parameters
+    ----------
+    model: hetGP model
+        hetGP model
+    N : int
+        total budget of replication to allocate
+    Wijs: ndarray
+        optional previously computed matrix of Wijs, see hetgpy.IMSE.Wij
+    use_Ki : bool
+        should Ki from model be used?
+
+    Returns
+    -------
+    vector with approximated best number of replicates per design
+    
+    References
+    ----------
+    B. Ankenman, B. Nelson, J. Staum (2010), Stochastic kriging for simulation metamodeling, Operations research, pp. 371--382, 58
+    '''
+    ## Precalculations
+    if Wijs is None: 
+        Wijs = Wij(mu1 = model.X0, theta = model.theta, type = model.covtype)
+    
+    if use_Ki:
+        Ci = np.clip(np.diag(model.Ki @ Wijs @ model.Ki),a_min=0,a_max=None) # clip for numerical imprecision
+    else:
+        Ci = np.linalg.pinv(cov_gen(model.X0, theta = model.theta, type = model.covtype),rcond=np.sqrt(np.finfo(float).eps))
+        Ci = np.clip(np.diag(Ci @ Wijs @ Ci),a_min=0, a_max = None)
+    
+    if type(model)==hetGP.hetGP: 
+        V = model.Lambda
+    else: 
+        V = np.repeat(model.g, len(model.Z0))
+    
+    res = (N * np.sqrt(Ci * V) / np.sum(np.sqrt(Ci * V))).squeeze()
+    
+    # Now get integer results summing to N
+    idxs = np.argsort(np.mod(res,1))[::-1]
+    bdg = (N - np.sum(np.floor(res))).astype(int)  # remaining number of points to add after truncating
+    
+    res = np.floor(res)
+    if bdg > 0:
+        res[idxs[0:bdg]] = res[idxs[0:bdg]] + 1
+    return res
+
+def horizon(model, current_horizon = None, previous_ratio = None, target = None, Wijs = None, seed = None):
+    '''
+    Adapt the look-ahead horizon depending on the replicate allocation or a target ratio
+    
+    Parameters
+    ----------
+    model : hetGP or homGP model
+        hetGP or homGP model
+    current_horizon : int
+        horizon used for the previous iteration, see details
+    previous_ratio : float
+        ratio before adding the previous new design
+    target : float
+        scalar in [0,1] for desired n/N
+    
+    Wijs : nd_array
+        optional previously computed matrix of Wijs, see hetgpy.IMSE.Wij
+
+    Returns
+    -------
+    Randomly selected horizon for next iteration (adpative) if no target is provided,
+    otherwise returns the update horizon value.
+    
+    Details
+    -------
+    If target is provided, along with previous_ratio and current_horizon:
+    \itemize{
+        \item the horizon is increased by one if more replicates are needed but a new ppint has been added at the previous iteration,
+        \item the horizon is decreased by one if new points are needed but a replicate has been added at the previous iteration,
+        \item otherwise it is unchanged.
+    }
+    If no target is provided, allocate_mult is used to obtain the best allocation of the existing replicates,
+    then the new horizon is sampled from the difference between the actual allocation and the best one, bounded below by 0.
+    See (Binois et al. 2017).
+    
+    References
+    ----------
+    M. Binois, J. Huang, R. B. Gramacy, M. Ludkovski (2019), 
+    Replication or exploration? Sequential design for stochastic simulation experiments,
+    Technometrics, 61(1), 7-23.\cr 
+    Preprint available on arXiv:1710.03206.
+    '''
+
+    rand = np.random.default_rng(seed)
+    if target is None:
+        mult_star = allocate_mult(model = model, N = model.mult.sum(), Wijs = Wijs)
+        tab_input = mult_star - model.mult
+        tab_input[tab_input<0] = 0
+        u, counts = np.unique(tab_input,return_counts=True)
+        return rand.choice(u, prob = counts/counts.sum())
+    
+    if current_horizon is None or previous_ratio is None:
+        raise ValueError("Missing arguments to use target \n")
+    
+    ratio = len(model.Z0)/len(model.Z)
+    
+    # Ratio increased while too small
+    if ratio < target and ratio < previous_ratio:
+        return(max(-1, current_horizon - 1))
+    # Ratio decreased while too high
+    if ratio > target and ratio > previous_ratio:
+        return current_horizon + 1
+        
+    return current_horizon

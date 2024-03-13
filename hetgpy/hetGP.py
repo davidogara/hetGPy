@@ -647,7 +647,7 @@ class hetGP:
             Z0 = X['Z0']
             mult = X['mult']
             if sum(mult) != len(Z):    raise ValueError(f"Length(Z) should be equal to sum(mult): they are {len(Z)} \n and {sum(mult)}")
-            if len(X.shape) == 1:      warnings.warn(f"Coercing X0 to shape {len(X0)} x 1"); X0 = X0.reshape(-1,1)
+            if len(X0.shape) == 1:      warnings.warn(f"Coercing X0 to shape {len(X0)} x 1"); X0 = X0.reshape(-1,1)
             if len(Z0) != X0.shape[0]: raise ValueError("Dimension mismatch between Z0 and X0")
         else:
             if len(X.shape) == 1:    warnings.warn(f"Coercing X to shape {len(X)} x 1"); X = X.reshape(-1,1)
@@ -680,7 +680,7 @@ class hetGP:
   
         n = X0.shape[0]
   
-        if len(X.shape)==1:
+        if len(X0.shape)==1:
             raise ValueError("X0 should be a matrix. \n")
         jointThetas  = False
         constrThetas = False
@@ -1093,7 +1093,7 @@ class hetGP:
         
         
         ## Case when some parameters need to be estimated
-        mle_par = known # Store infered and known parameters
+        mle_par = known.copy() # Store infered and known parameters
 
         if len(components) != 0:
             if modHom is not None:
@@ -1102,7 +1102,7 @@ class hetGP:
                 ## Compute reference homoskedastic likelihood, with fixed theta for speed
                 hom = homGP()
                 modHom_tmp = hom.mleHomGP(X = dict(X0 = X0, Z0 = Z0, mult = mult), Z = Z, lower = lower, upper = upper,
-                                    known = dict(theta = known["theta"], g = known.get('g_H'), beta0 = known['beta0']), covtype = covtype, init = init,
+                                    known = dict(theta = known.get("theta"), g = known.get('g_H'), beta0 = known.get('beta0')), covtype = covtype, init = init,
                                     noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
                                     settings = dict(return_Ki = False))
             
@@ -1433,11 +1433,11 @@ class hetGP:
         m_new = self
         if duplicated(np.vstack([m_new.X0, newdata['X0']])).any():
             id_exists = []
-            for i in range(newdata['X0']):
+            for i in range(newdata['X0'].shape[0]):
                 tmp = duplicated(np.vstack([newdata['X0'][i,:], m_new.X0]))
                 if tmp.any():
                     id_exists.append(i)
-                    id_X0 = np.where(tmp).nonzero()[0] - 1
+                    id_X0 = tmp.nonzero()[0] - 1
                     m_new.Z0[id_X0] = (m_new.mult[id_X0] * m_new.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(m_new.mult[id_X0] + newdata['mult'][i])
                     idZ = np.cumsum(m_new.mult)
                     m_new.Z = np.insert(m_new.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
@@ -1448,7 +1448,7 @@ class hetGP:
                         m_new.Kgi = update_Kgi_rep(id_X0, m_new, nrep = newdata.mult[i])
                     
                     
-                    m_new.mult[id_X0] = m_new.mult[id_X0] + newdata.mult[i]
+                    m_new.mult[id_X0] = m_new.mult[id_X0] + newdata['mult'][i]
                     
                     ### Update Delta value depending on the selected scheme
                     
@@ -1475,12 +1475,14 @@ class hetGP:
                         newdata['Delta'][id_X0] = new_delta_mean
                     
             # remove duplicates now
-            idxs = ~np.isin(newdata['X0'],id_exists)
+            idxs = (~np.isin(newdata['X0'],id_exists)).squeeze()
             newdata['X0']    = newdata['X0'][idxs,:]
             newdata['Z0']    = newdata['Z0'][idxs]
             newdata['mult']  = newdata['mult'][idxs]
-            newdata['Zlist'] = {k:v for k,v in newdata['Zlist'].items() if k in idxs}
-        
+            if type(newdata['Zlist'])==dict:
+                newdata['Zlist'] = {k:v for k,v in newdata['Zlist'].items() if k in idxs.nonzero()[0]}
+            else:
+                newdata['Zlist'] = newdata['Zlist'][idxs]
         ## Now deal with new data
         if newdata['X0'].shape[0] > 0:
             if method == 'quick':
@@ -1524,7 +1526,10 @@ class hetGP:
             
             m_new.Z0    = np.hstack([m_new.Z0, newdata['Z0']])
             m_new.mult  = np.hstack([m_new.mult, newdata['mult']])
-            m_new.Z     = np.hstack([m_new.Z, np.hstack(list(newdata['Zlist'].values()))])
+            if type(newdata['Zlist'])==dict:
+                m_new.Z     = np.hstack([m_new.Z, np.hstack(list(newdata['Zlist'].values()))])
+            else:
+                m_new.Z     = np.hstack([m_new.Z, newdata['Zlist']])
             m_new.Delta = np.hstack([m_new.Delta, delta_new_init])    
         
         if maxit == 0:
@@ -1536,7 +1541,7 @@ class hetGP:
             if upper is None: upper = self.used_args['upper']
             if lower is None: lower = self.used_args['lower']
             if noiseControl is None:
-                noiseControl <- self.used_args['noiseControl']
+                noiseControl = self.used_args['noiseControl']
                 noiseControl['lowerDelta'] = None
                 noiseControl['upperDelta'] = None ## must be given to noiseControl in update
              
@@ -1546,7 +1551,7 @@ class hetGP:
             m_new = self.mleHetGP(X = dict(X0 = m_new.X0, Z0 = m_new.Z0, mult = m_new.mult), Z = m_new.Z,
                             noiseControl = noiseControl, lower = lower, upper = upper, covtype = self.covtype, settings = settings,
                             init = dict(theta = self.theta, theta_g = self.theta_g, k_theta_g = self.k_theta_g,
-                                         Delta = m_new.Delta, g = np.max(self.g, ginit)),
+                                         Delta = m_new.Delta, g = np.max([self.g, ginit])),
                             known = known, eps = self.eps, maxit = maxit)
         
         return m_new
