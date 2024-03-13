@@ -434,7 +434,14 @@ def IMSPE_search(model, replicate = False, Xcand = None,
                                 gtol = control.get('pgtol',0) # should map to pgtol
                                 )
             )
-            return(out)
+            python_kws_2_R_kws = {
+                'x':'par',
+                'fun': 'value',
+                'nfev': 'counts'
+            }
+            for key, val in python_kws_2_R_kws.items():
+                out[val] = out[key]
+            return out
         
         all_res = Parallel(n_jobs=ncores)(delayed(local_opt_fun))(i for i in np.arnage(Xstart.shape[0]))
         all_res_values = [res.value for res in all_res]
@@ -597,3 +604,90 @@ def horizon(model, current_horizon = None, previous_ratio = None, target = None,
         return current_horizon + 1
         
     return current_horizon
+
+def IMSPE_optim(model, h = 2, Xcand = None, control = dict(tol_dist = 1e-6, tol_diff = 1e-6, multi_start = 20, maxit = 100),
+                        Wijs = None, seed = None, ncores = 1):
+    d = model.X0.shape[1]
+  
+    if max(np.vstack([model.X0, Xcand])) > 1: raise ValueError("IMSPE works only with [0,1]^d domain for now.")
+    if max(np.vstack([model.X0, Xcand])) < 0: raise ValueError("IMSPE works only with [0,1]^d domain for now.")
+    
+    ## Precalculations
+    if Wijs is None: 
+        Wijs = Wij(mu1 = model.X0, theta = model.theta, type = model.covtype)
+    ## A) Setting to beat: first new point then replicate h times
+    IMSPE_A     = IMSPE_search(model = model, control = control, Xcand = Xcand, Wijs = Wijs, ncores = ncores)
+    new_designA = IMSPE_A['par'] ## store first considered design to be added
+    path_A      = list(IMSPE_A)
+
+    if h > 0:
+        newmodelA = model.copy()
+        
+        if IMSPE_A['new']:
+            newWijs = Wij(mu1 = model.X0, mu2 = new_designA, theta = model.theta, type = model.covtype)
+            WijsA = np.hstack([Wijs, newWijs])
+            WijsA = np.vstack((WijsA, newWijs, Wij(IMSPE_A['par'], IMSPE_A['par'], theta = model.theta, type = model.covtype)))
+        else:
+            WijsA = Wijs
+
+        for i in range(h):
+            newmodelA.update(Xnew = IMSPE_A['par'], Znew = np.nan, maxit = 0)
+            IMSPE_A = IMSPE_search(model = newmodelA, replicate = True, control = control, Wijs = WijsA, ncores = ncores)
+            path_A.append(IMSPE_A)
+    
+    if h == -1: return dict(par = new_designA, value = IMSPE_A['value'], path = path_A)
+
+    ## B) Now compare with waiting to add new point
+    newmodelB = model.copy()
+  
+    if h == 0:
+        IMSPE_B = IMSPE_search(model = newmodelB, replicate = True, control = control, Wijs = Wijs, ncores = ncores)
+        new_designB = IMSPE_B['par'] ## store considered design to be added
+        
+        # search from best replicate
+        if Xcand is None:
+            IMSPE_C = IMSPE_search(model = newmodelB, Wijs = Wijs,
+                                control = dict(Xstart = IMSPE_B['par'], maxit = control['maxit'],
+                                            tol_dist = control['tol_dist'], tol_diff = control['tol_diff']), ncores = ncores)
+        else:
+            IMSPE_C = IMSPE_B
+        
+        if IMSPE_C['value'] < min(IMSPE_A['value'], IMSPE_B['value']): 
+            return(dict(par = IMSPE_C['par'], value = IMSPE_C['value'], path = list(IMSPE_C)))
+        
+        if IMSPE_B['value'] < IMSPE_A['value']:
+            return dict(par = IMSPE_B['par'], value = IMSPE_B['value'], path = list(IMSPE_B))
+    else:
+        for i in range(h):
+            ## Add new replicate
+            IMSPE_B = IMSPE_search(model = newmodelB, replicate = True, control = control, Wijs = Wijs, ncores = ncores)
+      
+            if i == 1:
+                new_designB = IMSPE_B['par'].reshape(1,-1) ##store first considered design to add
+                path_B = list()
+      
+            path_B.append(IMSPE_B)
+            newmodelB.update(Xnew = IMSPE_B['par'], Znew = np.nan, maxit = 0)
+            
+            ## Add new design
+            IMSPE_C = IMSPE_search(model = newmodelB, control = control, Xcand = Xcand, Wijs = Wijs, ncores = ncores)
+            path_C  = list(IMSPE_C)
+
+            if i < h:
+                newmodelC = newmodelB.copy()
+                
+                if not any(duplicated(np.vstack([model.X0, IMSPE_C['par']]))):
+                    newWijs = Wij(mu1 = model.X0, mu2 = IMSPE_C['par'], theta = model.theta, type = model.covtype)
+                    WijsC = np.hstack([Wijs, newWijs])
+                    WijsC = np.hstack((WijsC, newWijs, Wij(mu1 = IMSPE_C['par'], theta = model.theta, type = model.covtype)))
+                else:
+                    WijsC = Wijs
+                
+                for j in range(i,h):
+                    ## Add remaining replicates
+                    newmodelC.update(object = newmodelC, Xnew = IMSPE_C['par'], Znew = np.nan, maxit = 0)
+                    IMSPE_C = IMSPE_search(model = newmodelC, replicate = True, control = control, Wijs = WijsC, ncores = ncores)
+                    path_C.append(IMSPE_C)
+            if IMSPE_C['value'] < IMSPE_A['value']: return dict(par = new_designB, value = IMSPE_C['value'], path = (path_B, path_C))
+
+    return dict(par = new_designA, value = IMSPE_A['value'], path = path_A)
