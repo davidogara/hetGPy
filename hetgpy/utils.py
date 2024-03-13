@@ -34,7 +34,7 @@ def rho_AN(xx, X0, theta_g, g, sigma = 1, type = "Gaussian", SiNK_eps = 1e-4, ep
 
 def crossprod(X,Y):
       return X.T @ Y
-def duplicated(X):
+def duplicated(X,fromLast = False):
       '''
       Function to match `duplicated` in base R
 
@@ -46,7 +46,15 @@ def duplicated(X):
       
       (duplicated(x) == np.array(r("duplicated(x)"))).all()
       '''
-      _, i   = np.unique(X,return_index=True)
-      arr    = np.ones_like(X, dtype = bool)
-      arr[i] = False
+      arr = np.ones(shape=X.shape[0],dtype=bool)
+    
+      if not fromLast:
+        _, i = np.unique(X,return_index=True, axis=0)
+        arr[i] = False
+      else:
+        # flip the array and put it back
+        _, i = np.unique(X[::-1],return_index=True, axis = 0)
+        arr[i] = False
+        arr = arr[::-1]
+    
       return arr
