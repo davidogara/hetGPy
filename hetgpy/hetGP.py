@@ -1137,6 +1137,7 @@ class hetGP:
             }
             for key, val in python_kws_2_R_kws.items():
                 out[val] = out[key]
+            out['counts'] = dict(nfev=out['nfev'],njev=out['njev'])
             if out.success == False:
                 out = dict(par = self.arg_max, value = -1.0 * self.max_loglik, counts = out['nfev'],
                 iterates = self.iterates,

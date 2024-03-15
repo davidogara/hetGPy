@@ -136,19 +136,6 @@ class homGP():
 
         It is generally recommended to use :func: ``~find_reps.find_reps`` to pre-process the data, to rescale the inputs to the unit cube and to normalize the outputs.
         
-        The noise process lengthscales can be set in several ways:
-            - using ``k_theta_g`` (``settings['linkThetas'] == 'joint'``), supposed to be greater than one by default. In this case lengthscales of the noise process are multiples of those of the mean process.
-            - if ``settings['linkThetas'] == 'constr``, then the lower bound on ``theta_g`` correspond to estimated values of a homoskedastic GP fit.
-            - else lengthscales between the mean and noise process are independent (both either anisotropic or not).
-        
-        When no starting nor fixed parameter values are provided with ``init`` or ``known``, 
-        the initialization process consists of fitting first an homoskedastic model of the data, called ``modHom``.
-        ``init['theta']``, initial lengthscales are taken at 10\% of the range determined with ``lower`` and ``upper``,
-        while ``init['g_H']`` may be use to pass an initial nugget value.
-        The resulting lengthscales provide initial values for ``theta`` (or update them if given in ``init``).
-    
-    
-
         Returns
         -------
         self, with the following attributes: 
@@ -309,6 +296,7 @@ class homGP():
                 'fun': 'value',
                 'nit': 'counts'
             }
+            out['counts'] = dict(nfev=out['nfev'],njev=out['njev'])
             for key, val in python_kws_2_R_kws.items():
                 out[val] = out[key]
             if out.success == False:
