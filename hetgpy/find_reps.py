@@ -86,7 +86,7 @@ def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inpu
         X0 = X[indices,:]
         if X0.shape[0] == X.shape[0]:
             if return_Zlist:
-                return dict(X0 = X, Z0 = Z, mult = np.repeat(1, len(Z)), Z = Z, Zlist = Z,
+                return dict(X0 = X, Z0 = Z, mult = np.repeat(1, len(Z)), Z = Z, Zlist = {k:Z[k].reshape(-1) for k in range(len(Z))},
                   inputBounds = inputBounds, outputStats = outputStats)
             return dict(X0 = X, Z0 = Z, mult = np.repeat(1, len(Z)), Z = Z,
                 inputBounds = inputBounds, outputStats = outputStats)
@@ -97,7 +97,7 @@ def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inpu
         mult  = np.zeros(X0.shape[0], dtype=int)
         for idx, val in enumerate(corresp[indices]): 
             out = Z[(val==corresp).nonzero()[0]]
-            Zlist[idx] = out
+            Zlist[idx] = out.reshape(-1)
             Z0[idx]    = out.mean()
             mult[idx]  = len(out)
         if return_Zlist:

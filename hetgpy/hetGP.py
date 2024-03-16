@@ -1440,7 +1440,7 @@ class hetGP:
                     id_exists.append(i)
                     id_X0 = tmp.nonzero()[0] - 1
                     m_new.Z0[id_X0] = (m_new.mult[id_X0] * m_new.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(m_new.mult[id_X0] + newdata['mult'][i])
-                    idZ = np.cumsum(m_new.mult)
+                    idZ = np.cumsum(m_new.mult) -1
                     m_new.Z = np.insert(m_new.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
                     
                     ## Inverse matrices are updated if MLE is not performed 
@@ -1482,6 +1482,11 @@ class hetGP:
             newdata['mult']  = newdata['mult'][idxs]
             if type(newdata['Zlist'])==dict:
                 newdata['Zlist'] = {k:v for k,v in newdata['Zlist'].items() if k in idxs.nonzero()[0]}
+                # decrement key indices
+                Zlist = {}
+                for i, val in enumerate(newdata['Zlist'].values()):
+                    Zlist[i] = val
+                newdata['Zlist'] = Zlist.copy()
             else:
                 newdata['Zlist'] = newdata['Zlist'][idxs]
         ## Now deal with new data
