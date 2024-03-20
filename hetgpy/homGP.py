@@ -89,7 +89,7 @@ class homGP():
     def mleHomGP(self,X, Z, lower = None, upper = None, known = dict(),
                         noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
                         init = {},
-                        covtype = ("Gaussian", "Matern5_2", "Matern3_2"),
+                        covtype = "Gaussian",
                         maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
         '''
         Gaussian process modeling with homoskedastic noise

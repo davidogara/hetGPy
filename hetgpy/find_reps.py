@@ -64,9 +64,11 @@ def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inpu
             raise NotImplementedError("torch implementation is not yet available.")
         if type(X) != np.ndarray:
             raise ValueError(f"X must be a numpy array, is currently: {type(X)}")
+        if type(Z) != np.ndarray:
+            raise ValueError(f"X must be a numpy array, is currently: {type(Z)}")
         if X.shape[0] == 1:
             if return_Zlist:
-                return dict(X0=X,Z0=Z,mult = 1, Z = Z, Zlist = dict(Z))
+                return dict(X0=X,Z0=Z,mult = np.array([1]), Z = Z, Zlist = {0:Z})
             return(dict(X0 = X, Z0 = Z, mult = 1, Z = Z))
         if len(X.shape) == 1: # if x is a 1D series
             raise ValueError(f"X appears to be a 1D array. Suggest reshaping with X.reshape(-1,1)")

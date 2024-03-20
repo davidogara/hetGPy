@@ -1278,8 +1278,8 @@ class hetGP:
         self.k_theta_g = mle_par['k_theta_g']
         self.theta_g = mle_par['theta_g'] 
         self.g = mle_par['g'] 
-        self.nmean = nmean, 
-        self.Lambda = Lambda,
+        self.nmean = nmean 
+        self.Lambda = Lambda
         self.ll = -1.0 * out['value'] 
         self.ll_non_pen = ll_non_pen 
         self.nit_opt = out['counts'] 
@@ -1380,6 +1380,7 @@ class hetGP:
             nugs = self['nu_hat'] * np.exp(np.squeeze(self['nmean'] + M))
         else:
             nugs = self['nu_hat'] * np.max(0, np.squeeze(self['nmean'] + M))
+        if nugs.shape==(): nugs = np.array([nugs])
         
         if nugs_only:
             return dict(nugs = nugs)
@@ -1430,26 +1431,25 @@ class hetGP:
         # 'mixed' requires new data
         if np.isnan(Znew).any(): method = 'quick'
   
-        # copy object for update 
-        m_new = copy(self)
-        if duplicated(np.vstack([m_new.X0, newdata['X0']])).any():
+        
+        if duplicated(np.vstack([self.X0, newdata['X0']])).any():
             id_exists = []
             for i in range(newdata['X0'].shape[0]):
-                tmp = duplicated(np.vstack([newdata['X0'][i,:], m_new.X0]))
+                tmp = duplicated(np.vstack([newdata['X0'][i,:], self.X0]))
                 if tmp.any():
                     id_exists.append(i)
                     id_X0 = tmp.nonzero()[0] - 1
-                    m_new.Z0[id_X0] = (m_new.mult[id_X0] * m_new.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(m_new.mult[id_X0] + newdata['mult'][i])
-                    idZ = np.cumsum(m_new.mult)
-                    m_new.Z = np.insert(m_new.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
+                    self.Z0[id_X0] = (self.mult[id_X0] * self.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(self.mult[id_X0] + newdata['mult'][i])
+                    idZ = np.cumsum(self.mult)
+                    self.Z = np.insert(self.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
                     
                     ## Inverse matrices are updated if MLE is not performed 
                     if maxit == 0:
-                        m_new.Ki  = update_Ki_rep(id_X0, m_new, nrep = newdata.mult[i])
-                        m_new.Kgi = update_Kgi_rep(id_X0, m_new, nrep = newdata.mult[i])
+                        self.Ki  = update_Ki_rep(id_X0, self, nrep = newdata['mult'][i])
+                        self.Kgi = update_Kgi_rep(id_X0, self, nrep = newdata['mult'][i])
                     
                     
-                    m_new.mult[id_X0] = m_new.mult[id_X0] + newdata['mult'][i]
+                    self.mult[id_X0] = self.mult[id_X0] + newdata['mult'][i]
                     
                     ### Update Delta value depending on the selected scheme
                     
@@ -1461,16 +1461,16 @@ class hetGP:
                         delta_loo = self.LOO_preds_nugs(id_X0) ## LOO mean and variance at X0[id_X0,] (only variance is used)
                         
                         # empirical estimates
-                        sd2h = np.mean((m_new.Z[idZ[id_X0]:(idZ[id_X0] + m_new.mult[id_X0] - 1)] - self.predict(newdata['X0'][i:i:1,:])['mean'])**2)/self.nu_hat
-                        sd2sd2h = 2*sd2h**2/m_new.mult[id_X0] #variance of the estimator of the variance
+                        sd2h = np.mean((self.Z[idZ[id_X0]:(idZ[id_X0] + self.mult[id_X0] - 1)] - self.predict(newdata['X0'][i:i:1,:])['mean'])**2)/self.nu_hat
+                        sd2sd2h = 2*sd2h**2/self.mult[id_X0] #variance of the estimator of the variance
                         
                         if self.logN:
                             ## Add correction terms for the log transform
-                            sd2h = np.log(sd2h) - digamma((m_new.mult[id_X0] - 1)/2) - np.log(2) + np.log(m_new.mult[id_X0] - 1)
-                            sd2sd2h = polygamma(1,(m_new.mult[id_X0] - 1)/2)
+                            sd2h = np.log(sd2h) - digamma((self.mult[id_X0] - 1)/2) - np.log(2) + np.log(self.mult[id_X0] - 1)
+                            sd2sd2h = polygamma(1,(self.mult[id_X0] - 1)/2)
                         
                     
-                        delta_loo['mean'] = m_new.Delta[id_X0]
+                        delta_loo['mean'] = self.Delta[id_X0]
                         newdelta_sd2 = 1/(1/delta_loo['sd2'] + 1/sd2sd2h)
                         new_delta_mean = (delta_loo['mean']/delta_loo['sd2'] + sd2h/sd2sd2h) * newdelta_sd2 
                         newdata['Delta'][id_X0] = new_delta_mean
@@ -1516,32 +1516,32 @@ class hetGP:
             if maxit == 0:
                 for i in range(newdata['X0'].shape[0]):
                     if self.logN: 
-                        m_new.Ki = update_Ki(newdata['X0'][i:i+1,:], m_new, nrep = newdata['mult'][i], new_lambda = np.exp(delta_new_init[i]))
+                        self.Ki = update_Ki(newdata['X0'][i:i+1,:], self, nrep = newdata['mult'][i], new_lambda = np.exp(delta_new_init[i]))
                     else:
-                        m_new.Ki = update_Ki(newdata['X0'][i:i+1,:], m_new, new_lambda = delta_new_init[i], nrep = newdata['mult'][i])
+                        self.Ki = update_Ki(newdata['X0'][i:i+1,:], self, new_lambda = delta_new_init[i], nrep = newdata['mult'][i])
                     
-                    m_new.Kgi = update_Kgi(newdata['X0'][i:i+1,:], m_new, nrep = newdata['mult'][i])
-                    m_new.X0 = np.vstack([m_new.X0, newdata['X0'][i:i+1,:]])
+                    self.Kgi = update_Kgi(newdata['X0'][i:i+1,:], self, nrep = newdata['mult'][i])
+                    self.X0 = np.vstack([self.X0, newdata['X0'][i:i+1,:]])
                     foo=1
                 if self.logN: 
-                    m_new.Lambda = np.hstack(m_new.Lambda, np.exp(delta_new_init))
+                    self.Lambda = np.hstack([self.Lambda, np.exp(delta_new_init)])
                 else:
-                    m_new.Lambda = np.hstack(m_new.Lambda, delta_new_init)
+                    self.Lambda = np.hstack([self.Lambda, delta_new_init])
                 
             else:
-                m_new.X0 = np.vstack([m_new.X0, newdata['X0']])        
+                self.X0 = np.vstack([self.X0, newdata['X0']])        
                 foo=1
-            m_new.Z0    = np.hstack([m_new.Z0, newdata['Z0']])
-            m_new.mult  = np.hstack([m_new.mult, newdata['mult']])
+            self.Z0    = np.hstack([self.Z0, newdata['Z0']])
+            self.mult  = np.hstack([self.mult, newdata['mult']])
             if type(newdata['Zlist'])==dict:
-                m_new.Z     = np.hstack([m_new.Z, np.hstack(list(newdata['Zlist'].values()))])
+                self.Z     = np.hstack([self.Z, np.hstack(list(newdata['Zlist'].values()))])
             else:
-                m_new.Z     = np.hstack([m_new.Z, newdata['Zlist']])
-            m_new.Delta = np.hstack([m_new.Delta, delta_new_init])    
+                self.Z     = np.hstack([self.Z, newdata['Zlist']])
+            self.Delta = np.hstack([self.Delta, delta_new_init])    
         
         if maxit == 0:
-            m_new.nit_opt = 0
-            m_new.msg = "Not optimized \n"
+            self.nit_opt = 0
+            self.msg = "Not optimized \n"
             
         else:
             
@@ -1555,13 +1555,12 @@ class hetGP:
             if settings is None: settings = self.used_args['settings']
             if known is None: known = self.used_args['known']
             
-            m_new = self.mleHetGP(X = dict(X0 = m_new.X0, Z0 = m_new.Z0, mult = m_new.mult), Z = m_new.Z,
+            self.mleHetGP(X = dict(X0 = self.X0, Z0 = self.Z0, mult = self.mult), Z = self.Z,
                             noiseControl = noiseControl, lower = lower, upper = upper, covtype = self.covtype, settings = settings,
                             init = dict(theta = self.theta, theta_g = self.theta_g, k_theta_g = self.k_theta_g,
-                                         Delta = m_new.Delta, g = np.max([self.g, ginit])),
+                                         Delta = self.Delta, g = np.max([self.g, ginit])),
                             known = known, eps = self.eps, maxit = maxit)
-        
-        return m_new
+        return self
     
     def LOO_preds_nugs(self, i):
         '''

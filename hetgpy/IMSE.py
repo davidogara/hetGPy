@@ -10,6 +10,7 @@ from hetgpy.utils import duplicated
 from scipy.spatial.distance import pdist
 from scipy.stats.qmc import LatinHypercube
 from scipy.optimize import minimize
+from copy import copy
 TYPE = type
 
 def IMSPE(model, theta = None, Lambda = None, mult = None, covtype = None, nu= None, eps = np.sqrt(np.finfo(float).eps)):
@@ -54,7 +55,7 @@ def IMSPE(model, theta = None, Lambda = None, mult = None, covtype = None, nu= N
         Ki = Ki @ Ki.T
         return nu * (1 - np.sum(Ki * Wij(mu1 = model, theta = theta, type = covtype)))
     
-def crit_IMSPE(x, model, id = None, Wijs = None):
+def crit_IMSPE(x=None, model=None, id = None, Wijs = None):
     ## Precalculations
   
     if Wijs is None: Wijs = Wij(mu1 = model.X0, theta = model.theta, type = model.covtype)
@@ -184,7 +185,7 @@ def c2(x, sigma, w, type):
     return EMSE.c2_mat32_cpp(x = x, t = sigma, w = w)
 
 
-def deriv_crit_IMSPE(x, model, Wijs = None):
+def deriv_crit_IMSPE(x, model, id = None, Wijs = None):
     '''
     Derivative of crit_IMSPE
     
@@ -195,6 +196,8 @@ def deriv_crit_IMSPE(x, model, Wijs = None):
         matrix for the news design (size 1 x d)
     model : hetGP or homGP
         model
+    id: None
+        None (but included for compatibility with crit_IMSPE input structure so it can be used in minimize)
     Wijs : ndarray_like
         optional previously computed matrix of Wijs, see Wij
 
@@ -208,13 +211,13 @@ def deriv_crit_IMSPE(x, model, Wijs = None):
     if Wijs is None: Wijs = Wij(mu1 = model.X0, theta = model.theta, type = model.covtype)
 
     if len(x.shape) == 1: x = x.reshape(1,-1)
-    kn1 = cov_gen(model.X0, x, theta = model.theta, type = model.covtype)
+    kn1 = cov_gen(model.X0, x, theta = model.theta, type = model.covtype).squeeze()
     
-    if TYPE(model)==hetGP: kng1 = cov_gen(model.X0, x, theta = model.theta_g, type = model.covtype)
-    new_lambda = model.predict(x = x, nugs_only = True).nugs/model.nu_hat
+    if TYPE(model)==hetGP.hetGP: kng1 = cov_gen(model.X0, x, theta = model.theta_g, type = model.covtype).squeeze()
+    new_lambda = model.predict(x = x, nugs_only = True)['nugs']/model.nu_hat
     k11 = 1 + new_lambda
 
-    W1 = Wij(mu1 = model.X, mu2 = x, theta = model.theta, type = model.covtype)
+    W1 = Wij(mu1 = model.X0, mu2 = x, theta = model.theta, type = model.covtype)
     W11 = Wij(mu1 = x, theta = model.theta, type = model.covtype)
   
     # compute derivative vectors and scalars
@@ -222,11 +225,11 @@ def deriv_crit_IMSPE(x, model, Wijs = None):
     v = np.squeeze(k11 - (kn1.T @ Kikn1))
     g =  - Kikn1 / v
     
-    tmp = np.repeat(np.nan, x.shape[1])
+    tmp = np.repeat(np.nan, x.shape[1]).reshape(-1,1)
     dlambda = 0
-    if TYPE(model)==hetGP: KgiD = model.Kgi @ (model.Delta - model.nmean)
+    if TYPE(model)==hetGP.hetGP: KgiD = model.Kgi @ (model.Delta - model.nmean)
     if model.theta.shape[0] < x.shape[1]: model.theta = np.repeat(model.theta, x.shape[1])
-    if TYPE(model)==hetGP and model.theta_g.shape[0] < x.shape[1]: model.theta_g = np.repeat(model.theta, x.shape[1])
+    if TYPE(model)==hetGP.hetGP and model.theta_g.shape[0] < x.shape[1]: model.theta_g = np.repeat(model.theta, x.shape[1])
     
     Wig = Wijs @ g
   
@@ -236,16 +239,15 @@ def deriv_crit_IMSPE(x, model, Wijs = None):
     
         dis = np.squeeze(d1(X = model.X0[:,m], x = x[:,m], sigma = model.theta[m], type = model.covtype) * kn1)
     
-        if TYPE(model)==hetGP:
+        if TYPE(model)==hetGP.hetGP:
             dlambda = (d1(X = model.X0[:,m], x = x[:,m], sigma = model.theta_g[m], type = model.covtype) * kng1).T @ KgiD
             if model.logN:
                 dlambda = new_lambda *dlambda
     
-    v2 = np.squeeze(2 * (- dis @ Kikn1) + dlambda) 
-    v1 = -1/v^2 * v2
-    h = np.squeeze(-model.Ki @ (v1 * kn1 + 1/v * dis))
-    
-    tmp[m] <- 2 * (c1_v.T @ g) + c2(x = x[:,m], sigma = model.theta[m], w = W11, type = model.covtype) / v + ((v2 * g + 2 * v * h).T @ Wig) + 2 * (h.T @ W1) + v1 * W11
+        v2 = np.squeeze(2 * (- dis @ Kikn1) + dlambda) 
+        v1 = -1/v**2 * v2
+        h = np.squeeze(-model.Ki @ (v1 * kn1 + 1/v * dis))
+        tmp[m] = 2 * (c1_v.T @ g) + c2(x = x[:,m], sigma = model.theta[m], w = W11, type = model.covtype) / v + ((v2 * g + 2 * v * h).T @ Wig) + 2 * (h.T @ W1) + v1 * W11
     return -tmp
 
 
@@ -294,8 +296,8 @@ def lhs_EP(m, seed = None):
     G = m
     d = G.shape[1]
     n = G.shape[0]
-    ligns  = (rand.uniform(size=2,low=0,high=n)).astype(int)+1      
-    column = (rand.uniform(size=1,low=0,high=d)).astype(int)+1
+    ligns  = (rand.uniform(size=2,low=0,high=n)).astype(int)      
+    column = (rand.uniform(size=1,low=0,high=d)).astype(int)
     x = G[ligns[0],column]
     G[ligns[0],column] = G[ligns[1],column]
     G[ligns[1],column] = x 
@@ -338,14 +340,14 @@ def maximinSA_LHS(design,T0=10,c=0.95,it=2000,p=50,profile="GEOM",Imax=100, seed
   
         while T>0 & i<it:       
             
-            G = lhs_EP(m)[[0]]
+            G = lhs_EP(m)[0]
             fi_p_ep = phiP(G,p)
             diff = min(np.exp((fi_p-fi_p_ep)/T),1)
             if (diff == 1):
                 m = G
                 fi_p = fi_p_ep
             else:
-                Bernoulli = np.random.default_rng(seed)(1,1,diff)
+                Bernoulli = np.random.default_rng(seed).binomial(n=1,size=1,p=diff)
                 if Bernoulli==1:
                     m = G
                     fi_p = fi_p_ep
@@ -413,17 +415,17 @@ def IMSPE_search(model, replicate = False, Xcand = None,
                     Xstart = (np.linspace(1/2, control['multi_start'] -1/2, control['multi_start']) + np.random.default_rng(seed).uniform(size=control['multi_start'], low = -1/2, high = 1/2)).reshape(-1,1)/control['multi_start']
                 else:
                     sampler = LatinHypercube(d=d,seed=seed)
-                    Xstart = maximinSA_LHS(sampler(n=control['multi_start']))['design']
+                    Xstart = maximinSA_LHS(sampler.random(n=control['multi_start']))['design']
                 
             else:
                 sampler = LatinHypercube(d=d,seed=seed)
                 Xstart = sampler(n=control['multi_start'])
             
-        res = dict(par = np.nan, value = np.inf, new = np.nan)
+        res = dict(par = np.array([np.nan]), value = np.inf, new = np.nan)
         
         def local_opt_fun(i):
             out = minimize(
-            x0  = Xstart[[i],:],
+            x0  = Xstart[i,:],
             fun = crit_IMSPE,
             jac = deriv_crit_IMSPE,
             args = (model, i, Wijs),
@@ -443,19 +445,19 @@ def IMSPE_search(model, replicate = False, Xcand = None,
                 out[val] = out[key]
             return out
         
-        all_res = Parallel(n_jobs=ncores)(delayed(local_opt_fun))(i for i in np.arnage(Xstart.shape[0]))
+        all_res = Parallel(n_jobs=ncores)(delayed(local_opt_fun)(i) for i in range(Xstart.shape[0]))
         all_res_values = [res.value for res in all_res]
         res_min = np.argmin(all_res_values)
         par = all_res[res_min]['x']
         par[par<0] = 0
         par[par>1] = 1
-        res = dict(par = par, 
-                    value = all_res[res_min], new = True, id = None)
+        res = dict(par = par.reshape(1,-1), 
+                    value = all_res[res_min]['value'], new = True, id = None)
         
         
         if control['tol_dist'] > 0 and control['tol_diff'] > 0:
             ## Check if new design is not to close to existing design
-            dists = np.sqrt(euclidean_dist(res['par'], model.X0))
+            dists = np.sqrt(euclidean_dist(res['par'].reshape(1,-1), model.X0))
             if np.min(dists) < control['tol_dist']:
                 argmin = np.unravel_index(np.argmin(dists, axis=None), dists.shape)[0]
                 res = dict(par = model.X0[[argmin],:],
@@ -608,37 +610,43 @@ def horizon(model, current_horizon = None, previous_ratio = None, target = None,
 def IMSPE_optim(model, h = 2, Xcand = None, control = dict(tol_dist = 1e-6, tol_diff = 1e-6, multi_start = 20, maxit = 100),
                         Wijs = None, seed = None, ncores = 1):
     d = model.X0.shape[1]
-  
-    if max(np.vstack([model.X0, Xcand])) > 1: raise ValueError("IMSPE works only with [0,1]^d domain for now.")
-    if max(np.vstack([model.X0, Xcand])) < 0: raise ValueError("IMSPE works only with [0,1]^d domain for now.")
+    if Xcand is None:
+        if model.X0.max() > 1 or model.X0.min() < 0:
+            raise ValueError("IMSPE works only with [0,1]^d domain for now.")
+    else:
+        if np.max(np.vstack([model.X0, Xcand])) > 1: raise ValueError("IMSPE works only with [0,1]^d domain for now.")
+        if np.min(np.vstack([model.X0, Xcand])) < 0: raise ValueError("IMSPE works only with [0,1]^d domain for now.")
     
+
     ## Precalculations
     if Wijs is None: 
         Wijs = Wij(mu1 = model.X0, theta = model.theta, type = model.covtype)
     ## A) Setting to beat: first new point then replicate h times
     IMSPE_A     = IMSPE_search(model = model, control = control, Xcand = Xcand, Wijs = Wijs, ncores = ncores)
     new_designA = IMSPE_A['par'] ## store first considered design to be added
-    path_A      = list(IMSPE_A)
+    path_A      = [IMSPE_A]
 
     if h > 0:
-        newmodelA = model.copy()
+        newmodelA = copy(model)
         
         if IMSPE_A['new']:
             newWijs = Wij(mu1 = model.X0, mu2 = new_designA, theta = model.theta, type = model.covtype)
             WijsA = np.hstack([Wijs, newWijs])
-            WijsA = np.vstack((WijsA, newWijs, Wij(IMSPE_A['par'], IMSPE_A['par'], theta = model.theta, type = model.covtype)))
+            WijsA = np.vstack((WijsA, 
+                               np.concatenate([newWijs, Wij(IMSPE_A['par'], IMSPE_A['par'], theta = model.theta, type = model.covtype)]).T)
+                    )
         else:
             WijsA = Wijs
 
         for i in range(h):
-            newmodelA.update(Xnew = IMSPE_A['par'], Znew = np.nan, maxit = 0)
+            newmodelA.update(Xnew = IMSPE_A['par'], Znew = np.array([np.nan]), maxit = 0)
             IMSPE_A = IMSPE_search(model = newmodelA, replicate = True, control = control, Wijs = WijsA, ncores = ncores)
             path_A.append(IMSPE_A)
     
     if h == -1: return dict(par = new_designA, value = IMSPE_A['value'], path = path_A)
 
     ## B) Now compare with waiting to add new point
-    newmodelB = model.copy()
+    newmodelB = copy(model)
   
     if h == 0:
         IMSPE_B = IMSPE_search(model = newmodelB, replicate = True, control = control, Wijs = Wijs, ncores = ncores)
@@ -667,7 +675,7 @@ def IMSPE_optim(model, h = 2, Xcand = None, control = dict(tol_dist = 1e-6, tol_
                 path_B = list()
       
             path_B.append(IMSPE_B)
-            newmodelB.update(Xnew = IMSPE_B['par'], Znew = np.nan, maxit = 0)
+            newmodelB.update(Xnew = IMSPE_B['par'], Znew = np.array([np.nan]), maxit = 0)
             
             ## Add new design
             IMSPE_C = IMSPE_search(model = newmodelB, control = control, Xcand = Xcand, Wijs = Wijs, ncores = ncores)
@@ -685,7 +693,7 @@ def IMSPE_optim(model, h = 2, Xcand = None, control = dict(tol_dist = 1e-6, tol_
                 
                 for j in range(i,h):
                     ## Add remaining replicates
-                    newmodelC.update(object = newmodelC, Xnew = IMSPE_C['par'], Znew = np.nan, maxit = 0)
+                    newmodelC.update(object = newmodelC, Xnew = IMSPE_C['par'], Znew = np.array([np.nan]), maxit = 0)
                     IMSPE_C = IMSPE_search(model = newmodelC, replicate = True, control = control, Wijs = WijsC, ncores = ncores)
                     path_C.append(IMSPE_C)
             if IMSPE_C['value'] < IMSPE_A['value']: return dict(par = new_designB, value = IMSPE_C['value'], path = (path_B, path_C))
