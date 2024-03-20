@@ -12,7 +12,7 @@ from hetgpy.homGP import homGP
 from hetgpy.plot import plot_optimization_iterates
 from hetgpy.LOO import LOO_preds
 from hetgpy.update_covar import update_Ki, update_Ki_rep, update_Kgi, update_Kgi_rep
-
+from copy import copy
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
@@ -1431,7 +1431,7 @@ class hetGP:
         if np.isnan(Znew).any(): method = 'quick'
   
         # copy object for update 
-        m_new = self
+        m_new = copy(self)
         if duplicated(np.vstack([m_new.X0, newdata['X0']])).any():
             id_exists = []
             for i in range(newdata['X0'].shape[0]):
@@ -1440,7 +1440,7 @@ class hetGP:
                     id_exists.append(i)
                     id_X0 = tmp.nonzero()[0] - 1
                     m_new.Z0[id_X0] = (m_new.mult[id_X0] * m_new.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(m_new.mult[id_X0] + newdata['mult'][i])
-                    idZ = np.cumsum(m_new.mult) -1
+                    idZ = np.cumsum(m_new.mult)
                     m_new.Z = np.insert(m_new.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
                     
                     ## Inverse matrices are updated if MLE is not performed 
@@ -1476,17 +1476,18 @@ class hetGP:
                         newdata['Delta'][id_X0] = new_delta_mean
                     
             # remove duplicates now
-            idxs = (~np.isin(newdata['X0'],id_exists)).squeeze()
+            idxs = np.delete(np.arange(newdata['X0'].shape[0]),id_exists)
             newdata['X0']    = newdata['X0'][idxs,:]
             newdata['Z0']    = newdata['Z0'][idxs]
             newdata['mult']  = newdata['mult'][idxs]
             if type(newdata['Zlist'])==dict:
-                newdata['Zlist'] = {k:v for k,v in newdata['Zlist'].items() if k in idxs.nonzero()[0]}
+                newdata['Zlist'] = {k:v for k,v in newdata['Zlist'].items() if k in idxs}
                 # decrement key indices
                 Zlist = {}
                 for i, val in enumerate(newdata['Zlist'].values()):
                     Zlist[i] = val
                 newdata['Zlist'] = Zlist.copy()
+                foo=1
             else:
                 newdata['Zlist'] = newdata['Zlist'][idxs]
         ## Now deal with new data
@@ -1521,15 +1522,15 @@ class hetGP:
                     
                     m_new.Kgi = update_Kgi(newdata['X0'][i:i+1,:], m_new, nrep = newdata['mult'][i])
                     m_new.X0 = np.vstack([m_new.X0, newdata['X0'][i:i+1,:]])
-                
+                    foo=1
                 if self.logN: 
                     m_new.Lambda = np.hstack(m_new.Lambda, np.exp(delta_new_init))
                 else:
                     m_new.Lambda = np.hstack(m_new.Lambda, delta_new_init)
                 
             else:
-                m_new.X0 = np.vstack([m_new['X0'], newdata['X0']])        
-            
+                m_new.X0 = np.vstack([m_new.X0, newdata['X0']])        
+                foo=1
             m_new.Z0    = np.hstack([m_new.Z0, newdata['Z0']])
             m_new.mult  = np.hstack([m_new.mult, newdata['mult']])
             if type(newdata['Zlist'])==dict:
