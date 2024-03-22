@@ -11,6 +11,7 @@ from scipy.spatial.distance import pdist
 from scipy.stats.qmc import LatinHypercube
 from scipy.optimize import minimize
 from copy import copy
+import warnings
 TYPE = type
 
 def IMSPE(model, theta = None, Lambda = None, mult = None, covtype = None, nu= None, eps = np.sqrt(np.finfo(float).eps)):
@@ -66,12 +67,13 @@ def crit_IMSPE(x=None, model=None, id = None, Wijs = None):
             tmp = model.g
         else:
             tmp = model.Lambda[id]
-        
-        return 1 - (np.sum(model.Ki*Wijs) + model.Ki[:,id].T @ Wijs @ model.Ki[:,id] / ((model.mult[id]*(model.mult[id] + 1)) / (1*tmp) - model.Ki[id, id]))
-    
+        out = 1 - (np.sum(model.Ki*Wijs) + model.Ki[:,id].T @ Wijs @ model.Ki[:,id] / ((model.mult[id]*(model.mult[id] + 1)) / (1*tmp) - model.Ki[id, id]))
+        if out<0:
+            1/0
+        return out
 
     if len(x.shape)==1:
-        x = x.reshape(-1,1)
+        x = x.reshape(1,-1)
     newWijs = Wij(mu2 = x, mu1 = model.X0, theta = model.theta, type = model.covtype)
     W11 = Wij(mu2 = x, mu1 = x, theta = model.theta, type = model.covtype)
 
@@ -342,7 +344,9 @@ def maximinSA_LHS(design,T0=10,c=0.95,it=2000,p=50,profile="GEOM",Imax=100, seed
             
             G = lhs_EP(m)[0]
             fi_p_ep = phiP(G,p)
-            diff = min(np.exp((fi_p-fi_p_ep)/T),1)
+            
+            c = np.clip((fi_p-fi_p_ep)/T,a_min=None,a_max=10) # avoids overflows
+            diff = np.minimum(np.exp(c),1)
             if (diff == 1):
                 m = G
                 fi_p = fi_p_ep
@@ -368,17 +372,21 @@ def IMSPE_search(model, replicate = False, Xcand = None,
   # Only search on existing designs
     if(replicate):
         ## Discrete optimization
-        inputs = []
+        res = []
         for i in range(model.X0.shape[0]):
-            kw = dict(x = None, model = model, Wijs = Wijs)
-            kw['id'] = i
-            inputs.append(kw)
-            res = Parallel(n_jobs=ncores)(
-            delayed(crit_IMSPE)(**kw) 
-                for kw in inputs
+            res.append(
+                crit_IMSPE(x = None, model = model, id = i, Wijs=Wijs)
             )
-        return dict(par = model.X0[[np.argmin(res)],:], 
-        value = min(res), new = False, id = np.argmin(res)
+
+        #res = Parallel(n_jobs=ncores)(
+        #delayed(crit_IMSPE)(**kw) 
+        #    for kw in inputs
+        #)
+        return dict(
+            par = model.X0[np.argmin(res),:].reshape(1,-1), 
+            value = np.min(res), 
+            new = False, 
+            id = np.argmin(res)
         )
     if control is None:
         control = dict(multi_start = 20, maxit = 100)
@@ -428,7 +436,7 @@ def IMSPE_search(model, replicate = False, Xcand = None,
             x0  = Xstart[i,:],
             fun = crit_IMSPE,
             jac = deriv_crit_IMSPE,
-            args = (model, i, Wijs),
+            args = (model, None, Wijs),
             method = "L-BFGS-B", 
             bounds = [(0,1) for _ in range(d)],
             options=dict(maxiter=control['maxit'], #,
@@ -436,6 +444,8 @@ def IMSPE_search(model, replicate = False, Xcand = None,
                                 gtol = control.get('pgtol',0) # should map to pgtol
                                 )
             )
+            if out['fun']<0:
+                foo=1
             python_kws_2_R_kws = {
                 'x':'par',
                 'fun': 'value',
@@ -476,7 +486,7 @@ def IMSPE_search(model, replicate = False, Xcand = None,
     else:
         ## Discrete optimization
         def crit_IMSPE_mcl(i, model, Wijs, Xcand): 
-            return crit_IMSPE(x = Xcand[[i],:], model = model, Wijs = Wijs)
+            return crit_IMSPE(x = Xcand[i,:], model = model, Wijs = Wijs)
         
         inputs = []
         for i in range(Xcand.shape[0]):
@@ -661,16 +671,16 @@ def IMSPE_optim(model, h = 2, Xcand = None, control = dict(tol_dist = 1e-6, tol_
             IMSPE_C = IMSPE_B
         
         if IMSPE_C['value'] < min(IMSPE_A['value'], IMSPE_B['value']): 
-            return(dict(par = IMSPE_C['par'], value = IMSPE_C['value'], path = list(IMSPE_C)))
+            return dict(par = IMSPE_C['par'], value = IMSPE_C['value'], path = [IMSPE_C])
         
         if IMSPE_B['value'] < IMSPE_A['value']:
-            return dict(par = IMSPE_B['par'], value = IMSPE_B['value'], path = list(IMSPE_B))
+            return dict(par = IMSPE_B['par'], value = IMSPE_B['value'], path = [IMSPE_B])
     else:
         for i in range(h):
             ## Add new replicate
             IMSPE_B = IMSPE_search(model = newmodelB, replicate = True, control = control, Wijs = Wijs, ncores = ncores)
       
-            if i == 1:
+            if i == 0:
                 new_designB = IMSPE_B['par'].reshape(1,-1) ##store first considered design to add
                 path_B = list()
       
@@ -679,23 +689,30 @@ def IMSPE_optim(model, h = 2, Xcand = None, control = dict(tol_dist = 1e-6, tol_
             
             ## Add new design
             IMSPE_C = IMSPE_search(model = newmodelB, control = control, Xcand = Xcand, Wijs = Wijs, ncores = ncores)
-            path_C  = list(IMSPE_C)
+            path_C  = [IMSPE_C]
 
             if i < h:
-                newmodelC = newmodelB.copy()
+                newmodelC = copy(newmodelB)
                 
                 if not any(duplicated(np.vstack([model.X0, IMSPE_C['par']]))):
                     newWijs = Wij(mu1 = model.X0, mu2 = IMSPE_C['par'], theta = model.theta, type = model.covtype)
                     WijsC = np.hstack([Wijs, newWijs])
-                    WijsC = np.hstack((WijsC, newWijs, Wij(mu1 = IMSPE_C['par'], theta = model.theta, type = model.covtype)))
+                    WijsC = np.vstack((WijsC, 
+                                       np.concatenate(
+                                           [newWijs, 
+                                            Wij(mu1 = IMSPE_C['par'], theta = model.theta, type = model.covtype)
+                                            ]).T
+                                    )
+                            )
+                
                 else:
                     WijsC = Wijs
                 
                 for j in range(i,h):
                     ## Add remaining replicates
-                    newmodelC.update(object = newmodelC, Xnew = IMSPE_C['par'], Znew = np.array([np.nan]), maxit = 0)
+                    newmodelC.update(Xnew = IMSPE_C['par'], Znew = np.array([np.nan]), maxit = 0)
                     IMSPE_C = IMSPE_search(model = newmodelC, replicate = True, control = control, Wijs = WijsC, ncores = ncores)
                     path_C.append(IMSPE_C)
-            if IMSPE_C['value'] < IMSPE_A['value']: return dict(par = new_designB, value = IMSPE_C['value'], path = (path_B, path_C))
+            if IMSPE_C['value'] < IMSPE_A['value']: return dict(par = new_designB, value = IMSPE_C['value'], path = path_B + path_C)
 
     return dict(par = new_designA, value = IMSPE_A['value'], path = path_A)

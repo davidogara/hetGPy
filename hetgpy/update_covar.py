@@ -47,23 +47,24 @@ def update_Ki(x, model, new_lambda = None, nrep = 1):
         kn1 = cov_gen(x, model.X0, theta = model.theta, type = model.covtype)
         if new_lambda is None:
             new_lambda = model.predict(x = x, nugs_only = True)['nugs']/model.nu_hat
-        vn <- (1 - kn1 @ (model.Ki @ kn1.T)).squeeze() + new_lambda/nrep + model.eps
-    
+        vn = (1 - kn1 @ (model.Ki @ kn1.T)).squeeze() + new_lambda/nrep + model.eps
+        if vn.shape==(): vn = np.array(vn)
 
     gn = - (model.Ki @ kn1.T) / vn
     Ki = model.Ki + (gn @ gn.T) * vn
 
-    return np.hstack([np.vstack([Ki, gn]), (gn, 1/vn)])
+    return np.vstack([np.hstack([Ki, gn]), np.vstack((gn, 1/vn)).T])
 
 ## Same as update_Ki but for Kgi
 def update_Kgi(x, model, nrep = 1):
     kn1 = cov_gen(x, model.X0, theta = model.theta_g, type = model.covtype)
     nugsn = model.g/nrep
     vn = (1 - kn1 @ (model.Kgi @ kn1.T)).squeeze() + nugsn/nrep + model.eps
+    if vn.shape==(): vn = np.array(vn)
     gn = - (model.Kgi @ kn1.T) / vn
     Kgi = model.Kgi + (gn @ gn.T) * vn
 
-    return(np.hstack([np.vstack([Kgi, gn]), (gn, 1/vn)]))
+    return np.vstack([np.hstack([Kgi, gn]), np.vstack((gn, 1/vn)).T])
 
 ## ## Verification
 ## ## 1) run example("mleHetGP", ask = FALSE)
@@ -82,7 +83,7 @@ def update_Ki_rep(id, model, nrep = 1):
   else:
     tmp = model.Lambda[id]
   
-  B = (model.Ki[id,:] @ model.Ki[id,:].T) / ((model.mult[id]*(model.mult[id] + nrep)) / (nrep*tmp) - model.Ki[id, id])
+  B = (model.Ki[id,:].T @ model.Ki[id,:]) / ((model.mult[id]*(model.mult[id] + nrep)) / (nrep*tmp) - model.Ki[id, id])
   Ki = model.Ki + B
   return Ki
 
@@ -90,6 +91,6 @@ def update_Ki_rep(id, model, nrep = 1):
 ## update of Kgi in case model.X0[id,] is replicated nrep times
 def update_Kgi_rep(id, model, nrep = 1):
   tmp = model.g
-  B = (model.Kgi[id,:] @ model.Kgi[id,:].T) / ((model.mult[id]*(model.mult[id] + nrep)) / (nrep*tmp) - model.Kgi[id, id])
+  B = (model.Kgi[id,:].T @ model.Kgi[id,:]) / ((model.mult[id]*(model.mult[id] + nrep)) / (nrep*tmp) - model.Kgi[id, id])
   Kgi = model.Kgi + B
   return Kgi
