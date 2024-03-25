@@ -8,6 +8,8 @@ from hetgpy.utils import fast_tUY2, rho_AN
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy.find_reps import find_reps
+from hetgpy.utils import duplicated
+from hetgpy.update_covar import update_Ki, update_Ki_rep
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 class homGP():
@@ -407,6 +409,78 @@ class homGP():
             if key in self.keys():
                 del self[key]
         return self
+    def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
+                         known = None, maxit = 100,):
+        # first reduce Xnew/Znew in case of potential replicates
+        newdata = find_reps(Xnew, Znew, normalize = False, rescale = False)
+  
+        if duplicated(np.vstack([self.X0, newdata['X0']])).any():
+            id_exists = []
+            for i in range(newdata['X0'].shape[0]):
+                tmp = duplicated(np.vstack([newdata['X0'][i,:], self.X0]))
+                if tmp.any():
+                    id_exists.append(i)
+                    id_X0 = tmp.nonzero()[0] - 1
+                    self.Z0[id_X0] = (self.mult[id_X0] * self.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(self.mult[id_X0] + newdata['mult'][i])
+                    idZ = np.cumsum(self.mult)
+                    self.Z = np.insert(self.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
+                    
+                    ## Inverse matrices are updated if MLE is not performed 
+                    if maxit == 0:
+                        self.Ki  = update_Ki_rep(id_X0, self, nrep = newdata['mult'][i])
+                        self.nit_opt = 0
+                        self.msg = "Not optimized \n"
+                    
+                    self.mult[id_X0] = self.mult[id_X0] + newdata['mult'][i]
+                # remove duplicates now
+            idxs = np.delete(np.arange(newdata['X0'].shape[0]),id_exists)
+            newdata['X0']    = newdata['X0'][idxs,:]
+            newdata['Z0']    = newdata['Z0'][idxs]
+            newdata['mult']  = newdata['mult'][idxs]
+            if type(newdata['Zlist'])==dict:
+                newdata['Zlist'] = {k:v for k,v in newdata['Zlist'].items() if k in idxs}
+                # decrement key indices
+                Zlist = {}
+                for i, val in enumerate(newdata['Zlist'].values()):
+                    Zlist[i] = val
+                newdata['Zlist'] = Zlist.copy()
+                foo=1
+            else:
+                newdata['Zlist'] = newdata['Zlist'][idxs]
+        if newdata['X0'].shape[0] > 0 and maxit==0:
+            for i in np.arange(newdata['X0'].shape[0]):
+                self.Ki = update_Ki(newdata['X0'][i:i+1,:], self, nrep = newdata['mult'][i], new_lambda = None)
+                self.X0    = np.vstack([self.X0, newdata['X0']])        
+                self.Z0    = np.hstack([self.Z0, newdata['Z0']])
+                self.mult  = np.hstack([self.mult, newdata['mult']])
+                if type(newdata['Zlist'])==dict:
+                    self.Z     = np.hstack([self.Z, np.hstack(list(newdata['Zlist'].values()))])
+                else:
+                    self.Z     = np.hstack([self.Z, newdata['Zlist']])
+            self.nit_opt = 0
+            self.msg = "Not optimized \n"
+        if maxit > 0:
+            if upper is None: upper = self.used_args['upper']
+            if lower is None: lower = self.used_args['lower']
+            if noiseControl is None:
+                noiseControl = self.used_args['noiseControl']
+            init = {}
+            if settings is None: settings = self.used_args['settings']
+            if known is None: known = self.used_args['known']
+            if known.get('theta') is None: init['theta'] = self.theta
+            if known.get('g') is None: init['g'] = self.g
 
+            self.mleHomGP(X = dict(X0 = np.vstack([self.X0, newdata['X0']]), 
+                                   Z0 = np.hstack([self.Z0, newdata['Z0']]), 
+                                   mult = np.hstack([self.mult, newdata['mult']])), 
+                                   Z = np.hstack([self.Z, 
+                                                  list(newdata['Zlist'].values())]), 
+                       lower = lower, 
+                       upper = upper, 
+                       noiseControl = noiseControl, covtype = self.covtype, 
+                       init = init, 
+                       known = known, eps = self.eps, maxit = maxit)
+
+        return self
 class homTP():
     pass
