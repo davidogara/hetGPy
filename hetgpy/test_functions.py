@@ -83,3 +83,6 @@ def sirSimulate(S0 = 1990, I0 = 10, M = 2000, beta = 0.75, gamma = 0.5, imm = 0,
   return(dict(maxI = maxI, totT = curT[count], totI = S0-curS[count],S=curS,I=curI,R=M-curS-curI,T=curT))
 
 
+def f1d(x):
+  if len(x.shape)==1: x = x.reshape(-1,1)
+  return np.squeeze(((x*6-2)**2)*np.sin((x*6-2)*2))
