@@ -66,7 +66,7 @@ def predict_gr(model, x):
       tmp = np.squeeze(1 - (model.Ki.sum(axis=1)) @ kvec[:,i])/(np.sum(model.Ki)) * (model.Ki.sum(axis=1)) @ dkvec 
     else: 
       tmp = 0
-    ds2[i,:] <- -2 * ((kvec[:,i].T @ model.Ki) @ dkvec + tmp)
+    ds2[i,:] = -2 * ((kvec[:,i].T @ model.Ki) @ dkvec + tmp)
   
   if type(model)==homGP.homGP or type(model)==hetGP.hetGP:
     return dict(mean = dm, sd2 = model.nu_hat * ds2)
