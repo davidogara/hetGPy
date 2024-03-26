@@ -375,12 +375,15 @@ class homGP():
             kxprime = self['nu_hat'] * cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype'])
             if self['trendtype'] == 'SK':
                 if x.shape[0] < xprime.shape[0]:
-                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime
+                    cov = self['nu_hat'] *  cov_gen(X1 = x, X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime
                 else:
-                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ (self['Ki'] @ kxprime)
+                    cov = self['nu_hat'] *  cov_gen(X1 = x, X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ (self['Ki'] @ kxprime)
             else:
                 if x.shape[0] < xprime.shape[0]:
-                    cov = self['nu_hat'] *  cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime + ((1-(self['Ki'].sum(axis=0)).T @ kx).T @ (1-self['Ki'].sum(axis=0) @ kxprime))/self['Ki'].sum() #crossprod(1 - tcrossprod(rowSums(self$Ki), kx), 1 - rowSums(self$Ki) %*% kxprime)/sum(self$Ki)
+                    cov = self['nu_hat'] *  cov_gen(X1 = x, X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime + ((1-(self['Ki'].sum(axis=0,keepdims=True))@ kx.T).T @ (1-self['Ki'].sum(axis=0,keepdims=True) @ kxprime))/self['Ki'].sum() 
+                else:
+                    cov = self['nu_hat'] *  cov_gen(X1 = x, X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ (self['Ki'] @ kxprime) + ((1-(self['Ki'].sum(axis=0,keepdims=True))@ kx.T).T @ (1-self['Ki'].sum(axis=0,keepdims=True) @ kxprime))/self['Ki'].sum() 
+            
         else:
             cov = None
         
@@ -409,8 +412,9 @@ class homGP():
             if key in self.keys():
                 del self[key]
         return self
-    def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
-                         known = None, maxit = 100,):
+    
+    def update(self,Xnew, Znew, lower = None, upper = None, noiseControl = None, settings = None,
+                         known = None, maxit = 100):
         # first reduce Xnew/Znew in case of potential replicates
         newdata = find_reps(Xnew, Znew, normalize = False, rescale = False)
   
@@ -465,7 +469,7 @@ class homGP():
             if noiseControl is None:
                 noiseControl = self.used_args['noiseControl']
             init = {}
-            if settings is None: settings = self.used_args['settings']
+            if settings is None: settings = self.used_args.get('settings')
             if known is None: known = self.used_args['known']
             if known.get('theta') is None: init['theta'] = self.theta
             if known.get('g') is None: init['g'] = self.g
@@ -474,13 +478,17 @@ class homGP():
                                    Z0 = np.hstack([self.Z0, newdata['Z0']]), 
                                    mult = np.hstack([self.mult, newdata['mult']])), 
                                    Z = np.hstack([self.Z, 
-                                                  list(newdata['Zlist'].values())]), 
+                                                  np.concatenate(list(newdata['Zlist'].values()))]
+                                    ), 
                        lower = lower, 
                        upper = upper, 
-                       noiseControl = noiseControl, covtype = self.covtype, 
+                       noiseControl = noiseControl, 
+                       covtype = self.covtype, 
                        init = init, 
-                       known = known, eps = self.eps, maxit = maxit)
-
+                       known = known, 
+                       eps = self.eps, 
+                       maxit = maxit
+            )
         return self
 class homTP():
     pass
