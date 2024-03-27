@@ -1,9 +1,15 @@
 import numpy as np
+from joblib import Parallel, delayed
 from hetgpy import hetGP, homGP
-from hetgpy.covariance_functions import cov_gen, partial_cov_gen
+from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.src.qEI import qEI_cpp
 from scipy.stats import t, norm
 from scipy.special import gamma
+from scipy.stats.qmc import LatinHypercube
+from scipy.optimize import minimize
+from hetgpy.IMSE import maximinSA_LHS
+from hetgpy.utils import duplicated
+
 def crit_EI(x, model, cst = None, preds = None):
   if cst is None: cst = np.min(model.predict(x = model['X0'])['mean'])
   if len(x.shape) == 1: x = x.reshape(-1,1)
@@ -156,3 +162,150 @@ def crit_qEI(x, model, cst = None, preds = None):
   res = qEI_cpp(mu = -preds['mean'], s = np.sqrt(preds['sd2']), cor = cormat, threshold = -cst)
   
   return res
+
+
+def crit_search(model, crit, replicate = False, Xcand = None, 
+                        control = dict(tol_dist = 1e-6, tol_diff = 1e-6, multi_start = 20,
+                                       maxit = 100, maximin = True, Xstart = None), 
+                        seed = None,
+                        ncores = 1,
+                        **kwargs):
+    crit_to_function = {
+       'crit_EI': crit_EI
+    }
+    
+    crit_func = crit_to_function[crit]
+    def fn(*args):
+       # maximize
+       return -1.0 *  crit_func(*args)
+    if(replicate):
+        ## Discrete optimization
+        res = []
+        for i in range(model.X0.shape[0]):
+            res.append(
+                crit_func(x = model.X0[i:i+1,:], model = model, **kwargs)
+            )
+        return dict(
+            par = model.X0[np.argmin(res),:].reshape(1,-1), 
+            value = np.min(res), 
+            new = False, 
+            id = np.argmin(res)
+        )
+    if control is None:
+        control = dict(multi_start = 20, maxit = 100)
+  
+    if control.get('multi_start') is None:
+        control['multi_start'] = 20
+  
+    if control.get('maxit') is None:
+        control['maxit'] = 100
+  
+    if control.get('maximin') is None:
+        control['maximin'] = True
+  
+    if control.get('tol_dist') is None: control['tol_dist'] = 1e-6
+    if control.get('tol_diff') is None: control['tol_diff'] = 1e-6
+
+    d = model.X0.shape[1]
+  
+    if crit == "crit_EI": 
+      def grad(*args):
+         # maximization
+         return -1.0 * deriv_crit_EI(*args)
+      gr = grad 
+    else: 
+       gr = None
+    
+    ## Optimization
+    if Xcand is None:
+        ## Continuous optimization
+        if control.get('Xstart') is not None:
+            Xstart = control['Xstart']
+        else:
+            if seed is None: 
+                seed = np.random.default_rng().choice(2**15) ## To be changed?
+            if control['maximin']:
+                if(d == 1):
+                # perturbed 1d equidistant points
+                    Xstart = (np.linspace(1/2, control['multi_start'] -1/2, control['multi_start']) + np.random.default_rng(seed).uniform(size=control['multi_start'], low = -1/2, high = 1/2)).reshape(-1,1)/control['multi_start']
+                else:
+                    sampler = LatinHypercube(d=d,seed=seed)
+                    Xstart = maximinSA_LHS(sampler.random(n=control['multi_start']))['design']
+                
+            else:
+                sampler = LatinHypercube(d=d,seed=seed)
+                Xstart = sampler(n=control['multi_start'])
+            
+        res = dict(par = np.array([np.nan]), value = np.inf, new = np.nan)
+        crit_to_args = {
+           'crit_EI':   (model,None,kwargs.get('preds')),
+           'crit_MEE':  (model,kwargs.get('thres'),kwargs.get('preds')),
+           'crit_cSUR': (model,kwargs.get('thres'),kwargs.get('preds')),
+           'crit_ICU':  (model,kwargs.get('thres',0), kwargs.get('Xref',None),
+                        kwargs.get('w',None), kwargs.get('preds',None), kwargs.get('kxprime',None)),
+          'crit_tMSE':  (model,kwargs.get('thres',0), kwargs.get('preds', None), kwargs.get('seps',0.05)),
+          'crit_MCU':   (model,kwargs.get('thres',0), kwargs.get('gamma',2), kwargs.get('preds',None))
+        }
+        def local_opt_fun(i):
+            out = minimize(
+            x0  = Xstart[i,:],
+            fun = fn,
+            jac = gr,
+            args = crit_to_args[crit],
+            method = "L-BFGS-B", 
+            bounds = [(0,1) for _ in range(d)],
+            options=dict(maxiter=control['maxit'], #,
+                                ftol = control.get('factr',10) * np.finfo(float).eps,#,
+                                gtol = control.get('pgtol',0) # should map to pgtol
+                                )
+            )
+            python_kws_2_R_kws = {
+                'x':'par',
+                'fun': 'value',
+                'nfev': 'counts'
+            }
+            for key, val in python_kws_2_R_kws.items():
+                out[val] = out[key]
+            return out
+        all_res = Parallel(n_jobs=ncores)(delayed(local_opt_fun)(i) for i in range(Xstart.shape[0]))
+        all_res_values = [res.value for res in all_res]
+        res_min = np.argmin(all_res_values)
+        par = all_res[res_min]['x']
+        par[par<0] = 0
+        par[par>1] = 1
+        res = dict(par = par.reshape(1,-1), 
+                    value = all_res[res_min]['value'], new = True, id = None)
+        
+        
+        if control['tol_dist'] > 0 and control['tol_diff'] > 0:
+            ## Check if new design is not to close to existing design
+            dists = np.sqrt(euclidean_dist(res['par'].reshape(1,-1), model.X0))
+            if np.min(dists) < control['tol_dist']:
+                argmin = np.unravel_index(np.argmin(dists, axis=None), dists.shape)[0]
+                res = dict(par = model.X0[argmin,:],
+                            value = crit_func(x = model.X0[argmin,:], model = model, id = argmin, Wijs = Wijs),
+                            new = False, id = argmin)
+            else:
+                ## Check if crit difference between replication and new design is significative
+                id_closest = np.unravel_index(np.argmin(dists, axis=None), dists.shape)[0] # closest point to new design
+                crit_rep = crit_func(model = model, x=model.X0[id_closest])
+                if (crit_rep - res['value'])/res['value'] < control['tol_diff']:
+                    res = dict(par = model.X0[id_closest,:],
+                            value = crit_rep,
+                            new = False, id = id_closest)
+        else:
+            ## Discrete
+            inputs = []
+            for i in range(Xcand.shape[0]):
+                kw = {'model':model}
+                kw[i] = i
+                inputs.append(kw)
+            res = Parallel(n_jobs=ncores)(
+              delayed(fn)(**kw) 
+                  for kw in inputs
+              )
+            tmp = (duplicated(np.vstack(model.X0, Xcand[np.argmin(res),:]), fromLast = True))
+            if len(tmp) > 0: 
+                return(dict(par = Xcand[np.argmin(res),:,], value = min(res), new = False, id = tmp))
+            return dict(par = Xcand[np.argmin(res),:], value = min(res), new = True, id = None)
+    return res
