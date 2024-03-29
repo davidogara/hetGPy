@@ -471,7 +471,7 @@ def IMSPE_search(model, replicate = False, Xcand = None,
             if np.min(dists) < control['tol_dist']:
                 argmin = np.unravel_index(np.argmin(dists, axis=None), dists.shape)[0]
                 res = dict(par = model.X0[[argmin],:],
-                            value = crit_IMSPE(x = model.X0[[argmin],:], model = model, id = argmin, Wijs = Wijs),
+                            value = crit_IMSPE(x = model.X0[argmin,:], model = model, id = argmin, Wijs = Wijs),
                             new = False, id = argmin)
             else:
                 ## Check if IMSPE difference between replication and new design is significative
@@ -493,12 +493,12 @@ def IMSPE_search(model, replicate = False, Xcand = None,
             kw = {'model':model,'Wijs':Wijs,'Xcand':Xcand}
             kw[i] = i
             inputs.append(kw)
-        res = res = Parallel(n_jobs=ncores)(
+        res = Parallel(n_jobs=ncores)(
             delayed(crit_IMSPE_mcl)(**kw) 
                 for kw in inputs
             )
         
-        tmp = (duplicated(np.vstack(model.X0, Xcand[[np.argmin(res)],:]), fromLast = True))
+        tmp = (duplicated(np.vstack(model.X0, Xcand[np.argmin(res),:]), fromLast = True))
         if len(tmp) > 0: 
             return(dict(par = Xcand[[np.argmin(res)],:,], value = min(res), new = False, id = tmp))
         return(dict(par = Xcand[[np.argmin(res)],:], value = min(res), new = True, id = None))
