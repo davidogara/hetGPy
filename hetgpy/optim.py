@@ -1,6 +1,8 @@
 import numpy as np
+from copy import deepcopy
 from joblib import Parallel, delayed
 from hetgpy import hetGP, homGP
+from hetgpy.contour import crit_cSUR, crit_ICU, crit_MCU, crit_MEE, crit_tMSE
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.src.qEI import qEI_cpp
 from scipy.stats import t, norm
@@ -12,7 +14,7 @@ from hetgpy.utils import duplicated
 
 def crit_EI(x, model, cst = None, preds = None):
   if cst is None: cst = np.min(model.predict(x = model['X0'])['mean'])
-  if len(x.shape) == 1: x = x.reshape(-1,1)
+  if len(x.shape) == 1: x = x.reshape(-1,model.X0.shape[1])
   if preds is None: preds = model.predict(x = x)
   
   if type(model)== homGP.homTP or type(model)== hetGP.hetTP:
@@ -30,7 +32,7 @@ def crit_EI(x, model, cst = None, preds = None):
 
 def deriv_crit_EI(x, model, cst = None, preds = None):
   if cst is None: cst = np.min(model.predict(x = model.X0)['mean'])
-  if len(x.shape) == 1: x = x.reshape(-1,1)
+  if len(x.shape) == 1: x = x.reshape(-1,model.X0.shape[1])
   if preds is None: preds = model.predict(x = x)
   
   pred_gr = predict_gr(model, x)
@@ -61,7 +63,7 @@ def predict_gr(model, x):
   if len(x.shape) == 1: x = x.reshape(-1,1)
   kvec =  cov_gen(X1 = model.X0, X2 = x, theta = model.theta, type = model.covtype)
   
-  dm = np.full(fill_value=np.nan, shape = (x.shape[0], x.shape[0]))
+  dm = np.full(fill_value=np.nan, shape = (x.shape[0], x.shape[1]))
   ds2 = dm.copy()
   
   for i in range(x.shape[0]):
@@ -69,7 +71,7 @@ def predict_gr(model, x):
     for j in range(x.shape[1]):
       dkvec[:, j] = np.squeeze(partial_cov_gen(X1 = x[i:i+1,:], X2 = model.X0, theta = model.theta, i1 = 1, i2 = j, arg = "X_i_j", type = model.covtype)) * kvec[:,i]
     
-    dm[i,:] = (model.Z0 - model.beta0.T @ model.Ki) @ dkvec
+    dm[i,:] = ((model.Z0 - model.beta0).T @ model.Ki) @ dkvec
     if (type(model)==homGP.homGP or type(model)==hetGP.hetGP) and model.trendtype == "OK": 
       tmp = np.squeeze(1 - (model.Ki.sum(axis=1)) @ kvec[:,i])/(np.sum(model.Ki)) * (model.Ki.sum(axis=1)) @ dkvec 
     else: 
@@ -171,7 +173,12 @@ def crit_search(model, crit, replicate = False, Xcand = None,
                         ncores = 1,
                         **kwargs):
     crit_to_function = {
-       'crit_EI': crit_EI
+       'crit_EI': crit_EI,
+       'crit_cSUR': crit_cSUR, 
+       'crit_ICU':crit_ICU, 
+       'crit_MCU':crit_MCU, 
+       'crit_MEE':crit_MEE, 
+       'crit':crit_tMSE
     }
     
     crit_func = crit_to_function[crit]
@@ -186,10 +193,10 @@ def crit_search(model, crit, replicate = False, Xcand = None,
                 crit_func(x = model.X0[i:i+1,:], model = model, **kwargs)
             )
         return dict(
-            par = model.X0[np.argmin(res),:].reshape(1,-1), 
-            value = np.min(res), 
+            par = model.X0[np.argmax(res),:].reshape(1,-1), 
+            value = np.max(res), 
             new = False, 
-            id = np.argmin(res)
+            id = np.argmax(res)
         )
     if control is None:
         control = dict(multi_start = 20, maxit = 100)
@@ -235,27 +242,31 @@ def crit_search(model, crit, replicate = False, Xcand = None,
             else:
                 sampler = LatinHypercube(d=d,seed=seed)
                 Xstart = sampler(n=control['multi_start'])
-            
+        #model = deepcopy(model)    
         res = dict(par = np.array([np.nan]), value = np.inf, new = np.nan)
         crit_to_args = {
-           'crit_EI':   (model,None,kwargs.get('preds')),
-           'crit_MEE':  (model,kwargs.get('thres'),kwargs.get('preds')),
-           'crit_cSUR': (model,kwargs.get('thres'),kwargs.get('preds')),
-           'crit_ICU':  (model,kwargs.get('thres',0), kwargs.get('Xref',None),
-                        kwargs.get('w',None), kwargs.get('preds',None), kwargs.get('kxprime',None)),
-          'crit_tMSE':  (model,kwargs.get('thres',0), kwargs.get('preds', None), kwargs.get('seps',0.05)),
-          'crit_MCU':   (model,kwargs.get('thres',0), kwargs.get('gamma',2), kwargs.get('preds',None))
+           'crit_EI':   {'model':model,'cst': None,'preds':kwargs.get('preds')},
+           'crit_MEE':  {'model':model,'thres':kwargs.get('thres',0),'preds':kwargs.get('preds')},
+           'crit_cSUR': {'model':model,'thres':kwargs.get('thres',0),'preds':kwargs.get('preds')},
+           'crit_ICU':  {'model':model,'thres':kwargs.get('thres',0), 
+                         'Xref':kwargs.get('Xref',None),
+                        'w':kwargs.get('w',None), 'preds':kwargs.get('preds',None), 
+                        'kxprime':kwargs.get('kxprime',None)},
+          'crit_tMSE':  {'model':model,'thres':kwargs.get('thres',0),'preds':kwargs.get('preds'),
+                         'seps':kwargs.get('seps',0.05)},
+          'crit_MCU':   {'model':model,'thres':kwargs.get('thres',0),
+                         'gamma':kwargs.get('gamma',2), 'preds':kwargs.get('preds',None)}
         }
         def local_opt_fun(i):
             out = minimize(
             x0  = Xstart[i,:],
             fun = fn,
             jac = gr,
-            args = crit_to_args[crit],
+            args = tuple(crit_to_args[crit].values()),
             method = "L-BFGS-B", 
             bounds = [(0,1) for _ in range(d)],
             options=dict(maxiter=control['maxit'], #,
-                                ftol = control.get('factr',10) * np.finfo(float).eps,#,
+                                ftol = control.get('factr',10e9) * np.finfo(float).eps,#,
                                 gtol = control.get('pgtol',0) # should map to pgtol
                                 )
             )
@@ -268,29 +279,30 @@ def crit_search(model, crit, replicate = False, Xcand = None,
                 out[val] = out[key]
             return out
         all_res = Parallel(n_jobs=ncores)(delayed(local_opt_fun)(i) for i in range(Xstart.shape[0]))
-        all_res_values = [res.value for res in all_res]
-        res_min = np.argmin(all_res_values)
+        all_res_values = [res['value'] for res in all_res]
+        res_min = np.nanargmin(all_res_values)
         par = all_res[res_min]['x']
         par[par<0] = 0
         par[par>1] = 1
         res = dict(par = par.reshape(1,-1), 
-                    value = all_res[res_min]['value'], new = True, id = None)
+                    value = crit_func(par,**crit_to_args[crit]), 
+                    new = True, id = None)
         
         
         if control['tol_dist'] > 0 and control['tol_diff'] > 0:
             ## Check if new design is not to close to existing design
             dists = np.sqrt(euclidean_dist(res['par'].reshape(1,-1), model.X0))
             if np.min(dists) < control['tol_dist']:
-                argmin = np.unravel_index(np.argmin(dists, axis=None), dists.shape)[0]
-                res = dict(par = model.X0[argmin,:],
-                            value = crit_func(x = model.X0[argmin,:], model = model, id = argmin, Wijs = Wijs),
+                argmin = np.argmin(dists)
+                res = dict(par = model.X0[[argmin],:],
+                            value = crit_func(x = model.X0[argmin,:], **crit_to_args[crit]),
                             new = False, id = argmin)
             else:
                 ## Check if crit difference between replication and new design is significative
-                id_closest = np.unravel_index(np.argmin(dists, axis=None), dists.shape)[0] # closest point to new design
-                crit_rep = crit_func(model = model, x=model.X0[id_closest])
-                if (crit_rep - res['value'])/res['value'] < control['tol_diff']:
-                    res = dict(par = model.X0[id_closest,:],
+                id_closest = np.argmin(dists) # closest point to new design
+                crit_rep = crit_func(x=model.X0[id_closest],**crit_to_args[crit])
+                if (res['value']-crit_rep)/res['value'] < control['tol_diff']:
+                    res = dict(par = model.X0[[id_closest],:],
                             value = crit_rep,
                             new = False, id = id_closest)
         else:
@@ -306,6 +318,82 @@ def crit_search(model, crit, replicate = False, Xcand = None,
               )
             tmp = (duplicated(np.vstack(model.X0, Xcand[np.argmin(res),:]), fromLast = True))
             if len(tmp) > 0: 
-                return(dict(par = Xcand[np.argmin(res),:,], value = min(res), new = False, id = tmp))
-            return dict(par = Xcand[np.argmin(res),:], value = min(res), new = True, id = None)
+                par = Xcand[[np.argmin(res)],:,]
+                return(dict(par = par, value = crit_func(par,**crit_to_args[crit]), new = False, id = tmp))
+            par = Xcand[[np.argmin(res)],:,]
+            return dict(par = par, value = crit_func(par,**crit_to_args[crit]), new = True, id = None)
     return res
+
+def crit_optim(model, crit, h = 2, Xcand = None, 
+               control = dict(multi_start = 10, maxit = 100), seed = None, ncores = 1, **kwargs):
+  '''
+  crit_optim
+  '''
+  d = model.X0.shape[1]
+  if crit == "crit_IMSPE": raise ValueError("crit_IMSPE is intended to be optimized by IMSPE_optim")
+  ## A) Setting to beat: first new point then replicate h times
+  crit_A = crit_search(model = model, crit = crit, control = control, Xcand = Xcand, seed = seed, ncores = ncores, **kwargs)
+  new_designA = crit_A['par'] ## store first considered design to be added
+  path_A = [crit_A]
+
+  if h > 0:
+    newmodelA = deepcopy(model)
+  for i in range(1,h+1):
+    ZnewA = newmodelA.predict(crit_A['par'])['mean']
+    newmodelA.update(Xnew = crit_A['par'], Znew = ZnewA, maxit = 0)
+    crit_A = crit_search(model = newmodelA, crit = crit, replicate = True, 
+                          control = control, seed = seed, ncores = ncores, **kwargs)
+    path_A.append(crit_A)
+  if h == -1: return dict(par = new_designA, value = crit_A['value'], path = path_A) 
+
+  newmodelB = deepcopy(model)
+  if h == 0:
+    crit_B = crit_search(model = newmodelB, crit = crit, replicate = True, control = control, ncores = ncores,**kwargs)
+    new_designB = crit_B['par'] ## store considered design to be added
+    
+    # search from best replicate
+    if Xcand is None:
+       crit_C = crit_search(model = newmodelB,
+                            crit = crit,
+                            control = dict(Xstart = crit_B['par'], 
+                                           maxit = control['maxit'],
+                                        tol_dist = control['tol_dist'], 
+                                        tol_diff = control['tol_diff']), 
+                                        ncores = ncores,**kwargs)
+    else:
+      crit_C = crit_B.copy()
+      
+      if crit_C['value'] > max(crit_A['value'], crit_B['value']): 
+          return dict(par = crit_C['par'], value = crit_C['value'], path = [crit_C])
+      
+      if crit_B['value'] > crit_A['value']:
+          return dict(par = crit_B['par'], value = crit_B['value'], path = [crit_B])
+  else:
+      for i in range(h):
+        ## Add new replicate
+        crit_B = crit_search(model = newmodelB, crit = crit, replicate = True, control = control, ncores = ncores,**kwargs)
+  
+        if i == 0:
+            new_designB = crit_B['par'].reshape(1,-1) ##store first considered design to add
+            path_B = list()
+  
+        path_B.append(crit_B)
+        ZnewB = newmodelB.predict(crit_B['par'])['mean']
+        newmodelB.update(Xnew = crit_B['par'], Znew = ZnewB, maxit = 0)
+        
+        ## Add new design
+        crit_C = crit_search(model = newmodelB, crit = crit, control = control, Xcand = Xcand, ncores = ncores,**kwargs)
+        path_C  = [crit_C]
+
+        if i < h:
+          newmodelC = deepcopy(newmodelB)
+          for j in range(i,h):
+            ## Add remaining replicates
+            ZnewC = newmodelC.predict(crit_C['par'])['mean']
+            newmodelC.update(Xnew = crit_C['par'], Znew = ZnewC, maxit = 0)
+            crit_C = crit_search(model = newmodelC, crit = crit, replicate = True, control = control, 
+                                 ncores = ncores,**kwargs)
+            path_C.append(crit_C)
+        if crit_C['value'] < crit_A['value']: return dict(par = new_designB, value = crit_C['value'], path = path_B + path_C)
+
+  return dict(par = new_designA, value = crit_A['value'], path = path_A)

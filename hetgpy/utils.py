@@ -47,13 +47,17 @@ def duplicated(X,fromLast = False):
       (duplicated(x) == np.array(r("duplicated(x)"))).all()
       '''
       arr = np.ones(shape=X.shape[0],dtype=bool)
-    
+      # if we are working with model.Z, axis is None
+      # otherwise if we are working with model.X0, axis is 0
+      # why? because Z can have NAs
+      # this is a known issue in numpy: https://github.com/numpy/numpy/issues/23286
+      axis = 0 if len(X.shape)==2 else None
       if not fromLast:
-        _, i = np.unique(X,return_index=True, axis=0)
+        _, i = np.unique(X,return_index=True, axis=axis)
         arr[i] = False
       else:
         # flip the array and put it back
-        _, i = np.unique(X[::-1],return_index=True, axis = 0)
+        _, i = np.unique(X[::-1],return_index=True, axis = axis)
         arr[i] = False
         arr = arr[::-1]
     

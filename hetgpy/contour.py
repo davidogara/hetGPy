@@ -85,10 +85,10 @@ def crit_cSUR(x, model, thres = 0, preds = None):
                     t.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(sd2_new), df = model.nu + len(model.Z) + 1))
     else:
     
-        Ki_new = np.linalg.cholesky(pcov + np.diag(model.eps + preds['nugs'])).T
+        Ki_new = np.linalg.cholesky(preds['cov'] + np.diag(model.eps + preds['nugs'])).T
         Ki_new = dtrtri(Ki_new)[0]
         Ki_new = Ki_new @ Ki_new.T
-        sd2_new = psd2 - np.diag(pcov @ (Ki_new @ pcov.T))
+        sd2_new = preds['sd2'] - np.diag(preds['cov'] @ (Ki_new @ preds['cov'].T))
         sd2_new[sd2_new<0] = 0
 
         return(norm.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(preds['sd2'])) - norm.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(sd2_new)))

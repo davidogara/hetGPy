@@ -1,6 +1,6 @@
 
 # function to handle the updating of the covariance matrices
-from hetgpy import hetGP, homGP
+import hetgpy
 from hetgpy.covariance_functions import cov_gen
 import numpy as np
 
@@ -38,7 +38,7 @@ def update_Ki(x, model, new_lambda = None, nrep = 1):
     ## ' }
     '''
 
-    if type(model)==homGP.homTP or type(model)==hetGP.hetTP:
+    if type(model)==hetgpy.homGP.homTP or type(model)==hetgpy.hetGP.hetTP:
         kn1 = model.sigma2 * cov_gen(x, model.X0, theta = model.theta, type = model.covtype)
         if new_lambda is None:
             new_lambda = model.predict(object = model, x = x, nugs_only = True)['nugs']
@@ -78,7 +78,7 @@ def update_Kgi(x, model, nrep = 1):
 ##
 ## update of Ki in case model.X0[id,] is replicated nrep times
 def update_Ki_rep(id, model, nrep = 1):
-  if model.Lambda is None:
+  if model.get('Lambda') is None:
     tmp = model.g
   else:
     tmp = model.Lambda[id]

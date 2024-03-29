@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import chain
 import warnings
 from time import time
 from scipy.linalg.lapack import dtrtri
@@ -341,7 +342,7 @@ class homGP():
         
         if settings["return_Ki"]: self.Ki  = Ki
         return self
-    def predict(self, x, xprime = None):
+    def predict(self, x, xprime = None,**kw):
 
         if len(x.shape) == 1:
             x = x.reshape(-1,1)
@@ -474,11 +475,12 @@ class homGP():
             if known.get('theta') is None: init['theta'] = self.theta
             if known.get('g') is None: init['g'] = self.g
 
+             
             self.mleHomGP(X = dict(X0 = np.vstack([self.X0, newdata['X0']]), 
                                    Z0 = np.hstack([self.Z0, newdata['Z0']]), 
                                    mult = np.hstack([self.mult, newdata['mult']])), 
                                    Z = np.hstack([self.Z, 
-                                                  np.concatenate(list(newdata['Zlist'].values()))]
+                                                  np.array(list(chain(*newdata['Zlist'].values())))]
                                     ), 
                        lower = lower, 
                        upper = upper, 
