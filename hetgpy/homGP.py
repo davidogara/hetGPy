@@ -4,6 +4,7 @@ import warnings
 from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
+from scipy.stats import norm
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.utils import fast_tUY2, rho_AN
 from hetgpy.find_reps import find_reps
@@ -192,7 +193,8 @@ class homGP():
             if lower is None: lower = auto_thetas['lower']
             if upper is None: upper = auto_thetas['upper']
             if known.get("theta") is None and init.get('theta') is None:  init['theta'] = np.sqrt(upper * lower)
-        
+        lower = np.array(lower).reshape(-1)
+        upper = np.array(upper).reshape(-1)
         if len(lower) != len(upper): raise ValueError("upper and lower should have the same size")
 
         tic = time()
@@ -342,7 +344,7 @@ class homGP():
         
         if settings["return_Ki"]: self.Ki  = Ki
         return self
-    def predict(self, x, xprime = None,**kw):
+    def predict(self, x, xprime = None,interval = None, interval_lower = None, interval_upper = None,**kw):
 
         if len(x.shape) == 1:
             x = x.reshape(-1,1)
@@ -351,6 +353,15 @@ class homGP():
             xprime = xprime.reshape(-1,1)
             if xprime.shape[1] != self['X0'].shape[1]: raise ValueError("xprime is not a matrix")
         
+        interval_types = [None,'confidence','predictive']
+        return_interval = False
+        if interval is not None:
+            list_interval = [interval] if type(interval)==str else interval
+            if 'confidence' not in list_interval and 'predictive' not in list_interval:
+                raise ValueError(f"interval must be one of 'confidence' or 'predictive' not {interval}")
+            return_interval = True
+            
+
         if self.get('Ki') is None:
             # these should be replaced with calls to self instead of self
             ki = np.linalg.cholesky(
@@ -391,7 +402,19 @@ class homGP():
 
         # re-modify self so Ki is preserved (because R does not modify lists in place)
         self['Ki']*=self['nu_hat']
-        return dict(mean = mean, sd2 = sd2, nugs = nugs, cov = cov)
+        
+        preds = dict(mean = mean, sd2 = sd2, nugs = nugs, cov = cov)
+        if return_interval:
+            preds['confidence_interval'] = {}
+            if 'confidence' in list_interval:
+                preds['confidence_interval']['lower'] = norm.ppf(interval_lower, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+                preds['confidence_interval']['upper'] = norm.ppf(interval_upper, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+            preds['predictive_interval'] = {}
+            if 'predictive' in list_interval:
+                preds['predictive_interval']['lower'] = norm.ppf(interval_lower, loc = preds['mean'], scale = np.sqrt(preds['sd2'] + preds['nugs'])).squeeze()
+                preds['predictive_interval']['upper'] = norm.ppf(interval_upper, loc = preds['mean'], scale = np.sqrt(preds['sd2'] + preds['nugs'])).squeeze()
+            
+        return preds
 
     def rebuild_homGP(self, robust = False):
         if robust :

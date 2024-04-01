@@ -4,6 +4,7 @@ from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
 from scipy.special import digamma, polygamma
+from scipy.stats import norm
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen
 from hetgpy.utils import fast_tUY2, rho_AN, duplicated
 from hetgpy.find_reps import find_reps
@@ -671,7 +672,8 @@ class hetGP:
             auto_thetas = auto_bounds(X = X0, covtype = covtype)
             if lower is None: lower = auto_thetas['lower']
             if upper is None: upper = auto_thetas['upper']
-        
+        lower = np.array(lower).reshape(-1)
+        upper = np.array(upper).reshape(-1)
         if len(lower) != len(upper): raise ValueError("upper and lower should have the same size")
 
         tic = time()
@@ -1307,7 +1309,7 @@ class hetGP:
         
         return self
     
-    def predict(self,x, noise_var = False, xprime = None, nugs_only = False, **kwargs):
+    def predict(self,x, noise_var = False, xprime = None, nugs_only = False, interval = None, interval_lower = None, interval_upper = None, **kwargs):
         '''
         Gaussian process predictions using a heterogeneous noise GP object (of ``hetGP``) 
 
@@ -1348,6 +1350,14 @@ class hetGP:
             xprime = xprime.reshape(1,-1)
             if xprime.shape[1] != self['X0'].shape[1]: raise ValueError("xprime is not a matrix")
 
+        interval_types = [None,'confidence','predictive']
+        return_interval = False
+        if interval is not None:
+            list_interval = [interval] if type(interval)==str else interval
+            if 'confidence' not in list_interval and 'predictive' not in list_interval:
+                raise ValueError(f"interval must be one of 'confidence' or 'predictive' not {interval}")
+            return_interval = True
+        
         if self.get('Kgi') is None:
             if self.get('pX') is None:
                 Cg = cov_gen(X1 = self['X0'], theta = self['theta_g'], type = self['covtype'])
@@ -1419,12 +1429,22 @@ class hetGP:
         else:
             cov = None
         
-
-        return dict(mean = np.squeeze(self['beta0'] + kx @ (self['Ki'] @ (self['Z0'] - self['beta0']))),
+        pred = dict(mean = np.squeeze(self['beta0'] + kx @ (self['Ki'] @ (self['Z0'] - self['beta0']))),
               sd2 = sd2,
               nugs = nugs,
               sd2var = sd2var,
               cov = cov)
+        if return_interval:
+            preds['confidence_interval'] = {}
+            if 'confidence' in list_interval:
+                preds['confidence_interval']['lower'] = norm.ppf(interval_lower, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+                preds['confidence_interval']['upper'] = norm.ppf(interval_upper, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+            preds['predictive_interval'] = {}
+            if 'predictive' in list_interval:
+                preds['predictive_interval']['lower'] = norm.ppf(interval_lower, loc = preds['mean'], scale = np.sqrt(preds['sd2'] + preds['nugs'])).squeeze()
+                preds['predictive_interval']['upper'] = norm.ppf(interval_upper, loc = preds['mean'], scale = np.sqrt(preds['sd2'] + preds['nugs'])).squeeze()
+            
+        return preds
     
     def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
                          known = None, maxit = 100, method = 'quick'):
