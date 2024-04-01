@@ -1429,7 +1429,7 @@ class hetGP:
         else:
             cov = None
         
-        pred = dict(mean = np.squeeze(self['beta0'] + kx @ (self['Ki'] @ (self['Z0'] - self['beta0']))),
+        preds = dict(mean = np.squeeze(self['beta0'] + kx @ (self['Ki'] @ (self['Z0'] - self['beta0']))),
               sd2 = sd2,
               nugs = nugs,
               sd2var = sd2var,
