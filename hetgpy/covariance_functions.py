@@ -1,7 +1,9 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from hetgpy.src import matern ## high performance c++ functions
-from hetgpy.src import gauss
+try:
+    from hetgpy.src import gauss, matern ## high performance c++ functions
+except ImportError:
+    from hetgpy import gauss, matern
 
 TYPE = type # for checking types
 

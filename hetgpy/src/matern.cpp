@@ -1,10 +1,11 @@
 // cppimport
+/*
 <%
 cfg['compiler_args'] = ['-std=c++17']
-cfg['include_dirs'] = ['../eigen']
+cfg['include_dirs'] = ['../../eigen']
 setup_pybind11(cfg)
 %>
-
+*/
 #include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>

@@ -1,5 +1,47 @@
-#include <Rcpp.h>
-using namespace Rcpp;
+// cppimport
+/*<%
+cfg['compiler_args'] = ['-std=c++17']
+cfg['include_dirs'] = ['../../eigen']
+setup_pybind11(cfg)
+%>
+*/
+#include <iostream>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <pybind11/eigen.h>
+#include <Eigen/Dense>
+#include <Eigen/LU>
+#define _USE_MATH_DEFINES
+#include <cmath>
+
+namespace py = pybind11;
+
+
+// implement pnorm
+double pnorm(double q, double mean, double sd, int lower_tail, int log_p){
+    double x = (q - mean) / sd; // z transform
+    double out = 0.5 * std::erfc(-x * std::sqrt(0.5));
+    
+    if (lower_tail == 0){
+        // return P(X>x)
+        out = 1.0 - out;
+    }
+    if (log_p == 1){
+        out = std::log(out);
+    }
+    return out;
+}
+
+// implement dnorm
+double dnorm(double x, double mean, double sd, int log_p){
+    double c = 1.0 / std::sqrt(2 * M_PI * sd * sd);
+    double integrand = -0.5 * pow((x - mean) / sd,2);
+    double out = c * std::exp(integrand);
+    if (log_p == 1){
+        out = std::log(out);
+    }
+    return out;
+}
 
 // [[Rcpp::export]]
 double v1cpp(double mu1, double mu2, double s1, double s2, double rho) {
@@ -9,7 +51,7 @@ double v1cpp(double mu1, double mu2, double s1, double s2, double rho) {
   }
   double a = sqrt(s1*s1 + s2*s2 - 2*s1*s2*rho);
   double alpha = (mu1 - mu2)/a;
-  return(mu1 * R::pnorm(alpha, 0.0,1.0, 1, 0) + mu2 * R::pnorm(-alpha,0.0,1.0,1,0) + a * R::dnorm(alpha,0.0,1.0,0));
+  return(mu1 * pnorm(alpha, 0.0,1.0, 1, 0) + mu2 * pnorm(-alpha,0.0,1.0,1,0) + a * dnorm(alpha,0.0,1.0,0));
 }
 
 // [[Rcpp::export]]
@@ -20,9 +62,9 @@ double v2cpp(double mu1, double mu2, double s1, double s2, double rho) {
   double a = sqrt(s1*s1 + s2*s2 - 2*s1*s2*rho);
   double alpha = (mu1 - mu2)/a;
   return(
-    (mu1 * mu1 + s1 * s1) * R::pnorm(alpha, 0.0,1.0, 1, 0) +
-      (mu2 * mu2 + s2 * s2) * R::pnorm(-alpha,0.0,1.0, 1, 0) +
-      (mu1 + mu2) * a * R::dnorm(alpha,0.0,1.0,0));
+    (mu1 * mu1 + s1 * s1) * pnorm(alpha, 0.0,1.0, 1, 0) +
+      (mu2 * mu2 + s2 * s2) * pnorm(-alpha,0.0,1.0, 1, 0) +
+      (mu1 + mu2) * a * dnorm(alpha,0.0,1.0,0));
 }
 
 // [[Rcpp::export]]
@@ -35,14 +77,14 @@ double r_cpp(double mu1, double mu2, double s1, double s2, double rho,
   double a = sqrt(s1*s1 + s2*s2 - 2*s1*s2*rho);
   double alpha = (mu1 - mu2)/a;
   return((
-      s1 * rho1 * R::pnorm(alpha, 0.0,1.0, 1, 0) +
-        s2 * rho2 * R::pnorm(-alpha,0.0,1.0, 1, 0)) /
+      s1 * rho1 * pnorm(alpha, 0.0,1.0, 1, 0) +
+        s2 * rho2 * pnorm(-alpha,0.0,1.0, 1, 0)) /
           sqrt(v2cpp(mu1, mu2, s1, s2, rho) - v1cpp(mu1, mu2, s1, s2, rho)*v1cpp(mu1, mu2, s1, s2, rho)));
 }
 
 // [[Rcpp::export]]
-double qEI_cpp(NumericVector mu, NumericVector s, NumericMatrix cor, double threshold){
-  int q = mu.length();
+double qEI_cpp(Eigen::VectorXd mu, Eigen::VectorXd s, Eigen::MatrixXd cor, double threshold){
+  int q = mu.size();
   // if(q < 2){
   //   std::cout << "Error : q < 2" << std::endl;
   // }
@@ -94,3 +136,13 @@ double qEI_cpp(NumericVector mu, NumericVector s, NumericMatrix cor, double thre
 }
 
 
+PYBIND11_MODULE(qEI, m) {
+    m.doc() = "auto-compiled c++ extension";
+    m.def("pnorm",&pnorm,py::arg("q"), py::arg("mean"),py::arg("sd"), py::arg("lower_tail"),py::arg("log_p"));
+    m.def("dnorm",&dnorm,py::arg("x"), py::arg("mean"),py::arg("sd"), py::arg("log_p"));
+    
+    m.def("v1cpp",&v1cpp,py::arg("mu1"), py::arg("mu2"),py::arg("s1"), py::arg("s2"),py::arg("rho"));
+    m.def("v2cpp",&v2cpp,py::arg("mu1"), py::arg("mu2"),py::arg("s1"), py::arg("s2"),py::arg("rho"));
+    m.def("r_cpp",&r_cpp,py::arg("mu1"), py::arg("mu2"),py::arg("s1"), py::arg("s2"),py::arg("rho"),py::arg("rho1"),py::arg("rho2"));
+    m.def("qEI_cpp",&qEI_cpp,py::arg("mu"), py::arg("s"),py::arg("cor"), py::arg("threshold"));
+}
