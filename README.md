@@ -18,13 +18,14 @@ For project progress, please see `TODO.md`
 1. Install dependencies with [poetry](https://python-poetry.org/)
 ```
 poetry install
+poetry build
 ```
 2. Activate the virtual environment:
 ```
 poetry shell
 ```
 
-3. Compile the `c++` files that underlie the kernel functions. `cd` into `hetgpy` and run:
+3. Compile the `c++` files that underlie the kernel functions:
 
 ```
 python setup_cpp.py
@@ -41,7 +42,7 @@ Which tests some of the covariance functions.
 
 After this you should be able to run the examples in the `notebooks` folder. It is suggested to use:
 ```
-poetry run jupyter notebook
+poetry run jupyter lab
 ```
 
 ## Contact
