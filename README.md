@@ -40,7 +40,7 @@ pytest tests/test_cov_gen.py
 
 Which tests some of the covariance functions.
 
-After this you should be able to run the examples in the `notebooks` folder. It is suggested to use:
+After this you should be able to run the examples in the `examples` folder. It is suggested to use:
 ```
 poetry run jupyter lab
 ```
