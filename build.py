@@ -12,6 +12,14 @@ ext_modules = [
     Pybind11Extension(
         "hetgpy.matern", ["hetgpy/src/matern.cpp"], 
         include_dirs=["eigen/"]
+    ),
+    Pybind11Extension(
+        "hetgpy.qEI", ["hetgpy/src/qEI.cpp"], 
+        include_dirs=["eigen/"]
+    ),
+    Pybind11Extension(
+        "hetgpy.EMSE", ["hetgpy/src/EMSE.cpp"], 
+        include_dirs=["eigen/"]
     )
 ]
 
