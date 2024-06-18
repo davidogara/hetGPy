@@ -1,4 +1,9 @@
 import numpy as np
+import jax
+jax.config.update("jax_enable_x64", True)
+import jax.numpy as jnp
+import jax.scipy as jscp
+from jax import grad as jgrad
 from itertools import chain
 import warnings
 from time import time
@@ -16,6 +21,7 @@ MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 class homGP():
     def __init__(self):
+        self.mle = self.mleHomGP
         return
     def __getitem__(self, key):
         return self.__dict__[key]
@@ -25,30 +31,55 @@ class homGP():
         return self.__dict__.get(key)
     
     def logLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS, env = None):
+        n = X0.shape[0]
+        N = Z.shape[0]
+
+        C = cov_gen(X1 = X0, theta = theta, type = covtype)
+        self.C = C
+        Ki = np.linalg.cholesky(C + np.diag(eps + g / mult) ).T
+        ldetKi = - 2.0 * np.sum(np.log(np.diag(Ki)))
+        # to mirror R's chol2inv: do the following:
+        # expose dtrtri from lapack (for fast cholesky inversion of a triangular matrix)
+        # use result to compute Ki (should match chol2inv)
+        Ki = dtrtri(Ki)[0] #  -- equivalent of chol2inv -- see https://stackoverflow.com/questions/6042308/numpy-inverting-an-upper-triangular-matrix
+        Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
         
-            n = X0.shape[0]
-            N = Z.shape[0]
+        self.Ki = Ki
+        if beta0 is None:
+            beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
+        self.beta0 = beta0
 
-            C = cov_gen(X1 = X0, theta = theta, type = covtype)
-            self.C = C
-            Ki = np.linalg.cholesky(C + np.diag(eps + g / mult) ).T
-            ldetKi = - 2.0 * np.sum(np.log(np.diag(Ki)))
-            # to mirror R's chol2inv: do the following:
-            # expose dtrtri from lapack (for fast cholesky inversion of a triangular matrix)
-            # use result to compute Ki (should match chol2inv)
-            Ki = dtrtri(Ki)[0] #  -- equivalent of chol2inv -- see https://stackoverflow.com/questions/6042308/numpy-inverting-an-upper-triangular-matrix
-            Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
-            
-            self.Ki = Ki
-            if beta0 is None:
-                beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
-            self.beta0 = beta0
+        psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
+        psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
+        loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.log(mult).sum() - (N / 2.0)
+        #print('loglik: ', loglik,'\n')
+        return loglik
+    def logLikHom_autodiff(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS, env = None):
+        '''
+        Implementation of logLikHim with autodiff methods
+        '''
+        n = X0.shape[0]
+        N = Z.shape[0]
 
-            psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
-            psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
-            loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.log(mult).sum() - (N / 2.0)
-            #print('loglik: ', loglik,'\n')
-            return loglik
+        C = cov_gen(X1 = X0, theta = theta, type = covtype)
+        self.C = C
+        Ki = jnp.linalg.cholesky(C + jnp.diag(eps + g / mult),upper=True)
+        ldetKi = - 2.0 * jnp.sum(jnp.log(jnp.diag(Ki)))
+        
+        Ki = jscp.linalg.solve_triangular(Ki,1.0 * jnp.eye(Ki.shape[0]))
+        Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
+        
+        self.Ki = Ki
+        if beta0 is None:
+            beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
+        self.beta0 = beta0
+
+        psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
+        psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
+        loglik = (-N / 2.0) * jnp.log(2*jnp.pi) - (N / 2.0) * jnp.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * jnp.log(g) - (1.0 / 2.0) * jnp.log(mult).sum() - (N / 2.0)
+        
+        return loglik
+
         
     def dlogLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian",
                         eps = MACHINE_DOUBLE_EPS, components = ("theta", "g")):
@@ -89,6 +120,11 @@ class homGP():
         out = out[~(out==None)].astype(float).reshape(-1,1)
         #print('dll', out, '\n')
         return out
+    
+    def dlogLikHom_ad(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian",
+                        eps = MACHINE_DOUBLE_EPS, components = ("theta", "g")):
+        return jgrad(self.logLikHom_autodiff)
+        
 
     def mleHomGP(self,X, Z, lower = None, upper = None, known = dict(),
                         noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),

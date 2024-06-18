@@ -21,6 +21,7 @@ class hetGP:
     def __init__(self):
         self.iterates = [] # for saving iterates during MLE
         self.use_torch = False
+        self.mle = self.mleHetGP
         return
     def __getitem__(self, key):
         return self.__dict__[key]
@@ -28,7 +29,6 @@ class hetGP:
         self.__dict__[item] = value
     def get(self,key):
         return self.__dict__.get(key)
-    
     # Part II: hetGP functions
 
     def logLikHet(self, X0, Z0, Z, mult, Delta, theta, g, k_theta_g = None, theta_g = None, logN = None, SiNK = False,
@@ -498,7 +498,7 @@ class hetGP:
         
         
 
-
+    
 
     def mleHetGP(self,X, Z, lower = None, upper = None, known = dict(),
                      noiseControl = dict(k_theta_g_bounds = (1, 100), g_max = 100, g_bounds = (1e-06, 1)),
