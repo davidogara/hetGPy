@@ -1,6 +1,7 @@
 import numpy as np
 from copy import deepcopy
 from joblib import Parallel, delayed
+import hetgpy
 from hetgpy import hetGP, homGP
 from hetgpy.contour import crit_cSUR, crit_ICU, crit_MCU, crit_MEE, crit_tMSE
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
@@ -21,7 +22,7 @@ def crit_EI(x, model, cst = None, preds = None):
   if len(x.shape) == 1: x = x.reshape(-1,model.X0.shape[1])
   if preds is None: preds = model.predict(x = x)
   
-  if type(model)== homGP.homTP or type(model)== hetGP.hetTP:
+  if type(model)== hetgpy.homTP or type(model)== hetgpy.hetTP:
     gamma = (cst - preds['mean'])/np.sqrt(preds['sd2'])
     res = (cst - preds['mean']) * t.cdf(gamma, df = model['nu'] + len(model['Z']))
     res = res + np.sqrt(preds['sd2']) * (1 + (gamma**2 - 1)/(model['nu'] + len(model['Z']) - 1)) * t.pdf(x = gamma, df = model['nu'] + len(model['Z']))
@@ -73,16 +74,16 @@ def predict_gr(model, x):
   for i in range(x.shape[0]):
     dkvec = np.full(fill_value=np.nan, shape=(model.X0.shape[0], x.shape[1]))
     for j in range(x.shape[1]):
-      dkvec[:, j] = np.squeeze(partial_cov_gen(X1 = x[i:i+1,:], X2 = model.X0, theta = model.theta, i1 = 1, i2 = j, arg = "X_i_j", type = model.covtype)) * kvec[:,i]
+      dkvec[:, j] = np.squeeze(partial_cov_gen(X1 = x[i:i+1,:], X2 = model.X0, theta = model.theta, i1 = 1, i2 = j + 1, arg = "X_i_j", type = model.covtype)) * kvec[:,i]
     
     dm[i,:] = ((model.Z0 - model.beta0).T @ model.Ki) @ dkvec
-    if (type(model)==homGP.homGP or type(model)==hetGP.hetGP) and model.trendtype == "OK": 
+    if (type(model)==homGP or type(model)==hetGP) and model.trendtype == "OK": 
       tmp = np.squeeze(1 - (model.Ki.sum(axis=1)) @ kvec[:,i])/(np.sum(model.Ki)) * (model.Ki.sum(axis=1)) @ dkvec 
     else: 
       tmp = 0
     ds2[i,:] = -2 * ((kvec[:,i].T @ model.Ki) @ dkvec + tmp)
   
-  if type(model)==homGP.homGP or type(model)==hetGP.hetGP:
+  if type(model)==homGP or type(model)==hetGP:
     return dict(mean = dm, sd2 = model.nu_hat * ds2)
   else:
     return dict(mean = model.sigma2 * dm, sd2 =  (model.nu + model.psi - 2) / (model.nu + len(model.Z) - 2) * model.sigma2**2 * ds2)
