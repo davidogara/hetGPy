@@ -248,9 +248,10 @@ def partial_d_k_Matern5_2_dX_i_j(X1, X2, theta, i1, i2):
   if len(theta) == 1:
     tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2(X1/theta, X2/theta, i1, i2)
     return tmp/theta
-
-  tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2(X1/theta[i2], X2/theta[i2], i1, i2)
-  return tmp / theta[i2]
+  
+  # i2 gets incremented by -1 in matern.partial
+  tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2(X1/theta[i2-1], X2/theta[i2-1], i1, i2)
+  return tmp / theta[i2-1]
 
 
 ### C) Matern 3/2 covariance
