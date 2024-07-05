@@ -145,11 +145,11 @@ def partial_cov_gen(X1, X2 = None, theta = None,k_theta_g = None, type = "Gaussi
                 return partial_d_k_Gaussian_dX_i_j(X1 = X1, X2 = X2, theta = theta,i1 = i1, i2 = i2)
         if type == "Matern5_2":
             if arg == "theta_k":
-                return partial_d_C_Matern5_2_dtheta_k(X1 = X1, X2 = X2, theta = theta)
+                return partial_d_k_Matern5_2_dtheta_k(X1 = X1, X2 = X2, theta = theta)
             if arg == "k_theta_g":
-                return partial_d_Cg_Matern5_2_d_k_theta_g(X1 = X1, X2 = X2, theta = theta, k_theta_g=k_theta_g)
+                return partial_d_kg_Matern5_2_d_k_theta_g(X1 = X1, X2 = X2, theta = theta, k_theta_g=k_theta_g)
             if arg == "X_i_j":
-                return partial_d_C_Matern5_2_dX_i_j(X1 = X1, X2 = X2, theta = theta, i1 = i1, i2 = i2)
+                return partial_d_k_Matern5_2_dX_i_j(X1 = X1, X2 = X2, theta = theta, i1 = i1, i2 = i2)
         if type == "Matern3_2":
             if TYPE(theta)==np.ndarray: 
                 theta = theta[0]
@@ -218,6 +218,12 @@ def partial_d_Cg_Matern5_2_d_k_theta_g(X1, theta, k_theta_g):
 def partial_d_Cg_Matern5_2_d_k_theta_g(X1, theta, k_theta_g):
   if(isinstance(theta,np.floating) or len(theta) == 1): return matern.d_matern5_2_1args_kthetag(X1/theta, k_theta_g)
   return matern.d_matern5_2_1args_kthetag(X1 * 1/theta, k_theta_g)
+
+## Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
+def partial_d_kg_Matern5_2_d_k_theta_g(X1, X2, theta, k_theta_g):
+    if(isinstance(theta,np.floating) or len(theta) == 1): return(matern.d_matern5_2_2args_kthetag(X1/theta, X2/theta, k_theta_g))
+    return matern.d_matern5_2_2args_kthetag(X1 * 1/theta, X2 * 1/theta, k_theta_g) 
+
 
 ## Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
 ## @param i1 row
