@@ -12,7 +12,11 @@ def test_hetGP_predict():
     # read in R structures
     m = loadmat('tests/data/hetGP_mcycle_fit.mat')
 
-    het = hetGP.hetGP()
+    het = hetGP()
+    for key in m:
+        het.__dict__[key] = m[key]
+    het.covtype = "Gaussian"
+    
     Xgrid = np.linspace(0,60,301).reshape(-1,1)
     obj = m.copy() 
     # systematically remove objects from model
@@ -26,7 +30,7 @@ def test_hetGP_predict():
 
     obj['nu_hat_var'] = None
 
-    preds = het.predict_hetGP(x = Xgrid, object = obj)
+    preds = het.predict(x = Xgrid)
 
     assert np.allclose(preds['mean'],m['mean'])
     assert np.allclose(preds['sd2'],m['sd2'])
