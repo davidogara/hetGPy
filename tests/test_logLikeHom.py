@@ -1,9 +1,10 @@
 import sys
 sys.path.append('../')
-import pandas as pd
+from scipy.io import loadmat
 import numpy as np
 from hetgpy.covariance_functions import *
-from hetgpy.hetGP import hetGP
+from hetgpy.homGP import homGP
+from hetgpy.find_reps import find_reps
 
 def test_ll_hom():
     '''
@@ -25,11 +26,11 @@ def test_ll_hom():
     )
     '''
     target_ll = -674.8049
-    d = pd.read_csv('tests/data/mcycle.csv')
-    X = d['times'].values.reshape(-1,1)
-    Z = d['accel'].values
-    model = hetGP()
-    prdata = model.find_reps(
+    d = loadmat('tests/data/mcycle.mat')
+    X = d['times'].reshape(-1,1)
+    Z = d['accel']
+    model = homGP()
+    prdata = find_reps(
         X = X,
         Z = Z
     )
@@ -65,11 +66,11 @@ def test_dll_Hom():
     )
     '''
     target_dll = (17.60184, 181.40440)
-    d = pd.read_csv('tests/data/mcycle.csv')
-    X = d['times'].values.reshape(-1,1)
-    Z = d['accel'].values
-    model = hetGP()
-    prdata = model.find_reps(
+    d = loadmat('tests/data/mcycle.mat')
+    X = d['times'].reshape(-1,1)
+    Z = d['accel']
+    model = homGP()
+    prdata = find_reps(
         X = X,
         Z = Z
     )
@@ -106,14 +107,14 @@ def test_ll_and_dll_hom_anisotropic():
     target_ll =  -97.12093
     target_dll = np.array([1.6656848, 0.1213165, 0.2708796, -12.7440165])
 
-    d = pd.read_csv('tests/data/mcycle.csv')
+    d = loadmat('tests/data/mcycle.mat')
     # make some fake inputs
-    X = d['times'].values[0:90].reshape(30,3)
-    Z = d['accel'].values[0:30]
+    X = d['times'][0:90].reshape(30,3)
+    Z = d['accel'][0:30]
 
-    model = hetGP()
+    model = homGP()
 
-    prdata = model.find_reps(
+    prdata = find_reps(
         X = X,
         Z = Z
     )
