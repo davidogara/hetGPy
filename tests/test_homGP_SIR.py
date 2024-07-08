@@ -22,7 +22,7 @@ def test_homGP_SIR():
     model = homGP()
 
     # train
-    res = model.mleHomGP(
+    model.mleHomGP(
         X = X,
         Z = Z,
         init = {},
@@ -39,8 +39,7 @@ def test_homGP_SIR():
     # predict
     xseq = np.linspace(0,1,100)
     xgrid = np.array([(y,x) for x in xseq for y in xseq])
-    preds = model.predict_hom_GP(
-        object = res,
+    preds = model.predict(
         x = xgrid
     )
 
@@ -62,9 +61,9 @@ def test_homGP_SIR():
     
     
     # model pars
-    assert np.allclose(res['theta'],objR['theta'])
-    assert np.allclose(res['g'],objR['g'])
-    assert np.allclose(res['Ki'], objR['Ki'],atol=1e-3)
+    assert np.allclose(model['theta'],objR['theta'])
+    assert np.allclose(model['g'],objR['g'])
+    assert np.allclose(model['Ki'], objR['Ki'],atol=1e-3)
     
     # predictions
     assert np.allclose(preds['mean'],preds_mean_R,atol=1e-6)

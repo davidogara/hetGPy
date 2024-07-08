@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from scipy.io import loadmat
 import numpy as np
-from hetgpy import hetGP
+from hetgpy.homGP import homGP
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.stats import norm
@@ -15,10 +15,10 @@ def test_homGP_mcycle():
     X = d['times'].reshape(-1,1)
     Z = d['accel'].reshape(-1,1)
 
-    model = hetGP.hetGP()
+    model = homGP()
 
     # train
-    res = model.mleHomGP(
+    model.mleHomGP(
         X = X,
         Z = Z,
         init = {},
@@ -29,8 +29,7 @@ def test_homGP_mcycle():
     
     # predict
     xgrid =  np.linspace(0,60,301).reshape(-1,1)
-    preds = model.predict_hom_GP(
-        object = res,
+    preds = model.predict(
         x = xgrid
     )
 
@@ -63,9 +62,9 @@ def test_homGP_mcycle():
     
     
     # model pars
-    assert np.allclose(res['theta'],mat['theta'])
-    assert np.allclose(res['g'],mat['g'])
-    assert np.allclose(res['Ki'], mat['Ki'],atol=1e-7)
+    assert np.allclose(model['theta'],mat['theta'])
+    assert np.allclose(model['g'],mat['g'])
+    assert np.allclose(model['Ki'], mat['Ki'],atol=1e-7)
     
     # predictions
     assert np.allclose(preds['mean'],preds_mean_R,atol=1e-6)
