@@ -505,7 +505,7 @@ class hetGP:
                      init = {},
                      covtype = "Gaussian",
                      maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9),use_torch=False):
-        '''
+        r'''
         Gaussian process modeling with heteroskedastic noise
 
         Gaussian process regression under input dependent noise based on maximum likelihood estimation of the hyperparameters. 
