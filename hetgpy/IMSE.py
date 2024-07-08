@@ -45,7 +45,7 @@ def IMSPE(model, theta = None, Lambda = None, mult = None, covtype = None, nu= N
     -------
     One can provide directly a model of class ``hetGP`` or ``homGP``, or provide design locations ``X`` and all other arguments
     '''
-    if type(model)==hetGP.hetGP or type(model)==homGP.homGP:
+    if type(model)==hetGP or type(model)==homGP:
         Wij = Wij(mu1 = model.X0, theta = model.theta, type = model.covtype)
         if model.trendtype == "OK":
             tmp = np.squeeze(1 - 2 * model.Ki.sum(axis=0) @ mi(mu1 = model.X0, theta = model.theta, type = model.covtype) + model.Ki.sum(axis=0) @ Wij @ model.Ki(axis=1)/model.Ki.sum())
