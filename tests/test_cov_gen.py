@@ -1,5 +1,6 @@
 import pytest
 from hetgpy.covariance_functions import cov_gen
+from hetgpy.example_data import mcycle
 from hetgpy.find_reps import find_reps
 from scipy.io import loadmat
 import numpy as np
@@ -13,9 +14,9 @@ np_cv_rules = default_converter + numpy2ri.converter
 
 @pytest.fixture()
 def mcycleX0():
-    mcycle = loadmat('tests/data/mcycle.mat')
-    X = mcycle['times'].reshape(-1,1)
-    Z = mcycle['accel']
+    m = mcycle()
+    X = m['times'].reshape(-1,1)
+    Z = m['accel']
     test = find_reps(
         X = X,
         Z = Z,
@@ -65,9 +66,9 @@ def test_mcycle3_2_matern_theta2(mcycleX0):
     
 @pytest.fixture()
 def SIRX0():
-    SIR = loadmat('tests/data/SIR.mat')
-    X = SIR['X']
-    Z = SIR['Y']
+    S = loadmat('tests/data/SIR.mat')
+    X = S['X']
+    Z = S['Y']
     test = find_reps(
         X = X,
         Z = Z,
@@ -99,4 +100,16 @@ def test_SIR_matern5_2_aniso(SIRX0):
     C = cov_gen(X1 = SIRX0, theta = np.array([1,2]), type = "Matern5_2")
     with np_cv_rules.context():
         C_R = hetGP_R.cov_gen(X1 = SIRX0,theta = np.array([1,2]),type = "Matern5_2")
+    assert np.allclose(C,C_R)
+
+def test_SIR_matern3_2(SIRX0):
+    C = cov_gen(X1 = SIRX0, theta = np.array([1,1]), type = "Matern3_2")
+    with np_cv_rules.context():
+        C_R = hetGP_R.cov_gen(X1 = SIRX0,theta = np.array([1,1]),type = "Matern3_2")
+    assert np.allclose(C,C_R)
+
+def test_SIR_matern3_2_aniso(SIRX0):
+    C = cov_gen(X1 = SIRX0, theta = np.array([1,2]), type = "Matern3_2")
+    with np_cv_rules.context():
+        C_R = hetGP_R.cov_gen(X1 = SIRX0,theta = np.array([1,2]),type = "Matern3_2")
     assert np.allclose(C,C_R)

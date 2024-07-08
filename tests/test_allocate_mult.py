@@ -1,4 +1,4 @@
-from hetgpy.hetGP import hetGP
+from hetgpy import hetGP
 from hetgpy.find_reps import find_reps
 from hetgpy.IMSE import allocate_mult
 import numpy as np
