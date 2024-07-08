@@ -81,7 +81,7 @@ def partial_d_C_Gaussian_dX_i_j(X1,theta,i1,i2):
     ## 1-dimensional/isotropic case
     if len(theta) == 1:
         return(tmp/theta)
-    return(tmp / theta[i2])
+    return(tmp / theta[i2-1])
 
 def partial_d_k_Gaussian_dX_i_j(X1, X2, theta, i1, i2):
     ## Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
@@ -91,7 +91,7 @@ def partial_d_k_Gaussian_dX_i_j(X1, X2, theta, i1, i2):
     ## 1-dimensional/isotropic case
     if len(theta) == 1:
         return(tmp/theta)
-    return(tmp / theta[i2])
+    return(tmp / theta[i2-1])
 
 def partial_d_dist_dX_i1_i2(X1, i1, i2):
     nr = X1.shape[0]
