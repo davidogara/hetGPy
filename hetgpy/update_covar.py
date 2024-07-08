@@ -5,7 +5,7 @@ from hetgpy.covariance_functions import cov_gen
 import numpy as np
 
 def update_Ki(x, model, new_lambda = None, nrep = 1):
-    '''
+    r'''
     ## ' Compute the inverse covariance matrix when adding a new design
     ## ' @param x matrix for the new design
     ## ' @param model \code{homGP} or \code{hetGP} model
