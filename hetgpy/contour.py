@@ -4,7 +4,7 @@ from hetgpy.covariance_functions import cov_gen
 from scipy.stats import norm, t
 from scipy.linalg.lapack import dtrtri
 def crit_MEE(x, model, thres = 0, preds = None):
-    '''
+    r'''
     Computes MEE infill criterion
     Maximum Empirical Error criterion
 
@@ -41,7 +41,7 @@ def crit_MEE(x, model, thres = 0, preds = None):
     return norm.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(preds['sd2']))
 
 def crit_cSUR(x, model, thres = 0, preds = None):
-    '''
+    r'''
     Computes cSUR infill criterion
     
     Contour Stepwise Uncertainty Reduction criterion
@@ -94,7 +94,7 @@ def crit_cSUR(x, model, thres = 0, preds = None):
         return(norm.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(preds['sd2'])) - norm.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(sd2_new)))
     
 def crit_ICU(x, model, thres = 0, Xref = None, w = None, preds = None, kxprime = None):
-    '''
+    r'''
     Computes ICU infill criterion
     
     Integrated Contour Uncertainty criterion
@@ -165,7 +165,7 @@ def crit_ICU(x, model, thres = 0, Xref = None, w = None, preds = None, kxprime =
         return - np.sum(w * norm.pdf(-np.abs(preds['mean'] - thres)/np.sqrt(sd2_new)))
 
 def crit_tMSE(x, model, thres = 0, preds = None, seps = 0.05):
-    '''
+    r'''
     Computes targeted mean squared error infill criterion
     
     t-MSE criterion
@@ -201,7 +201,7 @@ def crit_tMSE(x, model, thres = 0, preds = None, seps = 0.05):
     return w * preds['sd2']
 
 def crit_MCU(x, model, thres = 0, gamma = 2, preds = None):
-    '''
+    r'''
     Parameters
     ----------
     x : nd_array
