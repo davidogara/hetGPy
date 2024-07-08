@@ -1,6 +1,6 @@
 # test_dloglikHet
 
-from hetgpy.hetGP import hetGP
+from hetgpy import hetGP
 from hetgpy.find_reps import find_reps
 import numpy as np
 from scipy.io import loadmat
