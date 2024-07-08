@@ -1,14 +1,13 @@
-## hetGPy
+## hetGPy: Heteroskedastic Gaussian Process Modeling in Python
 
 Python implementation of the `hetGP` R library.
 
 This package is designed to be a "pure" Python implementation of `hetGP`, with the goals of:
 *	Matching the behavior of the `R` package
-*	Having minimal dependencies (i.e. `numpy` and `scipy`)
+*	Having minimal dependencies (i.e. mostly `numpy` and `scipy`)
 
 The motivation for such a package is due to the rising popularity of implementing simulation models (also known as computer experiments) in Python. 
 
-For project progress, please see `TODO.md`
 
 ## Installing and Environments
 
@@ -25,14 +24,6 @@ poetry build
 poetry shell
 ```
 
-3. Compile the `c++` files that underlie the kernel functions:
-
-```
-python setup_cpp.py
-```
-
-Note that you may need to run `poetry install` or `poetry build` a second time.
-
 To quickly check if the installation worked, try running:
 ```
 pytest tests/test_cov_gen.py
@@ -44,6 +35,8 @@ After this you should be able to run the examples in the `examples` folder. It i
 ```
 poetry run jupyter lab
 ```
+
+If you wish to use `hetgpy` elsewhere, after running `poetry build` you should be able to install the `whl` file using pip.
 
 ## Contact
 For questions regarding this package, please contact:  
