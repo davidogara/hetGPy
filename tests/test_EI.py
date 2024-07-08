@@ -1,7 +1,7 @@
 from scipy.io import loadmat
 from scipy.stats import norm
 import numpy as np
-from hetgpy.hetGP import hetGP
+from hetgpy import hetGP
 from hetgpy.optim import crit_EI
 import pytest
 from rpy2.robjects import r
