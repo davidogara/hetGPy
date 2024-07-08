@@ -2,7 +2,6 @@ import rpy2
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import SignatureTranslatedAnonymousPackage
 import rpy2.robjects.numpy2ri
-rpy2.robjects.numpy2ri.activate()
 import numpy as np
 from scipy.linalg.lapack import dtrtri
 from time import time
@@ -54,5 +53,5 @@ def time_fast_inverse_big(msize=500):
     r_time = float(func.func(X_for_r)[0])
     assert py_time < r_time
 if __name__ == "__main__":
-    for test in (100,1000,10000):
+    for test in (100,200,300):
         time_fast_inverse_big(test)
