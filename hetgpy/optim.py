@@ -44,7 +44,7 @@ def deriv_crit_EI(x, model, cst = None, preds = None):
   
   z = (cst - preds['mean'])/np.sqrt(preds['sd2'])
   
-  if type(model)==homGP.homGP or type(model)==hetGP.hetGP:
+  if type(model)==homGP or type(model)==hetGP:
     res = pred_gr['sd2'] / (2 * np.sqrt(preds['sd2'])) * norm.pdf(z) - pred_gr['mean'] * norm.cdf(z)
   else:
     # dz = - dm/s - z ds/s = -dm/s - z * ds2/(2s2) 
@@ -74,7 +74,7 @@ def predict_gr(model, x):
   for i in range(x.shape[0]):
     dkvec = np.full(fill_value=np.nan, shape=(model.X0.shape[0], x.shape[1]))
     for j in range(x.shape[1]):
-      dkvec[:, j] = np.squeeze(partial_cov_gen(X1 = x[i:i+1,:], X2 = model.X0, theta = model.theta, i1 = 1, i2 = j + 1, arg = "X_i_j", type = model.covtype)) * kvec[:,i]
+      dkvec[:, j] = np.squeeze(partial_cov_gen(X1 = x[i:i+1,:], X2 = model.X0, theta = model.theta, i1 = 0, i2 = j + 1, arg = "X_i_j", type = model.covtype)) * kvec[:,i]
     
     dm[i,:] = ((model.Z0 - model.beta0).T @ model.Ki) @ dkvec
     if (type(model)==homGP or type(model)==hetGP) and model.trendtype == "OK": 
