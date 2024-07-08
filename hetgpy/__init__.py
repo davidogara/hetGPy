@@ -1,2 +1,2 @@
-from .homGP import homGP
-from .hetGP import hetGP
+from .homGP import homGP, homTP
+from .hetGP import hetGP, hetTP
