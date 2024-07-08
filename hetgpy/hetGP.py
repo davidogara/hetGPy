@@ -549,7 +549,7 @@ class hetGP:
         jitter used in the inversion of the covariance matrix for numerical stability
     init,known :  dict
         optional lists of starting values for mle optimization or that should not be optimized over, respectively.
-        Values in \code{known} are not modified, while it can happen to these of \code{init}, see Details. 
+        Values in ``known`` are not modified, while it can happen to these of ``init``, see Details. 
         One can set one or several of the following:
         - ``theta`` lengthscale parameter(s) for the mean process either one value (isotropic) or a vector (anistropic)
         - ``Delta`` vector of nuggets corresponding to each design in ``X0``, that are smoothed to give ``Lambda`` (as the global covariance matrix depends on ``Delta`` and ``nu_hat``, it is recommended to also pass values for ``theta``)
@@ -596,7 +596,7 @@ class hetGP:
         - for ``settings['initStrategy'] == 'simple'``, ``Delta`` is simply initialized to the estimated ``g`` value of ``modHom``. 
         Note that this procedure may fail when ``settings['penalty'] == True``.
         - for ``settings['initStrategy'] == 'residuals'``, ``Delta`` is initialized to the estimated residual variance from the homoskedastic mean prediction.
-        - for \code{settings['initStrategy'] == 'smoothed'}, \code{Delta} takes the values predicted by ``modNugs`` at ``X0``.
+        - for  ``settings['initStrategy'] == 'smoothed'``, ``Delta`` takes the values predicted by ``modNugs`` at ``X0``.
         
     Notice that ``lower`` and ``upper`` bounds cannot be equal for ``:func: scipy.optimize.minimize``.
     To use pseudo-input locations for the noise process, one can either provide ``pX`` if they are not to be optimized.
@@ -610,7 +610,7 @@ class hetGP:
 
         - ``theta``: unless given, maximum likelihood estimate (mle) of the lengthscale parameter(s),
         - ``Delta``: unless given, mle of the nugget vector (non-smoothed),
-        - ``Lambda``: predicted input noise variance at \code{X0}, 
+        - ``Lambda``: predicted input noise variance at ``X0``, 
         - ``nu_hat``: plugin estimator of the variance,
         - ``theta_g``: unless given, mle of the lengthscale(s) of the noise/log-noise process,
         - ``k_theta_g``: if ``settings['linkThetas'] == 'joint'``, mle for the constant by which lengthscale parameters of ``theta`` are multiplied to get ``theta_g``,
@@ -1338,7 +1338,7 @@ class hetGP:
         
         Details
         -------
-        The full predictive variance corresponds to the sum of \code{sd2} and \code{nugs}.
+        The full predictive variance corresponds to the sum of ``sd2`` and ``nugs``.
         See :func: `~hetgpy.hetGP.mleHetGP` for examples.
         '''
         if len(x.shape)==1:
