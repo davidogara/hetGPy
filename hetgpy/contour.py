@@ -128,7 +128,7 @@ def crit_ICU(x, model, thres = 0, Xref = None, w = None, preds = None, kxprime =
     if kxprime is None:
         covnew = model.predict(x = x, xprime = Xref)['cov']
     else:
-        if type(model)==hetgpy.homGP.homTP or type(model)==hetgpy.hetGP.hetTP:
+        if type(model)==hetgpy.homTP or type(model)==hetgpy.hetTP:
             kxprime = kxprime * model.sigma2
             kx = model.sigma2 * cov_gen(X1 = x, X2 = model.X0, theta = model.theta, type = model.covtype)
             covnew = (model.nu + model.psi - 2) / (model.nu + len(model.Z) - 2) * (model.sigma2 * cov_gen(X1 = x, X2 = Xref, theta = model.theta, type = model.covtype) - (kx @ model.Ki) @ kxprime)
@@ -141,7 +141,7 @@ def crit_ICU(x, model, thres = 0, Xref = None, w = None, preds = None, kxprime =
             else:
                 covnew = model.nu_hat * cov_gen(X1 = x, X2 = Xref, theta = model.theta, type = model.covtype) - (kx @ model.Ki) @ kxprime + (1 - (np.sum(model.Ki,axis=0,keepdims=True)@ kx.T)).T @ (1 - np.sum(model.Ki,axis=0,keepdims=True) @ kxprime)/np.sum(model.Ki)
 
-    if type(model)==hetgpy.homGP.homTP or type(model)==hetgpy.hetGP.hetTP:
+    if type(model)==hetgpy.homTP or type(model)==hetgpy.hetTP:
       
         # unscale the predictive variance and covariances (e.g., go back to the GP case)
         # (since psi is updated separately)
@@ -233,7 +233,7 @@ def crit_MCU(x, model, thres = 0, gamma = 2, preds = None):
 
 
     ## TP case
-    if type(model)==hetgpy.homGP.homTP or type(model)==hetgpy.hetGP.hetTP:
+    if type(model)==hetgpy.homTP or type(model)==hetgpy.hetTP:
         return(-np.abs(preds['mean'] - thres) + gamma * np.sqrt(preds['sd2']))
 
     ## GP case
