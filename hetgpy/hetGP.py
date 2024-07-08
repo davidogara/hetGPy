@@ -9,7 +9,7 @@ from hetgpy.covariance_functions import cov_gen, partial_cov_gen
 from hetgpy.utils import fast_tUY2, rho_AN, duplicated
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
-from hetgpy.homGP import homGP
+from hetgpy import homGP
 from hetgpy.plot import plot_optimization_iterates
 from hetgpy.LOO import LOO_preds
 from hetgpy.update_covar import update_Ki, update_Ki_rep, update_Kgi, update_Kgi_rep
@@ -1273,13 +1273,13 @@ class hetGP:
         
         
         # output
-        self.theta = mle_par['theta'] 
-        self.Delta = mle_par['Delta'] 
+        self.theta = mle_par.get('theta')
+        self.Delta = mle_par.get('Delta')
         self.nu_hat = nu2
-        self.beta0 = mle_par['beta0']
-        self.k_theta_g = mle_par['k_theta_g']
-        self.theta_g = mle_par['theta_g'] 
-        self.g = mle_par['g'] 
+        self.beta0 = mle_par.get('beta0')
+        self.k_theta_g = mle_par.get('k_theta_g')
+        self.theta_g = mle_par.get('theta_g')
+        self.g = mle_par.get('g')
         self.nmean = nmean 
         self.Lambda = Lambda
         self.ll = -1.0 * out['value'] 
