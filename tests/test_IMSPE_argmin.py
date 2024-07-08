@@ -3,7 +3,7 @@ import numpy as np
 from rpy2.robjects import r
 
 from hetgpy.IMSE import Wij, crit_IMSPE
-from hetgpy.hetGP import hetGP
+from hetgpy import hetGP
 from time import time
 
 def test_IMSPE():
