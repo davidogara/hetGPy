@@ -556,7 +556,7 @@ def allocate_mult(model = None, N = None, Wijs = None, use_Ki = False):
     return res
 
 def horizon(model, current_horizon = None, previous_ratio = None, target = None, Wijs = None, seed = None):
-    '''
+    r'''
     Adapt the look-ahead horizon depending on the replicate allocation or a target ratio
     
     Parameters
