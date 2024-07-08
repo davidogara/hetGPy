@@ -218,7 +218,7 @@ def deriv_crit_IMSPE(x, model, id = None, Wijs = None):
     if len(x.shape) == 1: x = x.reshape(1,-1)
     kn1 = cov_gen(model.X0, x, theta = model.theta, type = model.covtype).squeeze()
     
-    if TYPE(model)==hetGP.hetGP: kng1 = cov_gen(model.X0, x, theta = model.theta_g, type = model.covtype).squeeze()
+    if TYPE(model)==hetGP: kng1 = cov_gen(model.X0, x, theta = model.theta_g, type = model.covtype).squeeze()
     new_lambda = model.predict(x = x, nugs_only = True)['nugs']/model.nu_hat
     k11 = 1 + new_lambda
 
@@ -232,9 +232,9 @@ def deriv_crit_IMSPE(x, model, id = None, Wijs = None):
     
     tmp = np.repeat(np.nan, x.shape[1]).reshape(-1,1)
     dlambda = 0
-    if TYPE(model)==hetGP.hetGP: KgiD = model.Kgi @ (model.Delta - model.nmean)
+    if TYPE(model)==hetGP: KgiD = model.Kgi @ (model.Delta - model.nmean)
     if model.theta.shape[0] < x.shape[1]: model.theta = np.repeat(model.theta, x.shape[1])
-    if TYPE(model)==hetGP.hetGP and model.theta_g.shape[0] < x.shape[1]: model.theta_g = np.repeat(model.theta, x.shape[1])
+    if TYPE(model)==hetGP and model.theta_g.shape[0] < x.shape[1]: model.theta_g = np.repeat(model.theta, x.shape[1])
     
     Wig = Wijs @ g
   
@@ -244,7 +244,7 @@ def deriv_crit_IMSPE(x, model, id = None, Wijs = None):
     
         dis = np.squeeze(d1(X = model.X0[:,m], x = x[:,m], sigma = model.theta[m], type = model.covtype) * kn1)
     
-        if TYPE(model)==hetGP.hetGP:
+        if TYPE(model)==hetGP:
             dlambda = (d1(X = model.X0[:,m], x = x[:,m], sigma = model.theta_g[m], type = model.covtype) * kng1).T @ KgiD
             if model.logN:
                 dlambda = new_lambda *dlambda
@@ -539,7 +539,7 @@ def allocate_mult(model = None, N = None, Wijs = None, use_Ki = False):
         Ci = np.linalg.pinv(cov_gen(model.X0, theta = model.theta, type = model.covtype),rcond=np.sqrt(np.finfo(float).eps))
         Ci = np.clip(np.diag(Ci @ Wijs @ Ci),a_min=0, a_max = None)
     
-    if type(model)==hetGP.hetGP: 
+    if type(model)==hetGP: 
         V = model.Lambda
     else: 
         V = np.repeat(model.g, len(model.Z0))
