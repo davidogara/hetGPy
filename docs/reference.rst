@@ -9,3 +9,9 @@
 
 .. autoclass:: hetgpy.homGP.homGP
    :members:
+
+.. automodule:: hetgpy.optim
+   :members:
+
+.. automodule:: hetgpy.IMSE
+   :members:
