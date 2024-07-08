@@ -158,6 +158,7 @@ def mi(mu1, theta, type):
 ## Wrapper functions
 
 def d1(X, x, sigma, type):
+  if len(x.shape)==1: x = x.squeeze()
   if type == "Gaussian":
     return EMSE.d_gauss_cpp(X = X, x = x, sigma = sigma)
   
@@ -169,6 +170,7 @@ def d1(X, x, sigma, type):
   
 
 def c1(X, x, sigma, W, type):
+  if len(x.shape)==1: x = x.squeeze()
   if type == "Gaussian":
     return EMSE.c1_gauss_cpp(X = X, x = x, sigma = np.sqrt(sigma), W = W)
   
@@ -180,6 +182,9 @@ def c1(X, x, sigma, W, type):
   
   
 def c2(x, sigma, w, type):
+  if len(x.shape)==1:     x     = x.squeeze()
+  if len(sigma.shape)==1: sigma = sigma.squeeze()
+  if w.shape==(1,1):     w     = w.squeeze()
   if type == "Gaussian":
     return EMSE.c2_gauss_cpp(x = x, t = np.sqrt(sigma), w = w)
   
