@@ -38,7 +38,7 @@ def update_Ki(x, model, new_lambda = None, nrep = 1):
     ## ' }
     '''
 
-    if type(model)==hetgpy.homGP.homTP or type(model)==hetgpy.hetGP.hetTP:
+    if type(model)==hetgpy.homTP or type(model)==hetgpy.hetTP:
         kn1 = model.sigma2 * cov_gen(x, model.X0, theta = model.theta, type = model.covtype)
         if new_lambda is None:
             new_lambda = model.predict(object = model, x = x, nugs_only = True)['nugs']
