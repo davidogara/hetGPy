@@ -1096,7 +1096,7 @@ class hetGP:
         
         ## Case when some parameters need to be estimated
         mle_par = known.copy() # Store infered and known parameters
-
+        
         if len(components) != 0:
             if modHom is not None:
                 hom_ll = modHom['ll']
@@ -1114,7 +1114,7 @@ class hetGP:
             upperOpt = upperOpt[upperOpt!=None].astype(float)
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
             
-            
+            self.arg_max = parinit.copy()
             out = optimize.minimize(
                 fun = fn,
                 args = (X0, Z0, Z, mult, known.get('Delta'), 
