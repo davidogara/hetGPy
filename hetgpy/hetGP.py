@@ -1587,7 +1587,21 @@ class hetGP:
                                          Delta = self.Delta, g = np.max([self.g, ginit])),
                             known = known, eps = self.eps, maxit = maxit)
         return self
-    
+    def copy(self):
+        '''
+        Make a copy of the model, which is useful in tandem with the update function
+        
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        newmodel: (deep) copy of model
+        '''
+
+        newmodel = deepcopy(self)
+        return newmodel
     def LOO_preds_nugs(self, i):
         '''
         Leave-out-out predictions for the nugget

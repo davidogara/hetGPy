@@ -17,6 +17,7 @@ from hetgpy.auto_bounds import auto_bounds
 from hetgpy.find_reps import find_reps
 from hetgpy.utils import duplicated
 from hetgpy.update_covar import update_Ki, update_Ki_rep
+from copy import deepcopy
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 class homGP():
@@ -551,5 +552,20 @@ class homGP():
                        maxit = maxit
             )
         return self
+    def copy(self):
+        '''
+        Make a copy of the model, which is useful in tandem with the update function
+        
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        newmodel: (deep) copy of model
+        '''
+
+        newmodel = deepcopy(self)
+        return newmodel
 class homTP():
     pass
