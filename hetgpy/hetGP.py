@@ -1209,7 +1209,10 @@ class hetGP:
                 if trace >= 0: print("Homoskedastic model has higher log-likelihood: \n", modHom['ll'], " compared to ", ll_non_pen, "\n")
                 if settings['checkHom']:
                     if trace >= 0: print("Return homoskedastic model \n")
-                    return modHom
+                    self.__class__ = homGP
+                    for key in modHom.__dict__:
+                        self.__setitem__(key,modHom.__dict__[key])
+                    return self
         
         if mle_par.get('pX') is None:
             Cg = cov_gen(X1 = X0, theta = mle_par['theta_g'], type = covtype)
