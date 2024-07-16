@@ -13,7 +13,7 @@ from hetgpy.utils import duplicated
 from scipy.spatial.distance import pdist
 from scipy.stats.qmc import LatinHypercube
 from scipy.optimize import minimize
-from copy import copy
+from copy import deepcopy as copy
 import warnings
 TYPE = type
 
@@ -71,8 +71,8 @@ def crit_IMSPE(x=None, model=None, id = None, Wijs = None):
         else:
             tmp = model.Lambda[id]
         out = 1 - (np.sum(model.Ki*Wijs) + model.Ki[:,id].T @ Wijs @ model.Ki[:,id] / ((model.mult[id]*(model.mult[id] + 1)) / (1*tmp) - model.Ki[id, id]))
-        if out<0:
-            1/0
+        if out < -1e-1:
+            warnings.warn(f"Numerical errors caused negative IMSPE at design location {id}, suggest investigating")
         return out
 
     if len(x.shape)==1:
@@ -483,7 +483,7 @@ def IMSPE_search(model, replicate = False, Xcand = None,
                             new = False, id = argmin)
             else:
                 ## Check if IMSPE difference between replication and new design is significative
-                id_closest = np.unravel_index(np.argmin(dists, axis=None), dists.shape)[0] # closest point to new design
+                id_closest = np.unravel_index(np.argmin(dists, axis=None), dists.shape)[-1] # closest point to new design
                 imspe_rep = crit_IMSPE(model = model, id = id_closest, Wijs = Wijs)
                 if (imspe_rep - res['value'])/res['value'] < control['tol_diff']:
                     res = dict(par = model.X0[[id_closest],:],
@@ -716,11 +716,12 @@ def IMSPE_optim(model, h = 2, Xcand = None, control = dict(tol_dist = 1e-6, tol_
                 else:
                     WijsC = Wijs
                 
-                for j in range(i,h):
+                for j in range(i,h-1):
                     ## Add remaining replicates
                     newmodelC.update(Xnew = IMSPE_C['par'], Znew = np.array([np.nan]), maxit = 0)
                     IMSPE_C = IMSPE_search(model = newmodelC, replicate = True, control = control, Wijs = WijsC, ncores = ncores)
                     path_C.append(IMSPE_C)
-            if IMSPE_C['value'] < IMSPE_A['value']: return dict(par = new_designB, value = IMSPE_C['value'], path = path_B + path_C)
+            if IMSPE_C['value'] < IMSPE_A['value']: 
+                return dict(par = new_designB, value = IMSPE_C['value'], path = path_B + path_C)
 
     return dict(par = new_designA, value = IMSPE_A['value'], path = path_A)

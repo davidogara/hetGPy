@@ -13,7 +13,7 @@ from hetgpy import homGP
 from hetgpy.plot import plot_optimization_iterates
 from hetgpy.LOO import LOO_preds
 from hetgpy.update_covar import update_Ki, update_Ki_rep, update_Kgi, update_Kgi_rep
-from copy import copy
+from copy import copy, deepcopy
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
@@ -275,7 +275,7 @@ class hetGP:
         else:
             C = cov_gen(X1 = X0, theta = theta, type = covtype)
             Ki = np.linalg.cholesky(C + np.diag(Lambda/mult + eps)).T
-            ldetKi = - 2 * sum(np.log(np.diag(Ki))) # log determinant from Cholesky
+            ldetKi = - 2 * np.sum(np.log(np.diag(Ki))) # log determinant from Cholesky
             Ki = dtrtri(Ki)[0]
             Ki = Ki @ Ki.T
         if beta0 is None:
@@ -297,8 +297,8 @@ class hetGP:
             if nu_hat_var < eps:
                 penalty = False
             else:
-                loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi/N)  + 1/2 * ldetKi - 1/2 * sum((mult - 1) * np.log(Lambda) + np.log(mult)) - N/2
-                pen = - n/2 * np.log(nu_hat_var) - sum(np.log(np.diag(Kg_c))) - n/2*np.log(2*np.pi) - n/2
+                loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi/N)  + 1/2 * ldetKi - 1/2 * np.sum((mult - 1) * np.log(Lambda) + np.log(mult)) - N/2
+                pen = - n/2 * np.log(nu_hat_var) - np.sum(np.log(np.diag(Kg_c))) - n/2*np.log(2*np.pi) - n/2
                 if loglik < hom_ll and pen > 0: penalty = False
         
         dLogL_dtheta = dLogL_dDelta = dLogL_dkthetag = dLogL_dthetag = dLogL_dg = dLogL_dpX = None
@@ -365,7 +365,7 @@ class hetGP:
                     t3 = (KiZ0.T @ dK_dthetak) @ KiZ0
                     t4 = 1/2 * np.trace(Ki @ dK_dthetak)
                     dLogL_dtheta[i] = N / 2 * (t1 - t2 + t3)/psi - t4
-                    dLogL_dtheta[i] = dLogL_dtheta[i] - 1/2 * sum((mult - 1) * dLdtk/Lambda) # derivative of the sum(a_i - 1)log(lambda_i)
+                    dLogL_dtheta[i] = dLogL_dtheta[i] - 1/2 * np.sum((mult - 1) * dLdtk/Lambda) # derivative of the sum(a_i - 1)log(lambda_i)
                     
                     if penalty:
                         dLogL_dtheta[i] = dLogL_dtheta[i]  + 1/2 * (KgiD.T @ dCg_dthetak) @ KgiD / nu_hat_var  - 1/2 * np.trace(Kgi @ dCg_dthetak)
@@ -380,7 +380,7 @@ class hetGP:
                 dLogLdLambda = Lambda * dLogLdLambda
         ## Derivative of Lambda with respect to Delta
         if "Delta" in components:
-            dLogL_dDelta = (M.T @ dLogLdLambda) + rSKgi/sKgi*sum(dLogLdLambda) -  rSKgi / sKgi * sum((M.T @ dLogLdLambda)) #chain rule
+            dLogL_dDelta = (M.T @ dLogLdLambda) + rSKgi/sKgi*sum(dLogLdLambda) -  rSKgi / sKgi * np.sum((M.T @ dLogLdLambda)) #chain rule
         
         # Derivative Lambda / k_theta_g
         if "k_theta_g" in components:
@@ -455,9 +455,9 @@ class hetGP:
             if SiNK:
                 A0 = np.diag(np.repeat(1/mult, n))
                 d_irho_dg = -1/2 * (np.diag(M @ kg.T))**(-3/2) * np.diag((-M @ A0) @ Kgitkg)
-                dLogL_dg = ((d_irho_dg * M - rhox * M @ A0 @ Kgi) @ (Delta - nmean) - (1 - rsM) * ((Kgi @ A0 @ Kgi).sum(axis=0) @ Delta * sKgi - rSKgi @ Delta * sum(rSKgi**2/mult))/sKgi**2).T @ dLogLdLambda #chain rule
+                dLogL_dg = ((d_irho_dg * M - rhox * M @ A0 @ Kgi) @ (Delta - nmean) - (1 - rsM) * ((Kgi @ A0 @ Kgi).sum(axis=0) @ Delta * sKgi - rSKgi @ Delta * np.sum(rSKgi**2/mult))/sKgi**2).T @ dLogLdLambda #chain rule
             else:
-                dLogL_dg = (-M @ (KgiD/mult) - (1 - rsM) * np.squeeze(Delta @ (Kgi @ (rSKgi/mult)) * sKgi - rSKgi @ Delta * sum(rSKgi**2/mult))/sKgi**2).T @ dLogLdLambda #chain rule
+                dLogL_dg = (-M @ (KgiD/mult) - (1 - rsM) * np.squeeze(Delta @ (Kgi @ (rSKgi/mult)) * sKgi - rSKgi @ Delta * np.sum(rSKgi**2/mult))/sKgi**2).T @ dLogLdLambda #chain rule
         # Derivative Lambda/pX
         if "pX" in components:
             dLogL_dpX = np.repeat(np.nan, len(pX))
@@ -485,7 +485,7 @@ class hetGP:
                 dLogL_dkthetag = dLogL_dkthetag + 1/2 * (KgiD.T @ dCg_dk) @ KgiD / nu_hat_var - np.trace(Kgi @ dCg_dk)/2 
             
             if "g" in components:
-                dLogL_dg = dLogL_dg + 1/2 * ((KgiD/mult).T @ KgiD) / nu_hat_var - sum(np.diag(Kgi)/mult)/2
+                dLogL_dg = dLogL_dg + 1/2 * ((KgiD/mult).T @ KgiD) / nu_hat_var - np.sum(np.diag(Kgi)/mult)/2
 
         out = np.hstack([dLogL_dtheta,
            dLogL_dDelta,
@@ -647,7 +647,7 @@ class hetGP:
             X0 = X['X0']
             Z0 = X['Z0']
             mult = X['mult']
-            if sum(mult) != len(Z):    raise ValueError(f"Length(Z) should be equal to sum(mult): they are {len(Z)} \n and {sum(mult)}")
+            if np.sum(mult) != len(Z):    raise ValueError(f"Length(Z) should be equal to sum(mult): they are {len(Z)} \n and {sum(mult)}")
             if len(X0.shape) == 1:      warnings.warn(f"Coercing X0 to shape {len(X0)} x 1"); X0 = X0.reshape(-1,1)
             if len(Z0) != X0.shape[0]: raise ValueError("Dimension mismatch between Z0 and X0")
         else:
@@ -1463,8 +1463,8 @@ class hetGP:
                     id_exists.append(i)
                     id_X0 = tmp.nonzero()[0] - 1
                     self.Z0[id_X0] = (self.mult[id_X0] * self.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(self.mult[id_X0] + newdata['mult'][i])
-                    idZ = np.cumsum(self.mult)
-                    self.Z = np.insert(self.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
+                    idZ = np.cumsum(self.mult)+1
+                    self.Z = np.insert(self.Z, values = newdata['Zlist'][i], obj = min(idZ[id_X0],len(idZ)))
                     
                     ## Inverse matrices are updated if MLE is not performed 
                     if maxit == 0:
