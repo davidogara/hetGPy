@@ -474,7 +474,7 @@ class homGP():
                 del self[key]
         return self
     
-    def update(self,Xnew, Znew, lower = None, upper = None, noiseControl = None, settings = None,
+    def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
                          known = None, maxit = 100):
         # first reduce Xnew/Znew in case of potential replicates
         newdata = find_reps(Xnew, Znew, normalize = False, rescale = False)
