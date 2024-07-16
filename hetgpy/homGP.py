@@ -486,8 +486,8 @@ class homGP():
                     id_exists.append(i)
                     id_X0 = tmp.nonzero()[0] - 1
                     self.Z0[id_X0] = (self.mult[id_X0] * self.Z0[id_X0] + newdata['Z0'][i] * newdata['mult'][i])/(self.mult[id_X0] + newdata['mult'][i])
-                    idZ = np.cumsum(self.mult)
-                    self.Z = np.insert(self.Z, values = newdata['Zlist'][i], obj = idZ[id_X0])
+                    idZ = np.cumsum(self.mult)+1
+                    self.Z = np.insert(self.Z, values = newdata['Zlist'][i], obj = min(idZ[id_X0],len(idZ)))
                     
                     ## Inverse matrices are updated if MLE is not performed 
                     if maxit == 0:
