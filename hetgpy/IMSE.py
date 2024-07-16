@@ -66,7 +66,7 @@ def crit_IMSPE(x=None, model=None, id = None, Wijs = None):
 
 
     if id is not None:
-        if model.Lambda is None:
+        if not hasattr(model,'Lambda'):
             tmp = model.g
         else:
             tmp = model.Lambda[id]
