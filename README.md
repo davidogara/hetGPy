@@ -11,7 +11,7 @@ The motivation for such a package is due to the rising popularity of implementin
 
 ## Installing and Environments
 
-* `hetGPy` is not yet available as a compiled package, but you can build the package by doing the following:
+* `hetGPy` is not yet available as a compiled package on pypi, but you can build the package by doing the following:
 * At the moment, we use [poetry](https://python-poetry.org/) so dependencies can be installed with:
 
 1. Install dependencies with [poetry](https://python-poetry.org/)
@@ -37,6 +37,15 @@ poetry run jupyter lab
 ```
 
 If you wish to use `hetgpy` elsewhere, after running `poetry build` you should be able to install the `whl` file using pip.
+
+
+## Note on Dependencies
+*	`hetGPy` requires `scipy>=1.14.0` which fixed a memory issue when using `L-BFGS-B` in `scipy.optimize.minizmize`. That version of scipy requires Python 3.10. 
+
+*	Since `hetGPy` is designed for large-scale problems, this was chosen as a necessary feature. Experienced users may be able to roll back some of the dependencies, but this is not the recommended use.
+
+*	`hetGPy` also requires a c++17 compiler for the underlying covariance functions.
+
 
 ## Contact
 For questions regarding this package, please contact:  
