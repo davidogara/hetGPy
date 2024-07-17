@@ -1,6 +1,6 @@
 ## hetGPy: Heteroskedastic Gaussian Process Modeling in Python
 
-Python implementation of the `hetGP` R library.
+`hetGPy` is a Python implementation of the `hetGP` R library.
 
 This package is designed to be a "pure" Python implementation of `hetGP`, with the goals of:
 *	Matching the behavior of the `R` package
@@ -40,7 +40,7 @@ If you wish to use `hetgpy` elsewhere, after running `poetry build` you should b
 
 
 ## Note on Dependencies
-*	`hetGPy` requires `scipy>=1.14.0` which fixed a memory issue when using `L-BFGS-B` in `scipy.optimize.minizmize`. That version of scipy requires Python 3.10. 
+*	`hetGPy` requires `scipy>=1.14.0` which fixed a [memory leakage issue](https://github.com/scipy/scipy/issues/20768) when using `L-BFGS-B` in `scipy.optimize.minizmize`. That version of scipy requires Python 3.10. 
 
 *	Since `hetGPy` is designed for large-scale problems, this was chosen as a necessary feature. Experienced users may be able to roll back some of the dependencies, but this is not the recommended use.
 
