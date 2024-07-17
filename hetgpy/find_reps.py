@@ -66,6 +66,9 @@ def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inpu
             raise ValueError(f"X must be a numpy array, is currently: {type(X)}")
         if type(Z) != np.ndarray:
             raise ValueError(f"X must be a numpy array, is currently: {type(Z)}")
+        if len(Z.shape)>1:
+            if Z.shape[1]>1: raise ValueError(f"Z must be 1D")
+            Z = Z.reshape(-1)
         if X.shape[0] == 1:
             if return_Zlist:
                 return dict(X0=X,Z0=Z,mult = np.array([1]), Z = Z, Zlist = {0:Z})
