@@ -1450,7 +1450,7 @@ class hetGP:
         return preds
     
     def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
-                         known = None, maxit = 100, method = 'quick'):
+                         known = {}, maxit = 100, method = 'quick'):
         # first reduce Xnew/Znew in case of potential replicates
         newdata = find_reps(Xnew, Znew, normalize = False, rescale = False)
   
