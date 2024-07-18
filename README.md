@@ -14,15 +14,33 @@ The motivation for such a package is due to the rising popularity of implementin
 * `hetGPy` is not yet available as a compiled package on pypi, but you can build the package by doing the following:
 * At the moment, we use [poetry](https://python-poetry.org/) so dependencies can be installed with:
 
-1. Install dependencies with [poetry](https://python-poetry.org/)
+1. Create a virtual environment. Assuming you have python3.10 installed, run:
 ```
-poetry install
+python3.10 -m venv .venv
+```
+
+2. Check if `eigen` is installed as a submodule (note that you only have to do this once):
+```
+git submodule update
+```
+You should see the `eigen` subdirectory populate with many files.
+
+3. Install dependencies with [poetry](https://python-poetry.org/)
+```
+poetry install --no-root
 poetry build
 ```
-2. Activate the virtual environment:
+
+4. Activate the virtual environment:
 ```
 poetry shell
 ```
+
+5. If you want to develop locally (and run the tests), run:
+```
+python setup_cpp.py
+```
+
 
 To quickly check if the installation worked, try running:
 ```

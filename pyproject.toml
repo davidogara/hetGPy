@@ -36,6 +36,7 @@ setuptools = "^69.2.0"
 jax = "^0.4.28"
 jaxlib = "^0.4.28"
 tqdm = "^4.66.4"
+numba = "^0.60.0"
 
 
 [tool.poetry.group.dev.dependencies]
