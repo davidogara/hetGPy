@@ -1,9 +1,6 @@
 
 import numpy as np
-try:
-    from hetgpy.src import EMSE
-except ImportError:
-    from hetgpy import EMSE
+from hetgpy import EMSE
 from hetgpy import hetGP, homGP
 from hetgpy.covariance_functions import cov_gen
 from scipy.linalg.lapack import dtrtri
