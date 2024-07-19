@@ -5,10 +5,7 @@ import hetgpy
 from hetgpy import hetGP, homGP
 from hetgpy.contour import crit_cSUR, crit_ICU, crit_MCU, crit_MEE, crit_tMSE
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
-try:
-  from hetgpy.src.qEI import qEI_cpp
-except ImportError:
-  from hetgpy.qEI import qEI_cpp
+from hetgpy.qEI import qEI_cpp
   
 from scipy.stats import t, norm
 from scipy.special import gamma
