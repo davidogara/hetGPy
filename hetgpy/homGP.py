@@ -17,6 +17,7 @@ from hetgpy.auto_bounds import auto_bounds
 from hetgpy.find_reps import find_reps
 from hetgpy.utils import duplicated
 from hetgpy.update_covar import update_Ki, update_Ki_rep
+from hetgpy.LOO import LOO_preds
 from copy import deepcopy
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
@@ -569,10 +570,5 @@ class homGP():
         newmodel = deepcopy(self)
         return newmodel
     
-    def plot():
-        r'''
-        Plot Leave-One-Out (LOO) predictions against their observed values
-        '''
-        LOO_preds = 1.0
 class homTP():
     pass
