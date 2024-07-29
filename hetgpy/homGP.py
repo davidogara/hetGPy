@@ -320,6 +320,7 @@ class homGP():
                 lowerOpt = np.append(lowerOpt,g_min)
                 upperOpt = np.append(upperOpt,g_max)
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
+            foo=1
             out = optimize.minimize(
                 fun=fn, # for maximization
                 args = (X0, Z0, Z, mult, beta0, known.get('theta'), known.get('g')),
@@ -567,5 +568,11 @@ class homGP():
 
         newmodel = deepcopy(self)
         return newmodel
+    
+    def plot():
+        r'''
+        Plot Leave-One-Out (LOO) predictions against their observed values
+        '''
+        LOO_preds = 1.0
 class homTP():
     pass

@@ -643,6 +643,7 @@ class hetGP:
         # copy dicts upon import to make sure they aren't passed around between model runs
         known = known.copy()
         init  = init.copy()
+        noiseControl = noiseControl.copy()
         if type(X) == dict:
             X0 = X['X0']
             Z0 = X['Z0']
@@ -898,7 +899,8 @@ class hetGP:
                 if init.get('g') is None:
                     mean_var_replicates_nugs = np.mean((fast_tUY2(mult, (nugs_est - np.repeat(nugs_est0, mult))**2)/mult))
                     init['g'] = mean_var_replicates_nugs / np.var(nugs_est0,ddof=1)
-                
+                    if np.isnan(init['g']):
+                        init['g'] = MACHINE_DOUBLE_EPS
                 modNugs = homGP()
                 settings_tmp = settings.copy()
                 settings_tmp['return_Ki'] = False
