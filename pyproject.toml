@@ -52,17 +52,13 @@ cython = "^3.0.6"
 pybind11 = "^2.11.1"
 
 [tool.poetry.build]
-script = "build.py"
+script = "build_hetgpy.py"
 generate-setup-file = true
 
 
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = ["poetry>=0.12", "setuptools", "wheel", "setuptools-cpp","pybind11"]
-
-[virtualenvs]
-create = true
-in-project = true
 
 
 
