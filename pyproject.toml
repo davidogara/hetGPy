@@ -55,6 +55,8 @@ pybind11 = "^2.11.1"
 script = "build_hetgpy.py"
 generate-setup-file = true
 
+[tool.setuptools]
+packages = ["hetgpy"]
 
 [build-system]
 build-backend = "setuptools.build_meta"
