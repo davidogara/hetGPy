@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Python implementation of hetGP"
 authors = ["David O'Gara <david.ogara@wustl.edu>"]
 readme = "README.md"
+package-mode = true
 
 
 
@@ -55,8 +56,6 @@ pybind11 = "^2.11.1"
 script = "build_hetgpy.py"
 generate-setup-file = true
 
-[tool.setuptools]
-packages = ["hetgpy"]
 
 [build-system]
 build-backend = "setuptools.build_meta"
