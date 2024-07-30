@@ -10,7 +10,7 @@ from hetgpy.utils import fast_tUY2, rho_AN, duplicated
 from hetgpy.find_reps import find_reps
 from hetgpy.auto_bounds import auto_bounds
 from hetgpy import homGP
-from hetgpy.plot import plot_optimization_iterates
+from hetgpy.plot import plot_optimization_iterates, plot_diagnostics
 from hetgpy.LOO import LOO_preds
 from hetgpy.update_covar import update_Ki, update_Ki_rep, update_Kgi, update_Kgi_rep
 from copy import copy, deepcopy
@@ -1627,9 +1627,14 @@ class hetGP:
     
     
     
-    def plot(self,type='iterates',**kwargs):
+    def plot(self,type='diagnostics',**kwargs):
+        ptypes = ('diagnostics','iterates')
+        if type not in ptypes:
+            raise ValueError(f"{type} not found, select one of {ptypes}")
+        if type=='diagnostics':
+            return plot_diagnostics(model=self)
         if type=='iterates':
-            return plot_optimization_iterates(self,**kwargs)
+            return plot_optimization_iterates(model=self)
     def summary(self):
         
         print("N = ", len(self.Z), " n = ", len(self.Z0), " d = ", self.X0.shape[1], "\n")

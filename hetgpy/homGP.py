@@ -17,7 +17,7 @@ from hetgpy.auto_bounds import auto_bounds
 from hetgpy.find_reps import find_reps
 from hetgpy.utils import duplicated
 from hetgpy.update_covar import update_Ki, update_Ki_rep
-from hetgpy.LOO import LOO_preds
+from hetgpy.plot import plot_diagnostics, plot_optimization_iterates
 from copy import deepcopy
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
@@ -569,6 +569,14 @@ class homGP():
 
         newmodel = deepcopy(self)
         return newmodel
-    
+    def plot(self,type='diagnostics'):
+        ptypes = ('diagnostics','iterates')
+        if type not in ptypes:
+            raise ValueError(f"{type} not found, select one of {ptypes}")
+        if type=='diagnostics':
+            return plot_diagnostics(model=self)
+        if type=='iterates':
+            return plot_optimization_iterates(model=self)
+
 class homTP():
     pass

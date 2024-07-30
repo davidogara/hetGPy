@@ -1,9 +1,14 @@
-import matplotlib.pyplot as plt
+'''
+Suite of plotting functions for model checks/diagnostics/etc.
+'''
+
+import warnings
 import numpy as np
-import os
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
 
 def plot_optimization_iterates(object, keys_and_title = None , stylesheet = None):
-    if stylesheet is not None and os.path.exists(stylesheet): plt.style.use('mplstyle/latex.mplstyle')
     def extract_variable(key):
         # extract iterates from model object
         out = np.array([d[key] for d in object['iterates']])
@@ -26,4 +31,34 @@ def plot_optimization_iterates(object, keys_and_title = None , stylesheet = None
         ax[i].set_title(ax_title)
         i+=1
     return fig, ax
+
+def plot_diagnostics(model):
+    r'''Diagnostics plot which mirrors the plot(model) routine in hetGP'''
+    preds = model.predict(model.X0)
+    preds['upper'] = norm.ppf(0.95, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+    preds['lower'] = norm.ppf(0.05, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+
+    fig, ax = plt.subplots()
+    idxs = np.repeat(np.arange(len(model.X0)),model.mult)
+    ax.hlines(
+        y=preds['mean'],
+        xmin=preds['lower'],
+        xmax=preds['upper'],
+        label='Prediction Interval',zorder=-10)
+    ax.scatter(model.Z,
+        preds['mean'][idxs],
+        facecolors='none',
+        edgecolors='black',
+        label='Observations',zorder=5)
+    ax.axline((0, 0), slope=1,color='black',linestyle='dashed')
+
+    ax.scatter(model.Z0[(model.mult>1).nonzero()[0]],
+            preds['mean'][(model.mult>1).nonzero()[0]],
+            label='Averages (if mult > 1)',color='red',zorder=10)
+    ax.legend(loc='upper left',edgecolor='black')
+    ax.set_title('Model Diagnostics')
+    ax.set_xlabel('Observed')
+    ax.set_ylabel('Predicted')
+    return fig, ax
+
     
