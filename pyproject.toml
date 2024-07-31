@@ -12,7 +12,7 @@ requires-python = ">3.10"
 dynamic = ["dependencies", "optional-dependencies"]
 
 [tool.setuptools]
-packages=['hetgpy','tests','docs','eigen/*']
+packages=['hetgpy','tests','docs']
 
 
 
