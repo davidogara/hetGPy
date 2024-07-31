@@ -9,15 +9,10 @@ packages = \
 package_data = \
 {'': ['*'], 'hetgpy': ['src/*']}
 
-install_requires = \
-['jax>=0.4.28,<0.5.0',
- 'jaxlib>=0.4.28,<0.5.0',
- 'joblib>=1.3.2,<2.0.0',
- 'matplotlib>=3.9.1,<4.0.0',
- 'numba>=0.60.0,<0.61.0',
- 'numpy>=1.20.2,<2.0.0',
- 'scipy==1.14.0',
- 'tqdm>=4.66.4,<5.0.0']
+
+with open('requirements.txt','rb') as f: install_requires = f.read().splitlines()
+with open('requirements.txt','rb') as f: install_dev = f.read().splitlines()
+
 
 setup_kwargs = {
     'name': 'hetgpy',
@@ -33,6 +28,7 @@ setup_kwargs = {
     'package_data': package_data,
     'install_requires': install_requires,
     'python_requires': '>=3.10',
+    'extra_requires': {'dev':install_dev}
 }
 
 ext_modules = [
