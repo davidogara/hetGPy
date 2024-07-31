@@ -10,8 +10,8 @@ package_data = \
 {'': ['*'], 'hetgpy': ['src/*']}
 
 
-with open('requirements.txt','rb') as f: install_requires = f.read().splitlines()
-with open('requirements.txt','rb') as f: install_dev = f.read().splitlines()
+with open('requirements.txt','r') as f: install_requires = f.read().splitlines()
+with open('requirements.txt','r') as f: install_dev = f.read().splitlines()
 
 
 setup_kwargs = {
