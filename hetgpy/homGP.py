@@ -51,31 +51,7 @@ class homGP():
         loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.log(mult).sum() - (N / 2.0)
         #print('loglik: ', loglik,'\n')
         return loglik
-    def logLikHom_autodiff(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS, env = None):
-        '''
-        Implementation of logLikHim with autodiff methods
-        '''
-        n = X0.shape[0]
-        N = Z.shape[0]
-
-        C = cov_gen(X1 = X0, theta = theta, type = covtype)
-        self.C = C
-        Ki = jnp.linalg.cholesky(C + jnp.diag(eps + g / mult),upper=True)
-        ldetKi = - 2.0 * jnp.sum(jnp.log(jnp.diag(Ki)))
-        
-        Ki = jscp.linalg.solve_triangular(Ki,1.0 * jnp.eye(Ki.shape[0]))
-        Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
-        
-        self.Ki = Ki
-        if beta0 is None:
-            beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
-        self.beta0 = beta0
-
-        psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
-        psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
-        loglik = (-N / 2.0) * jnp.log(2*jnp.pi) - (N / 2.0) * jnp.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * jnp.log(g) - (1.0 / 2.0) * jnp.log(mult).sum() - (N / 2.0)
-        
-        return loglik
+    
 
         
     def dlogLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian",
@@ -116,12 +92,7 @@ class homGP():
         out = np.hstack((tmp1, tmp2)).squeeze()
         out = out[~(out==None)].astype(float).reshape(-1,1)
         #print('dll', out, '\n')
-        return out
-    
-    def dlogLikHom_ad(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian",
-                        eps = MACHINE_DOUBLE_EPS, components = ("theta", "g")):
-        return jgrad(self.logLikHom_autodiff)
-        
+        return out    
 
     def mleHomGP(self,X, Z, lower = None, upper = None, known = dict(),
                         noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
