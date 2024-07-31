@@ -1,0 +1,10 @@
+'dash>=2.14.1',
+'ipykernel>=6.27.1',
+'jupyter>=1.0.0',
+'sphinx>=7.2.6',
+'numpydoc>=1.6.0',
+'sphinx-rtd-theme>=2.0.0',
+'rpy2>=3.5.16',
+'pytest>=7.4.3',
+'cython>=3.0.6',
+'pybind11>=2.11.1'
