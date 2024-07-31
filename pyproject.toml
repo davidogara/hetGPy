@@ -7,13 +7,12 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">3.10"
-dependencies = [
- 'numpy>=1.20.2,<2.0.0',
- 'scipy>=1.14.0',
- 'matplotlib>=3.9.1,<4.0.0']
+
+
+
 
 [tool.setuptools]
-packages=['hetgpy','tests']
+packages=['hetgpy','tests','docs']
 
 
 
