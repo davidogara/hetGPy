@@ -1,9 +1,4 @@
 import numpy as np
-import jax
-jax.config.update("jax_enable_x64", True)
-import jax.numpy as jnp
-import jax.scipy as jscp
-from jax import grad as jgrad
 from itertools import chain
 import warnings
 from time import time
