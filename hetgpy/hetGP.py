@@ -632,13 +632,21 @@ class hetGP:
         See also `~hetgpy.hetGP.hetGP.predict` for predictions, `~hetgpy.hetGP.update` for updating an existing model.
         ``summary`` and ``plot`` functions are available as well.
         `~hetTP.mleHetTP` provide a Student-t equivalent.
-        
-        References
-        ----------
-        M. Binois, Robert B. Gramacy, M. Ludkovski (2018), Practical heteroskedastic Gaussian process modeling for large simulation experiments,
-        Journal of Computational and Graphical Statistics, 27(4), 808--821.
-        Preprint available on arXiv:1611.05902.
-        '''
+
+    Examples
+    --------
+    >>> from hetgpy import hetGP
+    >>> from hetgpy.example_data import mcycle
+    >>> m = mcycle()
+    >>> model = hetGP()
+    >>> model.mle(m['times'],m['accel'],lower=[1.0],upper=[10.0],covtype="Matern5_2")    
+    
+    References
+    ----------
+    M. Binois, Robert B. Gramacy, M. Ludkovski (2018), Practical heteroskedastic Gaussian process modeling for large simulation experiments,
+    Journal of Computational and Graphical Statistics, 27(4), 808--821.
+    Preprint available on arXiv:1611.05902.
+    '''
 
         # copy dicts upon import to make sure they aren't passed around between model runs
         known = known.copy()
