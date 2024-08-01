@@ -15,6 +15,43 @@ from hetgpy.IMSE import maximinSA_LHS
 from hetgpy.utils import duplicated
 
 def crit_EI(x, model, cst = None, preds = None):
+  r'''
+  Expected Improvement (EI) criteria
+
+  Parameters
+  ----------
+  x: nd_arraylike
+    model designs, one point per row
+  model: hetgpy.hetGP
+    hetGP or homGP model
+  cst: float
+    optional plugin value of the mean
+  preds: Dict
+    model predictions (optional)
+
+  References
+  ----------
+
+  Mockus, J.; Tiesis, V. & Zilinskas, A. (1978). The application of Bayesian methods for seeking the extremum Towards Global Optimization, Amsterdam: Elsevier, 2, 2.
+  Vazquez E, Villemonteix J, Sidorkiewicz M, Walter E (2008). Global Optimization Based on Noisy Evaluations: An Empirical Study of Two Statistical Approaches, Journal of Physics: Conference Series, 135, IOP Publishing.
+  
+  
+  
+  Examples
+  --------
+  >>> from hetgpy.test_functions import f1d
+  >>> from hetgpy.homGP import homGP
+  >>> from hetgpy.optim import crit_EI
+  >>> import numpy as np
+  >>> ftest = f1d
+  >>> n_init = 5 # number of unique designs
+  >>> X = np.linspace(0, 1, n_init).reshape(-1,1)
+  >>> Z = ftest(X)
+  >>> xgrid = np.linspace(0,1,51).reshape(-1,1)
+  >>> model = homGP()
+  >>> model.mle(X = X, Z = Z, lower = np.array([0.01]), upper = np.array([1]), known = dict(g = 2e-8))
+  >>> EI = crit_EI(xgrid, model, cst = model.Z0.min())
+  '''
   if cst is None: cst = np.min(model.predict(x = model['X0'])['mean'])
   if len(x.shape) == 1: x = x.reshape(-1,model.X0.shape[1])
   if preds is None: preds = model.predict(x = x)
@@ -33,6 +70,27 @@ def crit_EI(x, model, cst = None, preds = None):
   return res
 
 def deriv_crit_EI(x, model, cst = None, preds = None):
+  r'''
+  Derivative for crit_EI, used in crit_optim
+  
+  Parameters
+  ----------
+  x: nd_arraylike
+    model designs, one point per row
+  model: hetgpy.hetGP
+    hetGP or homGP model
+  cst: float
+    optional plugin value of the mean
+  preds: Dict
+    model predictions (optional)
+
+  References
+  ----------
+  Ginsbourger, D. Multiples metamodeles pour l'approximation et l'optimisation de fonctions numeriques multivariables Ecole Nationale Superieure des Mines de Saint-Etienne, Ecole Nationale Superieure des Mines de Saint-Etienne, 2009
+  Roustant, O., Ginsbourger, D., DiceKriging, DiceOptim: Two R packages for the analysis of computer experiments by kriging-based metamodeling and optimization, Journal of Statistical Software, 2012
+
+
+  '''
   if cst is None: cst = np.min(model.predict(x = model.X0)['mean'])
   if len(x.shape) == 1: x = x.reshape(-1,model.X0.shape[1])
   if preds is None: preds = model.predict(x = x)
@@ -62,6 +120,9 @@ def deriv_crit_EI(x, model, cst = None, preds = None):
   return res
 
 def predict_gr(model, x):
+  r'''
+  Gradient of the prediction given a model
+  '''
   if len(x.shape) == 1: x = x.reshape(-1,1)
   kvec =  cov_gen(X1 = model.X0, X2 = x, theta = model.theta, type = model.covtype)
   
@@ -86,7 +147,7 @@ def predict_gr(model, x):
     return dict(mean = model.sigma2 * dm, sd2 =  (model.nu + model.psi - 2) / (model.nu + len(model.Z) - 2) * model.sigma2**2 * ds2)
   
 def dlambda(z,a):
-  '''
+  r'''
   Derivative of the student-t pdf
 
   Parameters
@@ -108,7 +169,7 @@ def dlambda(z,a):
 
 
 def crit_qEI(x, model, cst = None, preds = None):
-  '''
+  r'''
   Fast approximated batch-Expected Improvement criterion (for minimization)
   Parallel Expected improvement
 
@@ -138,8 +199,6 @@ def crit_qEI(x, model, cst = None, preds = None):
   
   Examples
   --------
-  ## Optimization example (noiseless)
-  ## Test function defined in [0,1]
   >>> from hetgpy.test_functions import f1d
   >>> from hetgpy.homGP import homGP
   >>> from hetgpy.optim import crit_qEI

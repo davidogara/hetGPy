@@ -100,7 +100,9 @@ class homGP():
                         covtype = "Gaussian",
                         maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
         r'''
-        Gaussian process modeling with homoskedastic noise
+        Gaussian process modeling with homoskedastic noise.
+
+        You may also call this function as `model.mle`
 
         Gaussian process regression under homoskedastic noise based on maximum likelihood estimation of the hyperparameters. This function is enhanced to deal with replicated observations.
         

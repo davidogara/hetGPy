@@ -508,6 +508,8 @@ class hetGP:
         r'''
         Gaussian process modeling with heteroskedastic noise
 
+        You may also call this function as `model.mle`
+
         Gaussian process regression under input dependent noise based on maximum likelihood estimation of the hyperparameters. 
         A second GP is used to model latent (log-) variances. This function is enhanced to deal with replicated observations.
 
