@@ -99,7 +99,7 @@ class homGP():
                         init = {},
                         covtype = "Gaussian",
                         maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
-        '''
+        r'''
         Gaussian process modeling with homoskedastic noise
 
         Gaussian process regression under homoskedastic noise based on maximum likelihood estimation of the hyperparameters. This function is enhanced to deal with replicated observations.
@@ -163,6 +163,14 @@ class homGP():
             See also `~hetgpy.homGP.homGP.predict` for predictions, `~hetgpy.homGP.update` for updating an existing model.
             ``summary`` and ``plot`` functions are available as well.
             `~homTP.mleHomTP` provide a Student-t equivalent.
+        
+        Examples
+        --------
+        >>> from hetgpy import homGP
+        >>> from hetgpy.example_data import mcycle
+        >>> m = mcycle()
+        >>> model = homGP()
+        >>> model.mle(m['times'],m['accel'],lower=[1.0],upper=[10.0],covtype="Matern5_2")
         
         References
         ----------
