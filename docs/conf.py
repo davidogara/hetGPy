@@ -32,6 +32,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
     "numpydoc",
+    "nbsphinx", # nbsphinx-0.9.4
     "sphinx_rtd_theme"
 ]
 

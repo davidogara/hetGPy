@@ -21,7 +21,7 @@ Welcome to hetGPy's documentation!
         See what's hot off the press.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents:
    :hidden:
 
