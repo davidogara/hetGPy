@@ -1,15 +1,20 @@
+===
+API
+===
+    Welcome to the ``hetGPy`` API
 .. currentmodule:: hetgpy
-    Welcome to the API
+
 .. toctree::
    :hidden:
 
    hetGP
    homGP
+   contour
    covariance_functions
    optim
    IMSE
    find_reps
    LOO
    plot
-   
+
    
