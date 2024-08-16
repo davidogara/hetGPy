@@ -1,6 +1,8 @@
 import numpy as np
 from hetgpy.find_reps import find_reps
-from hetgpy.covariance_functions import euclidean_dist
+from hetgpy.covariance_functions import euclidean_dist, cov_gen
+from scipy.optimize import root_scalar
+MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 def auto_bounds(X, min_cor = 0.01, max_cor = 0.5, covtype = "Gaussian", p = 0.05):
 
     Xsc = find_reps(X,np.repeat(1,X.shape[0]), rescale=True) # rescaled distances
@@ -15,4 +17,22 @@ def auto_bounds(X, min_cor = 0.01, max_cor = 0.5, covtype = "Gaussian", p = 0.05
         
     
     else:
-        raise NotImplementedError(f"{covtype} not implemented yet")
+        def tmpfun(theta, repr_dist, covtype, value):
+            x1 = np.sqrt([repr_dist/X.shape[1]]*X.shape[1]).reshape(-1,X.shape[1])
+            x2 = np.zeros(shape=(1,X.shape[1]))
+            if type(theta)!=np.ndarray:
+                theta = np.array([theta])
+                if len(theta) != X.shape[1]: theta = np.repeat(theta,X.shape[1])
+            return cov_gen(x1,x2,theta=theta,type=covtype) - value
+
+        args_theta_min = (repr_low_dist,covtype,min_cor) 
+        args_theta_max = (repr_lar_dist,covtype,max_cor)       
+        theta_min = root_scalar(f=tmpfun, args = args_theta_min, 
+                            bracket = [MACHINE_DOUBLE_EPS, 100],
+                            xtol = MACHINE_DOUBLE_EPS).root
+        theta_max = root_scalar(f=tmpfun, args = args_theta_max, 
+                            bracket = [MACHINE_DOUBLE_EPS, 100],
+                            xtol = MACHINE_DOUBLE_EPS).root
+        return dict(lower = theta_min * (Xsc['inputBounds'][1,:] - Xsc['inputBounds'][0,:]),
+                upper = max(1, theta_max) * (Xsc['inputBounds'][1,:] - Xsc['inputBounds'][0,]))
+        
