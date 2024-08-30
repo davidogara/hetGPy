@@ -24,7 +24,7 @@ jobs:
     - name: Pull & update submodules recursively
       run: git submodule update --init --recursive
     - name: symlink eigen to /include
-      run: sudo ln -s eigen/Eigen /usr/local/include/Eigen
+      run: sudo cp -r eigen/Eigen /usr/local/include/
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages
