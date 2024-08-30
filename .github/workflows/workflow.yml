@@ -23,6 +23,8 @@ jobs:
         --user
     - name: Pull & update submodules recursively
       run: git submodule update --init --recursive
+    - name: Check if eigen was installed
+      run: ls eigen/*
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages
