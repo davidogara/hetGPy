@@ -19,7 +19,7 @@ packages=['hetgpy','tests','docs']
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["poetry>=0.12", "setuptools", "wheel", "setuptools-cpp","pybind11"]
+requires = ["setuptools", "wheel", "setuptools-cpp","pybind11"]
 
 
 
