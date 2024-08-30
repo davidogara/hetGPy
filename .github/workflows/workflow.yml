@@ -12,6 +12,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
+        submodules: recursive
         python-version: "3.X"
     - name: Install pypa/build
       run: >-
