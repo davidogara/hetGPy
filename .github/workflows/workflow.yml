@@ -23,8 +23,8 @@ jobs:
         --user
     - name: Pull & update submodules recursively
       run: git submodule update --init --recursive
-    - name: copy eigen to /include
-      run: cp eigen/* /usr/local/include
+    - name: symlink eigen to /include
+      run: sudo ln -s eigen/Eigen /usr/local/include/Eigen
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages
