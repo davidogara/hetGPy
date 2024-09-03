@@ -11,17 +11,28 @@ The motivation for such a package is due to the rising popularity of implementin
 
 ## Installing and Environments
 
-* `hetGPy` is not yet available as a compiled package on pypi, but you can build the package by doing the following, but you may install with `pip`. Assuming you have python 3.10 or later installed, you can either install via:
+* `hetGPy` is not yet available as a compiled package on pypi, but you can build the package by doing the following, but you may install with `pip`. Assuming you have python 3.10 or later installed, you can do one of the two options:
 
+### To Install and use `hetGPy`:
+* For simply using the package (but not the source code)
 ```
 python3.10 -m pip install git+https://github.com/davidogara/hetGPy.git
 ```
 
-Or you can clone the repository and run (with `hetGPy` as your current working directory):
+### To Install and use `hetGPy`:
+
+* To build from the source files:
+
+1. Clone the repository. Make sure to include `--recurve-submodules` if you do not already have `Eigen` installed on your system:
+
 ```
-pip install .
+git clone --recurse-submodules https://github.com/davidogara/hetGPy.git
 ```
 
+2. With `hetGPy` as your current working directory:
+```
+pip install -e .
+```
 
 We recommend installing in a virtual environment. One way to do this with `venv` is:
 ```
