@@ -8,3 +8,5 @@ rpy2>=3.5.16
 pytest>=7.4.3
 cython>=3.0.6
 pybind11>=2.11.1
+joblib
+pandas
