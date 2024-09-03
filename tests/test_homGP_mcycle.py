@@ -69,7 +69,7 @@ def test_homGP_mcycle():
     # predictions
     assert np.allclose(preds['mean'],preds_mean_R,atol=1e-6)
     assert np.allclose(preds['sd2'],preds_sd_R,atol=1e-6)
-    make_plot(preds,mat,xgrid,X,Z,save_plot=True)
+    #make_plot(preds,mat,xgrid,X,Z,save_plot=True)
     return
 
      

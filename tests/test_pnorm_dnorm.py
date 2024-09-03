@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import norm
-from hetgpy.src.qEI import pnorm, dnorm
+from hetgpy.qEI import pnorm, dnorm
 
 def compute_pnorm(loc,scale):
     x = np.linspace(-10,10,1000)
