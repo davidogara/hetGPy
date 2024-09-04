@@ -48,7 +48,8 @@ After this you should be able to run the examples in the `examples` folder.
 
 *	Since `hetGPy` is designed for large-scale problems, this was chosen as a necessary feature. Experienced users may be able to roll back some of the dependencies, but this is not the recommended use.
 
-*	`hetGPy` also requires a c++17 compiler for the underlying covariance functions.
+*	`hetGPy` also requires a c++17 compiler and [`Eigen`](https://eigen.tuxfamily.org/index.php?title=Main_Page) for the underlying covariance functions. Eigen 3.4.0 is included with the source files (and is a submodule of the git repository), but experienced users may wish to link against their own installation.
+
 
 
 ## Contact
