@@ -553,6 +553,17 @@ class homGP():
             return plot_diagnostics(model=self)
         if type=='iterates':
             return plot_optimization_iterates(model=self)
+    
+    def summary(self):
+        print("N = ", len(self.Z), " n = ", len(self.Z0), " d = ", self.X0.shape[1], "\n")
+        print("Homoskedastic nugget value: ", self.g, "\n")
+        print(self.covtype, " covariance lengthscale values: ", self.theta, "\n")
+        print("Variance/scale hyperparameter: ", self.nu_hat, "\n")
+        if self.trendtype == "SK":
+            print("Given constant trend value: ", self.beta0, "\n")
+        else:
+            print("Estimated constant trend value: ", self.beta0, "\n")
+        print("MLE optimization: \n", "Log-likelihood = ", self.ll, "; Nb of evaluations (obj, gradient) by L-BFGS-B: ", self.nit_opt, "; message: ", self.msg, "\n")
 
 class homTP():
     pass
