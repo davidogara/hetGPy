@@ -166,6 +166,8 @@ def cov_Matern3_2(X1, X2 = None, theta = None):
         abs_dist(X1[:,i:i+1],X2[:,i:i+1]) 
         for i in range(X1.shape[1])
         ]
+    if theta.shape[0]==1 and X1.shape[1] > 1:
+        theta = np.repeat(theta,X1.shape[1])
     klist = [
         (1 + np.sqrt(3)/theta[i] * dlist[i]) * np.exp(-1.0*np.sqrt(3)*dlist[i]/theta[i])
         for i in range(X1.shape[1])
@@ -184,6 +186,8 @@ def cov_Matern5_2(X1, X2 = None, theta = None):
         euclidean_dist(X1[:,i:i+1],X2[:,i:i+1]) 
         for i in range(X1.shape[1])
     ]
+    if theta.shape[0]==1 and X1.shape[1] > 1:
+        theta = np.repeat(theta,X1.shape[1])
     klist = [
         (1 + np.sqrt(5)/theta[i] * abs_dist_list[i] + 5 * euclid_dist_list[i]/(3*theta[i]**2)) * np.exp(-1.0*np.sqrt(5)*abs_dist_list[i]/theta[i])
         for i in range(X1.shape[1])
