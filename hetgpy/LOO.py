@@ -63,20 +63,20 @@ def LOO_preds(model, ids = None):
     if model.trendtype is not None and model.trendtype == "OK":
         model.Ki = model.Ki - model.Ki.sum(axis=0).reshape(-1,1) @ model.Ki.sum(axis=0).reshape(1,-1) / model.Ki.sum()
     
-    if type(model)==homGP.homGP:
+    if model.__class__.__name__ == 'homGP':
         sds = model.nu_hat * (1/np.diag(model.Ki)[ids] - model.g/model.mult[ids])
     
-    if type(model)==hetGP.hetGP:
+    if model.__class__.__name__ == 'hetGP':
         sds = model.nu_hat * (1/np.diag(model.Ki)[ids] - model.Lambda[ids]/model.mult[ids])
     
     
-    if type(model)==homGP.homTP:
+    if model.__class__.__name__ == 'homTP':
         sds = (1/np.diag(model.Ki)[ids] - model.g/model.mult[ids])
         # TP correction
         sds = (model.nu + model.psi - 2) / (model.nu + len(model.Z) - model.mult[ids] - 2) * sds
-    
-    
-    if type(model)==hetGP.hetTP:
+
+
+    if model.__class__.__name__ == 'hetTP':
         sds = (1/np.diag(model.Ki)[ids] - model.Lambda[ids]/model.mult[ids])
         # TP correction
         sds = (model.nu + model.psi - 2) / (model.nu + len(model.Z) - model.mult[ids] - 2) * sds
