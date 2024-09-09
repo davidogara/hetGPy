@@ -6,13 +6,14 @@ setup_pybind11(cfg)
 %>
 */
 #include <iostream>
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/eigen.h>
 #include <Eigen/Dense>
 #include <Eigen/LU>
-#define _USE_MATH_DEFINES
-#include <cmath>
+
 
 namespace py = pybind11;
 
