@@ -29,6 +29,13 @@ def cov_gen(X1, X2 = None, theta = None, type = None):
     -------
     matrix of covariances between design locations
 
+    Examples
+    --------
+    >>> from hetgpy.covariance_functions import cov_gen
+    >>> import numpy as np
+    >>> X = np.random.default_rng(42).integers(low=1,high=20,size=(50,2))
+    >>> K = cov_gen(X1=X,X2=X,theta=np.array([1,2]),type="Gaussian")
+    
     Notes
     -----
     Definition of univariate correlation function and hyperparameters:
