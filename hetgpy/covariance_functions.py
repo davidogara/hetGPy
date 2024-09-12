@@ -1,3 +1,9 @@
+r'''
+suite of covariance functions in `hetGPy`
+
+Note that most of these are not called by the user, but these functions provide
+the covariance kernels (and their gradients)
+'''
 import numpy as np
 from scipy.spatial.distance import cdist
 from hetgpy import matern
@@ -5,6 +11,34 @@ from hetgpy import matern
 TYPE = type # for checking types
 
 def cov_gen(X1, X2 = None, theta = None, type = None):
+    r"""
+    Correlation function of selected type, supporting both isotropic and product forms
+
+    Parameters
+    ----------
+    X1: ndarray	
+        matrix of design locations, one point per row
+    X2: ndarray	
+        matrix of design locations if correlation is calculated between X1 and X2 (otherwise calculated between X1 and itself)
+    theta: np.array or scalar	
+            vector of lengthscale parameters (either of size one if isotropic or of size d if anisotropic)
+    type: str	
+        one of "Gaussian", "Matern5_2", "Matern3_2"
+
+    Returns
+    -------
+    matrix of covariances between design locations
+
+    Notes
+    -----
+    Definition of univariate correlation function and hyperparameters:
+
+    -   "Gaussian": :math:`c(x, y) = \exp(-(x-y)^2/\theta)`
+    -   "Matern5_2": :math:`c(x, y) = (1+\sqrt{5}/\theta * |x-y\ + 5/(3*\theta^2)(x-y)^2) * \exp(-\sqrt{5}*|x-y|/\theta)`
+    -   "Matern3_2": :math:`c(x, y) = (1+\sqrt{3}/\theta * |x-y|) * \exp(-\sqrt{3}*|x-y|/\theta)`
+    
+    Multivariate correlations are product of univariate ones.
+    """
     if type=='Gaussian':
         dists  = cov_Gaussian(X1,X2,theta)
     elif type=="Matern5_2":
@@ -29,7 +63,13 @@ def abs_dist(X1,X2):
 # numba this
 def cov_Gaussian(X1, X2 = None, theta = None):
     '''
-    https://stackoverflow.com/questions/27948363/numpy-broadcast-to-perform-euclidean-distance-vectorized
+    Euclidean distances, scaled by theta
+
+
+    Notes
+    -----
+    
+    For an alternative implementation: https://stackoverflow.com/questions/27948363/numpy-broadcast-to-perform-euclidean-distance-vectorized
     threeSums = np.sum(np.square(A)[:,np.newaxis,:], axis=2) - 2 * A.dot(B.T) + np.sum(np.square(B), axis=1)
     np.exp(-threeSums/theta)
     '''
@@ -45,15 +85,21 @@ def cov_Gaussian(X1, X2 = None, theta = None):
         return np.exp(-1.0*euclidean_dist(A,B))
 
 def partial_d_C_Gaussian_dtheta_k(X1,theta):
-    ## Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)
+    '''
+    Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)
+    '''
     return euclidean_dist(X1,X1)/theta**2
 
 def partial_d_k_Gaussian_dtheta_k(X1,X2,theta):
-    ## Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)
+    '''
+    Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)
+    '''
     return euclidean_dist(X1,X2)/theta**2
 
 def partial_d_Cg_Gaussian_d_k_theta_g(X1,theta,k_theta_g):
-    ## Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
+    '''
+    Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
+    '''
     ## 1-dimensional/isotropic case
     if len(theta) == 1:
         return(euclidean_dist(X1,X1)/(theta*k_theta_g**2))
@@ -61,7 +107,9 @@ def partial_d_Cg_Gaussian_d_k_theta_g(X1,theta,k_theta_g):
     return euclidean_dist(xx1, xx1)/k_theta_g**2
 
 def partial_d_kg_Gaussian_d_k_theta_g(X1,X2,theta, k_theta_g):
-    ## Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
+    '''
+    Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
+    '''
     ## 1-dimensional/isotropic case
     if len(theta) == 1:
         return(euclidean_dist(X1,X2)/(theta*k_theta_g**2))
@@ -70,9 +118,16 @@ def partial_d_kg_Gaussian_d_k_theta_g(X1,X2,theta, k_theta_g):
     return euclidean_dist(xx1, xx2)/k_theta_g**2
 
 def partial_d_C_Gaussian_dX_i_j(X1,theta,i1,i2):
-    ## Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
-    ## @param i1 row
-    ## @param i2 column
+    '''
+    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
+    
+    Parameters
+    ----------
+    i1: int
+        row
+    i2: int
+        column
+    '''
     tmp = partial_d_dist_dX_i1_i2(X1, i1, i2)
 
     ## 1-dimensional/isotropic case
@@ -81,9 +136,16 @@ def partial_d_C_Gaussian_dX_i_j(X1,theta,i1,i2):
     return(tmp / theta[i2-1])
 
 def partial_d_k_Gaussian_dX_i_j(X1, X2, theta, i1, i2):
-    ## Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
-    ## @param i1 row
-    ## @param i2 column
+    '''
+    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
+    
+    Parameters
+    ----------
+    i1: int
+        row
+    i2: int
+        column
+    '''
     tmp = partial_d_dist_dX1_i1_i2_X2(X1, X2, i1, i2)
     ## 1-dimensional/isotropic case
     if len(theta) == 1:
@@ -196,8 +258,11 @@ def cov_Matern5_2(X1, X2 = None, theta = None):
     out = np.prod(klist,axis=0)
     return out
 
-## Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)
+
 def partial_d_C_Matern5_2_dtheta_k(X1, theta):
+    r'''
+    Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)
+    '''
     if X1.shape[1] == 1:
       tmp = matern.d_matern5_2_1args_theta_k(X1 = X1, theta = theta)
     else:
@@ -205,110 +270,151 @@ def partial_d_C_Matern5_2_dtheta_k(X1, theta):
     
     return tmp
 
-## Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)
 def partial_d_k_Matern5_2_dtheta_k(X1, X2, theta):
+    r'''
+    Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)
+    '''
     tmp = matern.d_matern5_2_2args_theta_k_iso(X1 = X1, X2 = X2, theta = theta)
     return tmp
 
-## Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
 def partial_d_Cg_Matern5_2_d_k_theta_g(X1, theta, k_theta_g):
+  r'''
+  Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
+  '''
   if(isinstance(theta,np.floating) or len(theta) == 1): return matern.d_matern5_2_1args_kthetag(X1/theta, k_theta_g)
   return matern.d_matern5_2_1args_kthetag(X1 * (1/theta), k_theta_g)
 
-## Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
 def partial_d_Cg_Matern5_2_d_k_theta_g(X1, theta, k_theta_g):
+  r'''
+  Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
+  '''
   if(isinstance(theta,np.floating) or len(theta) == 1): return matern.d_matern5_2_1args_kthetag(X1/theta, k_theta_g)
   return matern.d_matern5_2_1args_kthetag(X1 * 1/theta, k_theta_g)
 
-## Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
 def partial_d_kg_Matern5_2_d_k_theta_g(X1, X2, theta, k_theta_g):
+    r'''
+    Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
+    '''
     if(isinstance(theta,np.floating) or len(theta) == 1): return(matern.d_matern5_2_2args_kthetag(X1/theta, X2/theta, k_theta_g))
     return matern.d_matern5_2_2args_kthetag(X1 * 1/theta, X2 * 1/theta, k_theta_g) 
 
 
-## Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
-## @param i1 row
-## @param i2 column
+
 def partial_d_C_Matern5_2_dX_i_j(X1, theta, i1, i2):
+    r'''
+    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
 
-  ## 1-dimensional/isotropic case
-  if len(theta) == 1:
-    tmp = matern.partial_d_dist_abs_dX_i1_i2(X1/theta, i1, i2)
-    return tmp/theta
-  
-  tmp = matern.partial_d_dist_abs_dX_i1_i2(X1/theta[i2], i1, i2)
-  return tmp / theta[i2]
+    Parameters
+    ----------
+    i1: int
+        row
+    i2: int
+        column
+    '''
+    ## 1-dimensional/isotropic case
+    if len(theta) == 1:
+        tmp = matern.partial_d_dist_abs_dX_i1_i2(X1/theta, i1, i2)
+        return tmp/theta
+    tmp = matern.partial_d_dist_abs_dX_i1_i2(X1/theta[i2], i1, i2)
+    return tmp / theta[i2]
 
-## Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
-## @param i1 row
-## @param i2 column
-## @param theta lengthscales
+
 def partial_d_k_Matern5_2_dX_i_j(X1, X2, theta, i1, i2):
-
-  ## 1-dimensional/isotropic case
-  if len(theta) == 1:
-    tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2(X1/theta, X2/theta, i1, i2)
-    return tmp/theta
+    r'''
+    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
+    
+    Parameters:
+    i1: int 
+        row
+    i2: int
+        column
+    theta: ndarray
+        lengthscales
+    '''
+    ## 1-dimensional/isotropic case
+    if len(theta) == 1:
+        tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2(X1/theta, X2/theta, i1, i2)
+        return tmp/theta
   
-  # i2 gets incremented by -1 in matern.partial
-  tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2(X1/theta[i2-1], X2/theta[i2-1], i1, i2)
-  return tmp / theta[i2-1]
+    # i2 gets incremented by -1 in matern.partial
+    tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2(X1/theta[i2-1], X2/theta[i2-1], i1, i2)
+    return tmp / theta[i2-1]
 
 
 ### C) Matern 3/2 covariance
 
 
 
-## Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix) 
 def partial_d_C_Matern3_2_dtheta_k(X1, theta):
-  if X1.shape[1] == 1: return matern.d_matern3_2_1args_theta_k(X1 = X1, theta = theta)
-  return matern.d_matern3_2_1args_theta_k_iso(X1 = X1, theta = theta)
+    r'''
+    Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix) 
+    '''
+    if X1.shape[1] == 1: return matern.d_matern3_2_1args_theta_k(X1 = X1, theta = theta)
+    return matern.d_matern3_2_1args_theta_k_iso(X1 = X1, theta = theta)
 
 
-## Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)
 def partial_d_k_Matern3_2_dtheta_k(X1, X2, theta):
-  tmp = matern.d_matern3_2_2args_theta_k_iso(X1 = X1, X2 = X2, theta = theta)
-  return tmp
+    r'''
+    Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)
+    '''
+    tmp = matern.d_matern3_2_2args_theta_k_iso(X1 = X1, X2 = X2, theta = theta)
+    return tmp
 
 
-## Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
 def partial_d_Cg_Matern3_2_d_k_theta_g(X1, theta, k_theta_g):
+    r'''
+    Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)
+    '''
     if(isinstance(theta,np.floating) or len(theta) == 1): return matern.d_matern3_2_1args_kthetag(X1/theta, k_theta_g)
     return matern.d_matern3_2_1args_kthetag(X1 * 1/theta, k_theta_g)
 
 
-## Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
 def partial_d_kg_Matern3_2_d_k_theta_g(X1, X2, theta, k_theta_g):
+  r'''
+  Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)
+  '''
   if(isinstance(theta,np.floating) or len(theta) == 1): return matern.d_matern3_2_2args_kthetag(X1/theta, X2/theta, k_theta_g)
   return matern.d_matern3_2_2args_kthetag(X1/theta, X2/theta, k_theta_g)
 
 
-## Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
-## @param i1 row
-## @param i2 column
+
 def partial_d_C_Matern3_2_dX_i_j(X1, theta, i1, i2):
-  
-  ## 1-dimensional/isotropic case
-  if len(theta) == 1:
-    tmp = matern.partial_d_dist_abs_dX_i1_i2_m32(X1/theta, i1, i2)
-    return(tmp/theta)
-  
-  tmp = matern.partial_d_dist_abs_dX_i1_i2_m32(X1/theta[i2], i1, i2)
-  return(tmp / theta[i2])
+    r'''
+    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
 
-## Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
-## @param i1 row
-## @param i2 column
-## @param theta lengthscales
+    Parameters
+    ----------
+    i1: int
+        row
+    i2 : int
+        column
+    '''
+    ## 1-dimensional/isotropic case
+    if len(theta) == 1:
+        tmp = matern.partial_d_dist_abs_dX_i1_i2_m32(X1/theta, i1, i2)
+        return(tmp/theta)
+
+    tmp = matern.partial_d_dist_abs_dX_i1_i2_m32(X1/theta[i2], i1, i2)
+    return(tmp / theta[i2])
+
+
 def partial_d_k_Matern3_2_dX_i_j(X1, X2, theta, i1, i2):
+    r'''
+    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix
+    
+    Parameters
+    ----------
+    i1: int
+        row
+    i2: int
+        column
+    theta: int
+        lengthscales
+    '''
+    ## 1-dimensional/isotropic case
+    if len(theta) == 1:
+        tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2_m32(X1/theta, X2/theta, i1, i2)
+        return(tmp/theta)
   
-  ## 1-dimensional/isotropic case
-  if len(theta) == 1:
-    tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2_m32(X1/theta, X2/theta, i1, i2)
-    return(tmp/theta)
-  
-  tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2_m32(X1/theta[i2], X2/theta[i2], i1, i2)
-  return(tmp / theta[i2])
-
-
-
+    tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2_m32(X1/theta[i2], X2/theta[i2], i1, i2)
+    return(tmp / theta[i2])
