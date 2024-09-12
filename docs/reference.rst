@@ -15,3 +15,6 @@
 
 .. automodule:: hetgpy.IMSE
    :members:
+
+.. automodule:: hetgpy.LOO
+   :members:
