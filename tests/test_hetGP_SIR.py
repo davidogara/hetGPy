@@ -34,7 +34,7 @@ def RString_SIR(covtype = "Matern5_2"):
                 covtype = "{}",
                 lower = c(0.05,0.05),
                 upper = c(2,2),
-                maxit = 1e4
+                maxit = 50
             )
         preds = predict(model,xgrid)
         # predictive interval
