@@ -8,7 +8,20 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 
 
-def plot_optimization_iterates(object, keys_and_title = None , stylesheet = None):
+def plot_optimization_iterates(object, keys_and_title = None):
+    r'''
+    Plot maximum likelihood iterates
+
+    Parameters
+    ----------
+    object: hetgpy.homGP.homGP or hetgpy.hetGP.hetGP model
+        hetGPy object
+    keys_and_title: iterable for model component to extract (theta, g, etc.)
+
+    Returns
+    -------
+    fig, ax: matplotlib figure and axes
+    '''
     def extract_variable(key):
         # extract iterates from model object
         out = np.array([d[key] for d in object['iterates']])
@@ -33,7 +46,19 @@ def plot_optimization_iterates(object, keys_and_title = None , stylesheet = None
     return fig, ax
 
 def plot_diagnostics(model):
-    r'''Diagnostics plot which mirrors the plot(model) routine in hetGP'''
+    r'''
+    Diagnostics plot which mirrors the plot(model) routine in hetGP
+    
+    Plots the LOO predctions against the model data
+
+    Parameters
+    ----------
+    model: hetGPy model
+
+    Returns
+    -------
+    fig, ax: matplotlib figure and axes
+    '''
     preds = model.predict(model.X0)
     preds['upper'] = norm.ppf(0.95, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
     preds['lower'] = norm.ppf(0.05, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
