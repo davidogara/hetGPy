@@ -8,7 +8,7 @@ from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.qEI import qEI_cpp
   
 from scipy.stats import t, norm
-from scipy.special import gamma
+from scipy.special import gamma, erfcx
 from scipy.stats.qmc import LatinHypercube
 from scipy.optimize import minimize
 from hetgpy.IMSE import maximinSA_LHS
@@ -458,3 +458,103 @@ def crit_optim(model, crit, h = 2, Xcand = None,
         if crit_C['value'] < crit_A['value']: return dict(par = new_designB, value = crit_C['value'], path = path_B + path_C)
 
   return dict(par = new_designA, value = crit_A['value'], path = path_A)
+
+
+def log1mexp(x):
+    r"""
+
+    References
+    ----------
+    Maechler, Martin (2012). Accurately Computing log(1-exp(-|a|)). Assessed from the Rmpfr package.
+
+    """
+    if np.isnan(x):
+        print("x is NA")
+        return np.nan
+
+    if np.min(x) < 0:
+        print("x < 0")
+        return np.nan
+
+    if x <= np.log(2):
+        return np.log(-np.expm1(-x))
+    else:
+        return np.log1p(-exp(-x))
+
+
+#' log_h function from
+#' @references Ament, S., Daulton, S., Eriksson, D., Balandat, M., & Bakshy, E. (2024). Unexpected improvements to expected improvement for bayesian optimization. Advances in Neural Information Processing Systems, 36.
+def log_h(z, eps=np.finfo(float).eps):
+    r"""
+    References
+    ----------
+    Ament, S., Daulton, S., Eriksson, D., Balandat, M., & Bakshy, E. (2024). Unexpected improvements to expected improvement for Bayesian optimization. Advances in Neural Information Processing Systems, 36.
+
+    """
+    c1 = np.log(2 * np.pi) / 2
+    c2 = np.log(np.pi / 2) / 2
+    if z > -1:
+        return np.log(norm.pdf(z) + z * norm.cdf(z))
+    if z < -1 / np.sqrt(eps):
+        return -z ** 2 / 2 - c1 - 2 * np.log(np.abs(z))
+    res = -z ** 2 / 2 - c1 + log1mexp(-(np.log(erfcx(-z / np.sqrt(2)) * np.abs(z)) + c2))
+    if np.isnan(res):
+        res = -750
+    return res
+
+
+def crit_logEI(x, model, cst = None, preds = None):
+    r"""
+    Logarithm of Expected Improvement (EI) criteria
+
+    Parameters
+    ----------
+    x: nd_arraylike
+      model designs, one point per row
+    model: hetgpy.hetGP
+      hetGP or homGP model
+    cst: float
+      optional plugin value of the mean
+    preds: Dict
+      model predictions (optional)
+
+    References
+    ----------
+    Ament, S., Daulton, S., Eriksson, D., Balandat, M., & Bakshy, E. (2024). Unexpected improvements to expected improvement for Bayesian optimization. Advances in Neural Information Processing Systems, 36.
+
+    Examples
+    --------
+    >>> from hetgpy.test_functions import f1d
+    >>> from hetgpy.homGP import homGP
+    >>> from hetgpy.optim import crit_logEI
+    >>> import numpy as np
+    >>> ftest = f1d
+    >>> n_init = 5 # number of unique designs
+    >>> X = np.linspace(0, 1, n_init).reshape(-1,1)
+    >>> Z = ftest(X)
+    >>> xgrid = np.linspace(0,1,51).reshape(-1,1)
+    >>> model = homGP()
+    >>> model.mle(X = X, Z = Z, lower = np.array([0.01]), upper = np.array([1]), known = dict(g = 2e-8))
+    >>> logEI = crit_logEI(xgrid, model, cst = model.Z0.min())
+    """
+    if cst is None:
+        cst = np.min(model.predict(x=model["X0"])["mean"])
+    if len(x.shape) == 1:
+        x = x.reshape(-1, model.X0.shape[1])
+    if preds is None:
+        preds = model.predict(x=x)
+
+    if type(model) == hetgpy.homTP or type(model) == hetgpy.hetTP:
+        gamma = (cst - preds["mean"]) / np.sqrt(preds["sd2"])
+        res = (cst - preds["mean"]) * t.cdf(gamma, df=model["nu"] + len(model["Z"]))
+        res = res + np.sqrt(preds["sd2"]) * (1 + (gamma**2 - 1) / (model["nu"] + len(model["Z"]) - 1)) * t.pdf(x=gamma, df=model["nu"] + len(model["Z"]))
+        res[np.where(res < 1e-12)] = 0  # for stability
+        return log(res)
+
+    xcr = (cst - preds["mean"]) / np.sqrt(preds["sd2"])
+    res = np.log(np.sqrt(preds["sd2"]))
+    for i in np.arange(x.shape[0]):
+        res[i] = np.maximum(-800, res[i] + log_h(xcr[i]))
+    res[preds["sd2"] == 0] = -800
+
+    return res
