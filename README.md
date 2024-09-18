@@ -11,15 +11,20 @@ The motivation for such a package is due to the rising popularity of implementin
 
 ## Installing and Environments
 
-* `hetGPy` is not yet available as a compiled package on pypi, but you can build the package by doing the following, but you may install with `pip`. Assuming you have python 3.10 or later installed, you can do one of the two options:
 
-### To Install and use `hetGPy`:
-* For simply using the package (but not the source code)
+### pypi
+
+* `hetGPy` is availalbe on pypi:
+
 ```
-python3.10 -m pip install git+https://github.com/davidogara/hetGPy.git
+pip install hetgpy
 ```
 
-### To Install and use `hetGPy`:
+### Development Version:
+
+```
+python -m pip install git+https://github.com/davidogara/hetGPy.git
+```
 
 * To build from the source files:
 
