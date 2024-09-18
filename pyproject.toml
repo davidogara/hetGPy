@@ -1,6 +1,6 @@
 [project]
 name = "hetgpy"
-version = "0.1.1"
+version = "0.1.post1"
 description = "Python implementation of hetGP"
 authors = [
 {name="David O'Gara", email="david.ogara@wustl.edu"},
