@@ -1,9 +1,10 @@
 [project]
 name = "hetgpy"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python implementation of hetGP"
 authors = [
 {name="David O'Gara", email="david.ogara@wustl.edu"},
+{name="Mickaël Binois", email="mickael.binois@inria.fr"},
 ]
 readme = "README.md"
 requires-python = ">3.10"
