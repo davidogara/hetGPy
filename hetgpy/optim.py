@@ -132,7 +132,7 @@ def predict_gr(model, x):
   for i in range(x.shape[0]):
     dkvec = np.full(fill_value=np.nan, shape=(model.X0.shape[0], x.shape[1]))
     for j in range(x.shape[1]):
-      dkvec[:, j] = np.squeeze(partial_cov_gen(X1 = x[i:i+1,:], X2 = model.X0, theta = model.theta, i1 = 0, i2 = j + 1, arg = "X_i_j", type = model.covtype)) * kvec[:,i]
+      dkvec[:, j] = np.squeeze(partial_cov_gen(X1 = x[i:i+1,:], X2 = model.X0, theta = model.theta, i1 = 1, i2 = j + 1, arg = "X_i_j", type = model.covtype)) * kvec[:,i]
     
     dm[i,:] = ((model.Z0 - model.beta0).T @ model.Ki) @ dkvec
     if (type(model)==homGP or type(model)==hetGP) and model.trendtype == "OK": 
@@ -557,4 +557,81 @@ def crit_logEI(x, model, cst = None, preds = None):
         res[i] = np.maximum(-800, res[i] + log_h(xcr[i]))
     res[preds["sd2"] == 0] = -800
 
+    return res
+
+#' Derivative  of log_h function from
+#' @references Ament, S., Daulton, S., Eriksson, D., Balandat, M., & Bakshy, E. (2024). Unexpected improvements to expected improvement for bayesian optimization. Advances in Neural Information Processing Systems, 36.
+def dlog_h(z, eps=np.finfo(float).eps):
+    r"""
+    References
+    ----------
+    Ament, S., Daulton, S., Eriksson, D., Balandat, M., & Bakshy, E. (2024). Unexpected improvements to expected improvement for Bayesian optimization. Advances in Neural Information Processing Systems, 36.
+
+    """
+    c2 = np.log(np.pi / 2) / 2
+    if z > -1:
+        return norm.cdf(z) / (norm.pdf(z) + z * norm.cdf(z))
+    if z < -1 / np.sqrt(eps):
+        return -z - 2 / z
+    # res = -z ** 2 / 2 - c1 + log1mexp(-(np.log(erfcx(-z / np.sqrt(2)) * np.abs(z)) + c2))
+    # res = -z + (np.exp(c2) * (np.sqrt(np.pi) * (z**2 + 1) * np.exp(z**2 / 2) * (erfc(z / np.sqrt(2)) - 2) - np.sqrt(2) * z)) / (np.sqrt(np.pi) * (z * np.exp((z**2 + 2 * c2) / 2) * (erfc(z / np.sqrt(2)) - 2) - 1))
+    res = -z + (np.exp(c2) * (-np.sqrt(np.pi) * (z**2 + 1) * erfcx(-z/np.sqrt(2)) - np.sqrt(2) * z)) / (np.sqrt(np.pi) * (z * np.exp(c2) * -erfcx(-z / np.sqrt(2)) - 1))
+    if np.isnan(res):
+        res = 0
+    return res
+
+
+def deriv_crit_logEI(x, model, cst=None, preds=None):
+    r"""
+    Derivative of the logarithm of Expected Improvement (EI) criteria
+
+    Parameters
+    ----------
+    x: nd_arraylike
+      model designs, one point per row
+    model: hetgpy.hetGP
+      hetGP or homGP model
+    cst: float
+      optional plugin value of the mean
+    preds: Dict
+      model predictions (optional)
+
+    References
+    ----------
+    Ament, S., Daulton, S., Eriksson, D., Balandat, M., & Bakshy, E. (2024). Unexpected improvements to expected improvement for Bayesian optimization. Advances in Neural Information Processing Systems, 36.
+
+    Examples
+    --------
+    """
+    if cst is None:
+        cst = np.min(model.predict(x=model["X0"])["mean"])
+    if len(x.shape) == 1:
+        x = x.reshape(-1, model.X0.shape[1])
+    if preds is None:
+        preds = model.predict(x=x)
+
+    pred_gr = predict_gr(model, x)
+    z = (cst - preds["mean"]) / np.sqrt(preds["sd2"])
+
+    if type(model) == homGP or type(model) == hetGP:
+        ds = pred_gr["sd2"] / (2 * np.sqrt(preds["sd2"]).reshape(x.shape[0], x.shape[0]).T)
+        dz = -pred_gr["mean"] / np.sqrt(preds["sd2"]) - z * ds / np.sqrt(preds["sd2"])
+        return dz * dlog_h(z) + ds / np.sqrt(preds["sd2"])
+    else:
+        # dz = - dm/s - z ds/s = -dm/s - z * ds2/(2s2)
+        dz = -pred_gr["mean"] / np.sqrt(preds["sd2"]) - z * pred_gr["sd2"] / (2 * preds["sd2"].reshape(x.shape[0], x.shape[0]).T)
+
+        # d( (cst - m(x)).pt(z(x))) =
+        p1 = -pred_gr["mean"] * t.cdf(z, df=model.nu + len(model.Z)) + (cst - preds["mean"]) * dz * t.pdf(z, df=model.nu + len(model.Z))
+
+        a = model.nu + len(model.Z) - 1
+        # d( s(x) (1 + (z^2-1)/(nu + N -1)) dt(z(x)) (in 2 lines)
+        p2 = (pred_gr["sd2"] / (2 * np.sqrt(preds["sd2"])) * (1 + (z**2 - 1) / a) + 2 * np.sqrt(preds["sd2"]) * z * dz / a) * t.pdf(z, df=model.nu + len(model.Z))
+        p2 = p2 + np.sqrt(preds["sd2"]) * (1 + (z**2 - 1) / a) * dz * dlambda(z, model.nu + len(model.Z))
+        res = p1 + p2
+        res[np.abs(res) < 1e-12] = 0  # for stability with optim
+
+        eitmp = (cst - preds["mean"]) * t.cdf(z, df=model["nu"] + len(model["Z"]))
+        eitmp = eitmp + np.sqrt(preds["sd2"]) * (1 + (z**2 - 1) / (model["nu"] + len(model["Z"]) - 1)) * t.pdf(x=z, df=model["nu"] + len(model["Z"]))
+        res = res/eitmp
     return res
