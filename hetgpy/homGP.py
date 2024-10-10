@@ -375,7 +375,9 @@ class homGP():
             if 'confidence' not in list_interval and 'predictive' not in list_interval:
                 raise ValueError(f"interval must be one of 'confidence' or 'predictive' not {interval}")
             return_interval = True
-            
+
+        if "nugs_only" in kw and kw["nugs_only"]:
+            return dict(nugs = np.repeat(self['nu_hat'] * self['g'], x.shape[0]))
 
         if self.get('Ki') is None:
             # these should be replaced with calls to self instead of self
