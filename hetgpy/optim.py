@@ -8,7 +8,7 @@ from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.qEI import qEI_cpp
   
 from scipy.stats import t, norm
-from scipy.special import gamma, erfcx
+from scipy.special import gamma, erfc, erfcx
 from scipy.stats.qmc import LatinHypercube
 from scipy.optimize import minimize
 from hetgpy.IMSE import maximinSA_LHS
