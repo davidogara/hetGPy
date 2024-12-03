@@ -24,7 +24,7 @@ def test_update():
 
     ## Initial fit
     testpts <- matrix(seq(0, 2*pi, length = 10*n), ncol = 1)
-    model <- model_init <- mleHetGP(X = X, Z = Z, lower = rep(0.1, nvar), 
+    model <- model_init <- mleHomGP(X = X, Z = Z, lower = rep(0.1, nvar), 
     upper = rep(5, nvar), maxit = 100)
     nsteps <- 5
     npersteps <- 10

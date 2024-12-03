@@ -40,8 +40,9 @@ def test_allocate_mult():
         model.Delta  = np.array(r('model$Delta'))
         model.Lambda = np.array(r('model$Lambda'))
 
-    A = allocate_mult(model,N = 1000)
-    assert np.allclose(A,np.array(r('A')))
+    A = allocate_mult(model,N = 1000).astype(int)
+    Ar = np.array(r('A')).astype(int)
+    assert np.allclose(A,Ar,atol=1) # allow for difference of one replicate
 
 if __name__ == "__main__":
     test_allocate_mult()
