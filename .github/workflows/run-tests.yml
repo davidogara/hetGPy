@@ -1,4 +1,4 @@
-name: Build
+name: Build and Test
 
 on: workflow_dispatch
 
@@ -25,7 +25,5 @@ jobs:
         run: git submodule update --init --recursive
       - name: Build package
         run: pip install -e .
-      - name: Build wheels
-        run: python -m build
       - name: Test
         run: pytest
