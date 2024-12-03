@@ -11,7 +11,7 @@ build:
   tools:
     python: "3.11"
   jobs:
-    pre_install:  # Lock version of torch at 1.11
+    pre_install:
       - pip install -e .
 
 # Build documentation in the "docs/" directory with Sphinx
