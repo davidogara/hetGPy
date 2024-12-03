@@ -25,5 +25,7 @@ jobs:
         run: git submodule update --init --recursive
       - name: Build package
         run: pip install -e .
+      - name: Install R packages for pytest
+        run: python tests/install_R.py
       - name: Test
         run: pytest
