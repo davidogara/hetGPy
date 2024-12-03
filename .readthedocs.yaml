@@ -10,10 +10,9 @@ build:
   os: "ubuntu-20.04"
   tools:
     python: "3.11"
-    # You can also specify other tool versions:
-    # nodejs: "23"
-    # rust: "1.82"
-    # golang: "1.23"
+  jobs:
+    pre_install:  # Lock version of torch at 1.11
+      - pip install -e .
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
