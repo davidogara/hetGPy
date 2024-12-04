@@ -2,6 +2,10 @@ name: Build and Test
 
 on: push
 
+env:
+  OPENBLAS_NUM_THREADS: 1
+  OMP_NUM_THREADS: 1
+
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
