@@ -30,4 +30,4 @@ jobs:
       - name: Build package
         run: pip install -e .
       - name: Test
-        run: pytest tests/test*.py
+        run: pytest tests/test*.py -p no:warnings
