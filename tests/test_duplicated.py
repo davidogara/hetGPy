@@ -13,8 +13,10 @@ def test_duplicates():
     assert test2
 
     # 2d example
-    X = R_data['X']
+    X = np.array(R_data['X']).reshape(3,3).T
+    R_data['D2'] = np.array(R_data['D2'])
+    R_data['D2_L'] = np.array(R_data['D2_L'])
     test3 = (duplicated(X) == R_data['D2'].astype(bool)).all()
-    test4 = (duplicated(X,fromLast=True) == R_data['D2_l'].astype(bool)).all()
+    test4 = (duplicated(X,fromLast=True) == R_data['D2_L'].astype(bool)).all()
     assert test3
     assert test4
