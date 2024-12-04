@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>homGP &mdash; hetGPy 1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=29a6c3e3"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="contour" href="contour.html" />
+    <link rel="prev" title="hetGP" href="hetGP.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            hetGPy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Welcome to hetGPy’s overview!</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hetGP.html">hetGP</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">homGP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.homGP.homGP"><code class="docutils literal notranslate"><span class="pre">homGP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hetgpy.homGP.homGP.copy"><code class="docutils literal notranslate"><span class="pre">homGP.copy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hetgpy.homGP.homGP.mleHomGP"><code class="docutils literal notranslate"><span class="pre">homGP.mleHomGP()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contour.html">contour</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariance_functions.html">covariance_functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IMSE.html">IMSE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="find_reps.html">find_reps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LOO.html">LOO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hetGPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API</a></li>
+      <li class="breadcrumb-item active">homGP</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/homGP.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="homgp">
+<h1>homGP<a class="headerlink" href="#homgp" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="hetgpy.homGP.homGP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">homGP</span></span><a class="reference internal" href="../_modules/hetgpy/homGP.html#homGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.homGP.homGP" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../reference.html#hetgpy.homGP.homGP.copy" title="hetgpy.homGP.homGP.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a>()</p></td>
+<td><p>Make a copy of the model, which is useful in tandem with the update function</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../reference.html#hetgpy.homGP.homGP.mleHomGP" title="hetgpy.homGP.homGP.mleHomGP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mleHomGP</span></code></a>(X, Z[, lower, upper, known, ...])</p></td>
+<td><p>Gaussian process modeling with homoskedastic noise.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>dlogLikHom</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>get</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>logLikHom</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>plot</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>predict</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>rebuild_homGP</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>strip</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>summary</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>update</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.homGP.homGP.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/homGP.html#homGP.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.homGP.homGP.copy" title="Link to this definition"></a></dt>
+<dd><p>Make a copy of the model, which is useful in tandem with the update function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>None</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>newmodel: (deep) copy of model</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.homGP.homGP.mleHomGP">
+<span class="sig-name descname"><span class="pre">mleHomGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noiseControl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'g_bounds':</span> <span class="pre">(np.float64(1.4901161193847656e-08),</span> <span class="pre">100.0)}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'factr':</span> <span class="pre">10000000.0,</span> <span class="pre">'returnKi':</span> <span class="pre">True}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/homGP.html#homGP.mleHomGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.homGP.homGP.mleHomGP" title="Link to this definition"></a></dt>
+<dd><p>Gaussian process modeling with homoskedastic noise.</p>
+<p>You may also call this function as <cite>model.mle</cite></p>
+<p>Gaussian process regression under homoskedastic noise based on maximum likelihood estimation of the hyperparameters. This function is enhanced to deal with replicated observations.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">ndarray_like</span></dt><dd><p>matrix of all designs, one per row, or list with elements:
+- <code class="docutils literal notranslate"><span class="pre">X0</span></code> matrix of unique design locations, one point per row
+- <code class="docutils literal notranslate"><span class="pre">Z0</span></code> vector of averaged observations, of length <code class="docutils literal notranslate"><span class="pre">len(X0)</span></code>
+- <code class="docutils literal notranslate"><span class="pre">mult</span></code> number of replicates at designs in <code class="docutils literal notranslate"><span class="pre">X0</span></code>, of length <code class="docutils literal notranslate"><span class="pre">len(X0)</span></code></p>
+</dd>
+<dt><strong>Z</strong><span class="classifier">ndarray_like</span></dt><dd><p>Z vector of all observations. If using a list with <code class="docutils literal notranslate"><span class="pre">X</span></code>, <code class="docutils literal notranslate"><span class="pre">Z</span></code> has to be ordered with respect to <code class="docutils literal notranslate"><span class="pre">X0</span></code>, and of length <code class="docutils literal notranslate"><span class="pre">sum(mult)</span></code></p>
+</dd>
+<dt><strong>lower,upper</strong><span class="classifier">ndarray_like</span></dt><dd><p>optional bounds for the <code class="docutils literal notranslate"><span class="pre">theta</span></code> parameter (see :func: covariance_functions.cov_gen for the exact parameterization).
+In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)</p>
+</dd>
+<dt><strong>noiseControl</strong><span class="classifier">dict</span></dt><dd><p>dict with element:
+- <code class="docutils literal notranslate"><span class="pre">g_bounds</span></code> vector providing minimal and maximal noise to signal ratio (default to <code class="docutils literal notranslate"><span class="pre">(sqrt(MACHINE_DOUBLE_EPS),</span> <span class="pre">100)</span></code>).</p>
+</dd>
+<dt><strong>settings</strong><span class="classifier">dict</span></dt><dd><p>dict for options about the general modeling procedure, with elements:
+- <code class="docutils literal notranslate"><span class="pre">return_Ki</span></code> boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
+- <code class="docutils literal notranslate"><span class="pre">factr</span></code> (default to 1e9) and <code class="docutils literal notranslate"><span class="pre">pgtol</span></code> are available to be passed to <cite>options</cite> for L-BFGS-B in :func: <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code>.</p>
+</dd>
+<dt><strong>eps</strong><span class="classifier">float</span></dt><dd><p>jitter used in the inversion of the covariance matrix for numerical stability</p>
+</dd>
+<dt><strong>known</strong><span class="classifier">dict</span></dt><dd><p>optional dict of known parameters (e.g. <code class="docutils literal notranslate"><span class="pre">beta0</span></code>, <code class="docutils literal notranslate"><span class="pre">theta</span></code>, <code class="docutils literal notranslate"><span class="pre">g</span></code>)</p>
+</dd>
+<dt><strong>init</strong><span class="classifier">dict</span></dt><dd><p>optional lists of starting values for mle optimization:
+- <code class="docutils literal notranslate"><span class="pre">theta_init</span></code> initial value of the theta parameters to be optimized over (default to 10% of the range determined with <code class="docutils literal notranslate"><span class="pre">lower</span></code> and <code class="docutils literal notranslate"><span class="pre">upper</span></code>)
+- <code class="docutils literal notranslate"><span class="pre">g_init</span></code> vector of nugget parameter to be optimized over</p>
+</dd>
+<dt><strong>covtype</strong><span class="classifier">str</span></dt><dd><p>covariance kernel type, either <code class="docutils literal notranslate"><span class="pre">'Gaussian'</span></code>, <code class="docutils literal notranslate"><span class="pre">'Matern5_2'</span></code> or <code class="docutils literal notranslate"><span class="pre">'Matern3_2'</span></code>, see :func: <code class="docutils literal notranslate"><span class="pre">~covariance_functions.cov_gen</span></code></p>
+</dd>
+<dt><strong>maxit</strong><span class="classifier">int</span></dt><dd><p>maximum number of iterations for <cite>L-BFGS-B</cite> of :func: <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code> dedicated to maximum likelihood optimization</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt>self, with the following attributes:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">theta</span></code>: unless given, maximum likelihood estimate (mle) of the lengthscale parameter(s),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nu_hat</span></code>: plugin estimator of the variance,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">g</span></code>: unless given, mle of the nugget of the noise/log-noise process,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trendtype</span></code>: either <code class="docutils literal notranslate"><span class="pre">&quot;SK&quot;</span></code> if <code class="docutils literal notranslate"><span class="pre">beta0</span></code> is provided, else <code class="docutils literal notranslate"><span class="pre">&quot;OK&quot;</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta0</span></code>: constant trend of the mean process, plugin-estimator unless given,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ll</span></code>: log-likelihood value, (<code class="docutils literal notranslate"><span class="pre">ll_non_pen</span></code>) is the value without the penalty,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nit_opt</span></code>, <code class="docutils literal notranslate"><span class="pre">msg</span></code>: counts and message returned by :func:<code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code></p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">used_args</span></code>: list with arguments provided in the call to the function,</dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Ki</span></code>, <code class="docutils literal notranslate"><span class="pre">Kgi</span></code>: inverse of the covariance matrices of the mean and noise processes (not scaled by <code class="docutils literal notranslate"><span class="pre">nu_hat</span></code> and <code class="docutils literal notranslate"><span class="pre">nu_hat_var</span></code>),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X0</span></code>, <code class="docutils literal notranslate"><span class="pre">Z0</span></code>, <code class="docutils literal notranslate"><span class="pre">Z</span></code>, <code class="docutils literal notranslate"><span class="pre">eps</span></code>, <code class="docutils literal notranslate"><span class="pre">logN</span></code>, <code class="docutils literal notranslate"><span class="pre">covtype</span></code>: values given in input,</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">time</span></code>: time to train the model, in seconds.</p></li>
+</ul>
+<p>See also <cite>~hetgpy.homGP.homGP.predict</cite> for predictions, <cite>~hetgpy.homGP.update</cite> for updating an existing model.
+<code class="docutils literal notranslate"><span class="pre">summary</span></code> and <code class="docutils literal notranslate"><span class="pre">plot</span></code> functions are available as well.
+<cite>~homTP.mleHomTP</cite> provide a Student-t equivalent.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. Binois, Robert B. Gramacy, M. Ludkovski (2018), Practical heteroskedastic Gaussian process modeling for large simulation experiments,
+Journal of Computational and Graphical Statistics, 27(4), 808–821.
+Preprint available on arXiv:1611.05902.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy</span> <span class="kn">import</span> <span class="n">homGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.example_data</span> <span class="kn">import</span> <span class="n">mcycle</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">mcycle</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">homGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;times&#39;</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;accel&#39;</span><span class="p">],</span><span class="n">lower</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">],</span><span class="n">upper</span><span class="o">=</span><span class="p">[</span><span class="mf">10.0</span><span class="p">],</span><span class="n">covtype</span><span class="o">=</span><span class="s2">&quot;Matern5_2&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="hetGP.html" class="btn btn-neutral float-left" title="hetGP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contour.html" class="btn btn-neutral float-right" title="contour" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, David O&#39;Gara.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

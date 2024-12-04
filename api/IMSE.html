@@ -1,0 +1,352 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMSE &mdash; hetGPy 1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=29a6c3e3"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="find_reps" href="find_reps.html" />
+    <link rel="prev" title="optim" href="optim.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            hetGPy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Welcome to hetGPy’s overview!</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hetGP.html">hetGP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="homGP.html">homGP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contour.html">contour</a></li>
+<li class="toctree-l2"><a class="reference internal" href="covariance_functions.html">covariance_functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optim.html">optim</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">IMSE</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.IMSPE"><code class="docutils literal notranslate"><span class="pre">IMSPE()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.Wij"><code class="docutils literal notranslate"><span class="pre">Wij()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.allocate_mult"><code class="docutils literal notranslate"><span class="pre">allocate_mult()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.deriv_crit_IMSPE"><code class="docutils literal notranslate"><span class="pre">deriv_crit_IMSPE()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.horizon"><code class="docutils literal notranslate"><span class="pre">horizon()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.lhs_EP"><code class="docutils literal notranslate"><span class="pre">lhs_EP()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.maximinSA_LHS"><code class="docutils literal notranslate"><span class="pre">maximinSA_LHS()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.mi"><code class="docutils literal notranslate"><span class="pre">mi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.IMSE.phiP"><code class="docutils literal notranslate"><span class="pre">phiP()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="find_reps.html">find_reps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LOO.html">LOO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hetGPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API</a></li>
+      <li class="breadcrumb-item active">IMSE</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/IMSE.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hetgpy.IMSE">
+<span id="imse"></span><h1>IMSE<a class="headerlink" href="#module-hetgpy.IMSE" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.IMSPE">
+<span class="sig-name descname"><span class="pre">IMSPE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lambda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mult</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#IMSPE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.IMSPE" title="Link to this definition"></a></dt>
+<dd><p>IMSPE of a given design.</p>
+<p>Integrated Mean Square Prediction Error</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>X</strong><span class="classifier"><code class="docutils literal notranslate"><span class="pre">hetgpy.hetGP.hetGP</span></code> or <code class="docutils literal notranslate"><span class="pre">hetgpy.homGP.homGP</span></code> model.</span></dt><dd><p>Alternatively, one can provide a matrix of unique designs considered</p>
+</dd>
+<dt><strong>theta</strong><span class="classifier">ndarray_like</span></dt><dd><p>lengthscales</p>
+</dd>
+<dt><strong>Lambda</strong><span class="classifier">ndarray_like</span></dt><dd><p>diagonal matrix for the noise</p>
+</dd>
+<dt><strong>mult</strong><span class="classifier">ndarray_like</span></dt><dd><p>number of replicates at each design</p>
+</dd>
+<dt><strong>covtype</strong><span class="classifier">str</span></dt><dd><p>either “Gaussian”, “Matern3_2” or “Matern5_2”</p>
+</dd>
+<dt><strong>nu</strong><span class="classifier">float</span></dt><dd><p>variance parameter</p>
+</dd>
+<dt><strong>eps</strong><span class="classifier">float</span></dt><dd><p>numerical nugget</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.Wij">
+<span class="sig-name descname"><span class="pre">Wij</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Gaussian'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#Wij"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.Wij" title="Link to this definition"></a></dt>
+<dd><p>Compute double integral of the covariance kernel over a [0,1]^d domain</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mu1,mu2</strong><span class="classifier">ndarray)like</span></dt><dd><p>input locations considered</p>
+</dd>
+<dt><strong>theta</strong><span class="classifier">ndarray_like</span></dt><dd><p>lengthscale hyperparameter of the kernel</p>
+</dd>
+<dt><strong>type</strong><span class="classifier">str</span></dt><dd><p>kernel type, one of <code class="docutils literal notranslate"><span class="pre">&quot;Gaussian&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Matern5_2&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;Matern3_2&quot;</span></code></p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. Binois, J. Huang, R. B. Gramacy, M. Ludkovski (2019), Replication or exploration? Sequential design for stochastic simulation experiments,
+Technometrics, 61(1), 7-23. Preprint available on arXiv:1710.03206.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.allocate_mult">
+<span class="sig-name descname"><span class="pre">allocate_mult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wijs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_Ki</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#allocate_mult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.allocate_mult" title="Link to this definition"></a></dt>
+<dd><p>Allocation of replicates on existing design locations, based on (29) from (Ankenman et al, 2010)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>model: hetGP model</strong></dt><dd><p>hetGP model</p>
+</dd>
+<dt><strong>N</strong><span class="classifier">int</span></dt><dd><p>total budget of replication to allocate</p>
+</dd>
+<dt><strong>Wijs: ndarray</strong></dt><dd><p>optional previously computed matrix of Wijs, see hetgpy.IMSE.Wij</p>
+</dd>
+<dt><strong>use_Ki</strong><span class="classifier">bool</span></dt><dd><p>should Ki from model be used?</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>vector with approximated best number of replicates per design</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<ol class="upperalpha simple" start="2">
+<li><p>Ankenman, B. Nelson, J. Staum (2010), Stochastic kriging for simulation metamodeling, Operations research, pp. 371–382, 58</p></li>
+</ol>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.deriv_crit_IMSPE">
+<span class="sig-name descname"><span class="pre">deriv_crit_IMSPE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wijs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#deriv_crit_IMSPE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.deriv_crit_IMSPE" title="Link to this definition"></a></dt>
+<dd><p>Derivative of crit_IMSPE</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">ndarray_like</span></dt><dd><p>matrix for the news design (size 1 x d)</p>
+</dd>
+<dt><strong>model</strong><span class="classifier">hetGP or homGP</span></dt><dd><p>model</p>
+</dd>
+<dt><strong>id: None</strong></dt><dd><p>None (but included for compatibility with crit_IMSPE input structure so it can be used in minimize)</p>
+</dd>
+<dt><strong>Wijs</strong><span class="classifier">ndarray_like</span></dt><dd><p>optional previously computed matrix of Wijs, see Wij</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Derivative of the sequential IMSPE with respect to x</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.horizon">
+<span class="sig-name descname"><span class="pre">horizon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_horizon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wijs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#horizon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.horizon" title="Link to this definition"></a></dt>
+<dd><p>Adapt the look-ahead horizon depending on the replicate allocation or a target ratio</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>model</strong><span class="classifier">hetGP or homGP model</span></dt><dd><p>hetGP or homGP model</p>
+</dd>
+<dt><strong>current_horizon</strong><span class="classifier">int</span></dt><dd><p>horizon used for the previous iteration, see details</p>
+</dd>
+<dt><strong>previous_ratio</strong><span class="classifier">float</span></dt><dd><p>ratio before adding the previous new design</p>
+</dd>
+<dt><strong>target</strong><span class="classifier">float</span></dt><dd><p>scalar in [0,1] for desired n/N</p>
+</dd>
+<dt><strong>Wijs</strong><span class="classifier">nd_array</span></dt><dd><p>optional previously computed matrix of Wijs, see hetgpy.IMSE.Wij</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Randomly selected horizon for next iteration (adpative) if no target is provided,</dt><dd></dd>
+<dt>otherwise returns the update horizon value.</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. Binois, J. Huang, R. B. Gramacy, M. Ludkovski (2019), 
+Replication or exploration? Sequential design for stochastic simulation experiments,
+Technometrics, 61(1), 7-23.cr 
+Preprint available on arXiv:1710.03206.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.lhs_EP">
+<span class="sig-name descname"><span class="pre">lhs_EP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#lhs_EP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.lhs_EP" title="Link to this definition"></a></dt>
+<dd><p>From DiceDesign: FUNCTION PERFORMING ELEMENTARY PERMUTATION (EP) IN LHD USED IN SA ALGORITHMS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>m</strong><span class="classifier">nd_arraylike</span></dt><dd><p>the design</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>out</strong><span class="classifier">tuple</span></dt><dd><p>list including design after EP, ligns and columns defining EP</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.maximinSA_LHS">
+<span class="sig-name descname"><span class="pre">maximinSA_LHS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEOM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Imax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#maximinSA_LHS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.maximinSA_LHS" title="Link to this definition"></a></dt>
+<dd><p>Implementation of maximinSA_LHS from DiceDesign
+Only profile=”GEOM” is implemented (like in hetGP)</p>
+<p>#####maximinSA_LHS#####
+#####Maximin LHS VIA SIMULATED ANNEALING OPTIMIZATION#####</p>
+<p>#—————————————————————————|
+#args :  m     : the design                                                 |
+#        T0    : the initial temperature                                    |
+#        c     : parameter regulating the temperature                       |
+#        it    : the number of iterations                                   |
+#        p     : power required in phiP criterion                           |
+#      profile : temperature down profile                                   |
+#                “GEOM” or “GEOM_MORRIS” or “LINEAR”. By default : “GEOM”   |
+#output        : a list containing all the input arguments plus:            |
+#       a mindist optimized design                                          |
+#       vector of criterion values along the iterations                     |
+#       vector of temperature values along the iterations                   |
+#       vector of acceptation probability values along the iterations       |
+#depends :  phiP,lhs_EP                                                     |
+#—————————————————————————|</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.mi">
+<span class="sig-name descname"><span class="pre">mi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#mi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.mi" title="Link to this definition"></a></dt>
+<dd><p>Compute integral of the covariance kernel over a [0,1]^d domain</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mu1</strong><span class="classifier">ndarray_like</span></dt><dd><p>input locations considered</p>
+</dd>
+<dt><strong>theta</strong><span class="classifier">ndarray_like</span></dt><dd><p>lengthscale hyperparameter of the kernel</p>
+</dd>
+<dt><strong>type</strong><span class="classifier">str</span></dt><dd><p>kernel type, one of <code class="docutils literal notranslate"><span class="pre">&quot;Gaussian&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Matern5_2&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;Matern3_2&quot;</span></code></p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Replication or exploration? Sequential design for stochastic simulation experiments,
+Technometrics, 61(1), 7-23. Preprint available on arXiv:1710.03206.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.phiP">
+<span class="sig-name descname"><span class="pre">phiP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/IMSE.html#phiP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.phiP" title="Link to this definition"></a></dt>
+<dd><p>Implementation of <cite>phiP.R</cite> from <cite>DiceDesign</cite> (necessary for maximinSA_LHS from DiceDesign which is used by IMSPE_search)</p>
+<p>From DiceDesign:
+Compute the phiP criterion (Lp norm of the sum of the inverses of the design inter-point distances)
+Reference: Pronzato, L. and Muller, W.,2012, Design of computer experiments: space filling and beyond, Statistics and Computing, 22:681-701.
+A higher phiP corresponds to a more regular scaterring of design points</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>fi_p</strong><span class="classifier">np.float</span></dt><dd><p>the phiP criterion</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="optim.html" class="btn btn-neutral float-left" title="optim" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="find_reps.html" class="btn btn-neutral float-right" title="find_reps" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, David O&#39;Gara.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

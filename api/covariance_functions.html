@@ -1,0 +1,350 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>covariance_functions &mdash; hetGPy 1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=29a6c3e3"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="optim" href="optim.html" />
+    <link rel="prev" title="contour" href="contour.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            hetGPy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Welcome to hetGPy’s overview!</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hetGP.html">hetGP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="homGP.html">homGP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contour.html">contour</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">covariance_functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IMSE.html">IMSE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="find_reps.html">find_reps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LOO.html">LOO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hetGPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API</a></li>
+      <li class="breadcrumb-item active">covariance_functions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/covariance_functions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="covariance-functions">
+<h1>covariance_functions<a class="headerlink" href="#covariance-functions" title="Link to this heading"></a></h1>
+<p>Methods for the <cite>covariance_functions</cite> module in <cite>hetgpy</cite></p>
+<p>suite of covariance functions in <cite>hetGPy</cite></p>
+<p>Note that most of these are not called by the user, but these functions provide
+the covariance kernels (and their gradients)</p>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cov_Gaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#cov_Gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Euclidean distances, scaled by theta</p>
+<p class="rubric">Notes</p>
+<p>For an alternative implementation: <a class="reference external" href="https://stackoverflow.com/questions/27948363/numpy-broadcast-to-perform-euclidean-distance-vectorized">https://stackoverflow.com/questions/27948363/numpy-broadcast-to-perform-euclidean-distance-vectorized</a>
+threeSums = np.sum(np.square(A)[:,np.newaxis,:], axis=2) - 2 * A.dot(B.T) + np.sum(np.square(B), axis=1)
+np.exp(-threeSums/theta)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cov_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#cov_gen"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Correlation function of selected type, supporting both isotropic and product forms</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X1: ndarray</strong></dt><dd><p>matrix of design locations, one point per row</p>
+</dd>
+<dt><strong>X2: ndarray</strong></dt><dd><p>matrix of design locations if correlation is calculated between X1 and X2 (otherwise calculated between X1 and itself)</p>
+</dd>
+<dt><strong>theta: np.array or scalar</strong></dt><dd><p>vector of lengthscale parameters (either of size one if isotropic or of size d if anisotropic)</p>
+</dd>
+<dt><strong>type: str</strong></dt><dd><p>one of “Gaussian”, “Matern5_2”, “Matern3_2”</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>matrix of covariances between design locations</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Definition of univariate correlation function and hyperparameters:</p>
+<ul class="simple">
+<li><p>“Gaussian”: <span class="math notranslate nohighlight">\(c(x, y) = \exp(-(x-y)^2/\theta)\)</span></p></li>
+<li><p>“Matern5_2”: <span class="math notranslate nohighlight">\(c(x, y) = (1+\sqrt{5}/\theta * |x-y\ + 5/(3*\theta^2)(x-y)^2) * \exp(-\sqrt{5}*|x-y|/\theta)\)</span></p></li>
+<li><p>“Matern3_2”: <span class="math notranslate nohighlight">\(c(x, y) = (1+\sqrt{3}/\theta * |x-y|) * \exp(-\sqrt{3}*|x-y|/\theta)\)</span></p></li>
+</ul>
+<p>Multivariate correlations are product of univariate ones.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.covariance_functions</span> <span class="kn">import</span> <span class="n">cov_gen</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">K</span> <span class="o">=</span> <span class="n">cov_gen</span><span class="p">(</span><span class="n">X1</span><span class="o">=</span><span class="n">X</span><span class="p">,</span><span class="n">X2</span><span class="o">=</span><span class="n">X</span><span class="p">,</span><span class="n">theta</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]),</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Gaussian&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_C_Gaussian_dX_i_j</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_C_Gaussian_dX_i_j"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>i1: int</strong></dt><dd><p>row</p>
+</dd>
+<dt><strong>i2: int</strong></dt><dd><p>column</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_C_Gaussian_dtheta_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_C_Gaussian_dtheta_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_C_Matern3_2_dX_i_j</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_C_Matern3_2_dX_i_j"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>i1: int</strong></dt><dd><p>row</p>
+</dd>
+<dt><strong>i2</strong><span class="classifier">int</span></dt><dd><p>column</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_C_Matern3_2_dtheta_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_C_Matern3_2_dtheta_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_C_Matern5_2_dX_i_j</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_C_Matern5_2_dX_i_j"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>i1: int</strong></dt><dd><p>row</p>
+</dd>
+<dt><strong>i2: int</strong></dt><dd><p>column</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_C_Matern5_2_dtheta_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_C_Matern5_2_dtheta_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_Cg_Gaussian_d_k_theta_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_theta_g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_Cg_Gaussian_d_k_theta_g"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_Cg_Matern3_2_d_k_theta_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_theta_g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_Cg_Matern3_2_d_k_theta_g"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_Cg_Matern5_2_d_k_theta_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_theta_g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_Cg_Matern5_2_d_k_theta_g"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_k_Gaussian_dX_i_j</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_k_Gaussian_dX_i_j"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>i1: int</strong></dt><dd><p>row</p>
+</dd>
+<dt><strong>i2: int</strong></dt><dd><p>column</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_k_Gaussian_dtheta_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_k_Gaussian_dtheta_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_k_Matern3_2_dX_i_j</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_k_Matern3_2_dX_i_j"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>i1: int</strong></dt><dd><p>row</p>
+</dd>
+<dt><strong>i2: int</strong></dt><dd><p>column</p>
+</dd>
+<dt><strong>theta: int</strong></dt><dd><p>lengthscales</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_k_Matern3_2_dtheta_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_k_Matern3_2_dtheta_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_k_Matern5_2_dX_i_j</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_k_Matern5_2_dX_i_j"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</p>
+<p>Parameters:
+i1: int</p>
+<blockquote>
+<div><p>row</p>
+</div></blockquote>
+<dl class="simple">
+<dt>i2: int</dt><dd><p>column</p>
+</dd>
+<dt>theta: ndarray</dt><dd><p>lengthscales</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_k_Matern5_2_dtheta_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_k_Matern5_2_dtheta_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_kg_Gaussian_d_k_theta_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_theta_g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_kg_Gaussian_d_k_theta_g"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_kg_Matern3_2_d_k_theta_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_theta_g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_kg_Matern3_2_d_k_theta_g"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">partial_d_kg_Matern5_2_d_k_theta_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_theta_g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/covariance_functions.html#partial_d_kg_Matern5_2_d_k_theta_g"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contour.html" class="btn btn-neutral float-left" title="contour" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="optim.html" class="btn btn-neutral float-right" title="optim" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, David O&#39;Gara.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

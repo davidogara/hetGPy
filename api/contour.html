@@ -1,0 +1,271 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>contour &mdash; hetGPy 1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=29a6c3e3"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="covariance_functions" href="covariance_functions.html" />
+    <link rel="prev" title="homGP" href="homGP.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            hetGPy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Welcome to hetGPy’s overview!</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hetGP.html">hetGP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="homGP.html">homGP</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">contour</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.contour.crit_ICU"><code class="docutils literal notranslate"><span class="pre">crit_ICU()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.contour.crit_MCU"><code class="docutils literal notranslate"><span class="pre">crit_MCU()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.contour.crit_MEE"><code class="docutils literal notranslate"><span class="pre">crit_MEE()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.contour.crit_cSUR"><code class="docutils literal notranslate"><span class="pre">crit_cSUR()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hetgpy.contour.crit_tMSE"><code class="docutils literal notranslate"><span class="pre">crit_tMSE()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="covariance_functions.html">covariance_functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IMSE.html">IMSE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="find_reps.html">find_reps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LOO.html">LOO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html">plot</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hetGPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API</a></li>
+      <li class="breadcrumb-item active">contour</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/contour.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="contour">
+<h1>contour<a class="headerlink" href="#contour" title="Link to this heading"></a></h1>
+<p>Sequential design functions for contour finding</p>
+<span class="target" id="module-hetgpy.contour"></span><dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.contour.crit_ICU">
+<span class="sig-name descname"><span class="pre">crit_ICU</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thres</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Xref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kxprime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/contour.html#crit_ICU"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.contour.crit_ICU" title="Link to this definition"></a></dt>
+<dd><p>Computes ICU infill criterion</p>
+<p>Integrated Contour Uncertainty criterion</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">nd_array</span></dt><dd><p>matrix of new designs, one point per row (size n x d)</p>
+</dd>
+<dt><strong>model: `homGP` or `hetGP`</strong></dt><dd><p>including inverse matrices</p>
+</dd>
+<dt><strong>Xref</strong><span class="classifier">nd_array</span></dt><dd><p>matrix of input locations to approximate the integral by a sum</p>
+</dd>
+<dt><strong>w</strong><span class="classifier">nd_array</span></dt><dd><p>optional weights vector of weights for code{Xref} locations</p>
+</dd>
+<dt><strong>thres: float</strong></dt><dd><p>for contour finding</p>
+</dd>
+<dt><strong>preds: dict</strong></dt><dd><p>optional predictions at <cite>Xref</cite> to avoid recomputing if already done</p>
+</dd>
+<dt><strong>kxprime: nd_array</strong></dt><dd><p>optional covariance matrix between <cite>model.X0</cite> and <cite>Xref</cite> to avoid its recomputation</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Lyu, X., Binois, M. &amp; Ludkovski, M. (2018+). Evaluating Gaussian Process Metamodels and Sequential Designs for Noisy Level Set Estimation. arXiv:1807.06712.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.contour.crit_MCU">
+<span class="sig-name descname"><span class="pre">crit_MCU</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thres</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/contour.html#crit_MCU"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.contour.crit_MCU" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">nd_array</span></dt><dd><p>matrix of new designs, one point per row (size n x d)</p>
+</dd>
+<dt><strong>model: `homGP` or `hetGP`</strong></dt><dd><p>including inverse matrices</p>
+</dd>
+<dt><strong>thres: float</strong></dt><dd><p>for contour finding</p>
+</dd>
+<dt><strong>gamma: float</strong></dt><dd><p>optional weight in -<a href="#id1"><span class="problematic" id="id2">|f(x) - thres|</span></a> + gamma * s(x). Default to 2</p>
+</dd>
+<dt><strong>preds: dict</strong></dt><dd><p>optional predictions at <cite>x</cite> to avoid recomputing if already done (must contain <cite>cov</cite>)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Srinivas, N., Krause, A., Kakade, S, &amp; Seeger, M. (2012). 
+Information-theoretic regret bounds for Gaussian process optimization 
+in the bandit setting, IEEE Transactions on Information Theory, 58, pp. 3250-3265.</p>
+<p>Bogunovic, J., Scarlett, J., Krause, A. &amp; Cevher, V. (2016). 
+Truncated variance reduction: A unified approach to Bayesian optimization and level-set estimation,
+in Advances in neural information processing systems, pp. 1507-1515.</p>
+<p>Lyu, X., Binois, M. &amp; Ludkovski, M. (2018+). 
+Evaluating Gaussian Process Metamodels and Sequential Designs for Noisy Level Set Estimation. arXiv:1807.06712.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.contour.crit_MEE">
+<span class="sig-name descname"><span class="pre">crit_MEE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thres</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/contour.html#crit_MEE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.contour.crit_MEE" title="Link to this definition"></a></dt>
+<dd><p>Computes MEE infill criterion
+Maximum Empirical Error criterion</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">nd_array</span></dt><dd><p>matrix of new designs, one point per row (size n x d)</p>
+</dd>
+<dt><strong>model: `homGP` or `hetGP`</strong></dt><dd><p>including inverse matrices</p>
+</dd>
+<dt><strong>thres: float</strong></dt><dd><p>for contour finding</p>
+</dd>
+<dt><strong>preds: dict</strong></dt><dd><p>optional predictions at <cite>x</cite> to avoid recomputing if already done</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Ranjan, P., Bingham, D. &amp; Michailidis, G (2008). 
+Sequential experiment design for contour estimation from complex computer codes, 
+Technometrics, 50, pp. 527-541. cr cr</p>
+<p>Bichon, B., Eldred, M., Swiler, L., Mahadevan, S. &amp; McFarland, J. (2008).
+Efficient global  reliability  analysis  for  nonlinear  implicit  performance  functions, 
+AIAA Journal, 46, pp. 2459-2468. cr cr</p>
+<p>Lyu, X., Binois, M. &amp; Ludkovski, M. (2018+). Evaluating Gaussian Process Metamodels and Sequential Designs for Noisy Level Set Estimation. arXiv:1807.06712.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.contour.crit_cSUR">
+<span class="sig-name descname"><span class="pre">crit_cSUR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thres</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/contour.html#crit_cSUR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.contour.crit_cSUR" title="Link to this definition"></a></dt>
+<dd><p>Computes cSUR infill criterion</p>
+<p>Contour Stepwise Uncertainty Reduction criterion</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">nd_array</span></dt><dd><p>matrix of new designs, one point per row (size n x d)</p>
+</dd>
+<dt><strong>model: `homGP` or `hetGP`</strong></dt><dd><p>including inverse matrices</p>
+</dd>
+<dt><strong>thres: float</strong></dt><dd><p>for contour finding</p>
+</dd>
+<dt><strong>preds: dict</strong></dt><dd><p>optional predictions at <cite>x</cite> to avoid recomputing if already done</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Lyu, X., Binois, M. &amp; Ludkovski, M. (2018+). Evaluating Gaussian Process Metamodels and Sequential Designs for Noisy Level Set Estimation. arXiv:1807.06712.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.contour.crit_tMSE">
+<span class="sig-name descname"><span class="pre">crit_tMSE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thres</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hetgpy/contour.html#crit_tMSE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.contour.crit_tMSE" title="Link to this definition"></a></dt>
+<dd><p>Computes targeted mean squared error infill criterion</p>
+<p>t-MSE criterion</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">nd_array</span></dt><dd><p>matrix of new designs, one point per row (size n x d)</p>
+</dd>
+<dt><strong>model: `homGP` or `hetGP`</strong></dt><dd><p>including inverse matrices</p>
+</dd>
+<dt><strong>thres: float</strong></dt><dd><p>for contour finding</p>
+</dd>
+<dt><strong>preds: dict</strong></dt><dd><p>optional predictions at <cite>x</cite> to avoid recomputing if already done (must contain <cite>cov</cite>)</p>
+</dd>
+<dt><strong>seps: float</strong></dt><dd><p>parameter for the target window</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Picheny, V., Ginsbourger, D., Roustant, O., Haftka, R., Kim, N. (2010).
+Adaptive designs of experiments for accurate approximation of a target region,
+Journal of Mechanical Design (132), p. 071008.</p>
+<p>Lyu, X., Binois, M. &amp; Ludkovski, M. (2018+). 
+Evaluating Gaussian Process Metamodels and Sequential Designs for Noisy Level Set Estimation. arXiv:1807.06712.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="homGP.html" class="btn btn-neutral float-left" title="homGP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="covariance_functions.html" class="btn btn-neutral float-right" title="covariance_functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, David O&#39;Gara.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

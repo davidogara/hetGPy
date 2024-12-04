@@ -1,0 +1,219 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hetgpy.find_reps &mdash; hetGPy 1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=29a6c3e3"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hetGPy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Welcome to hetGPy’s overview!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hetGPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hetgpy.find_reps</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hetgpy.find_reps</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">docstring for find_reps</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="viewcode-block" id="find_reps">
+<a class="viewcode-back" href="../../reference.html#hetgpy.find_reps.find_reps">[docs]</a>
+<span class="k">def</span> <span class="nf">find_reps</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">Z</span><span class="p">,</span> <span class="n">return_Zlist</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">rescale</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">normalize</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">inputBounds</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">use_torch</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare data for use with ``mleHomGP`` and ``mleHetGP``</span>
+<span class="sd">        </span>
+<span class="sd">        In particular to find replicated observations</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        X : array_like</span>
+<span class="sd">            matrix of design locations, one point per row</span>
+<span class="sd">        Z : array_like</span>
+<span class="sd">            vector of observations at ``X``</span>
+<span class="sd">        return_Zlist: bool </span>
+<span class="sd">            to return `Zlist`, see below</span>
+<span class="sd">        </span>
+<span class="sd">        rescale: bool</span>
+<span class="sd">            if ``True``, the inputs are rescaled to the unit hypercube</span>
+<span class="sd">        normalize: bool </span>
+<span class="sd">            if ``True``, the outputs are centered and normalized</span>
+<span class="sd">        inputBounds: array_like </span>
+<span class="sd">            optional matrix of known boundaries in original input space, of size 2 times `X.shape[1]`. If not provided, and ``rescale == True``, it is estimated from the data.   </span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            dictionary of outputs</span>
+<span class="sd">        type</span>
+<span class="sd">            explain types</span>
+<span class="sd">        out</span>
+<span class="sd">            dictionary of </span>
+
+<span class="sd">                - ``X0`` matrix with unique designs locations, one point per row</span>
+<span class="sd">                - ``Z0`` vector of averaged observations at ``X0``</span>
+<span class="sd">                - ``mult`` number of replicates at ``X0``                </span>
+<span class="sd">                - ``Z`` vector with all observations, sorted according to ``X0``</span>
+<span class="sd">                - ``Zlist`` optional list, each element corresponds to observations at a design in ``X0``</span>
+<span class="sd">                - ``inputBounds`` optional matrix, to rescale back to the original input space</span>
+<span class="sd">                -  ``outputStats`` optional vector, with mean and variance of the original outputs.</span>
+<span class="sd">        </span>
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        Binois et. al (2018)</span>
+
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; from hetgpy.data import mcycle</span>
+<span class="sd">        &gt;&gt;&gt; from hetgpy.hetGP import hetGP</span>
+<span class="sd">        &gt;&gt;&gt; X = mcycle[&#39;times&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; Z = mcycle[&#39;accel&#39;]</span>
+
+<span class="sd">        &gt;&gt;&gt; model = hetGP()</span>
+<span class="sd">        &gt;&gt;&gt; out = model.find_reps(X, Z)</span>
+<span class="sd">        &gt;&gt;&gt; print(out)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">use_torch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;torch implementation is not yet available.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;X must be a numpy array, is currently: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;X must be a numpy array, is currently: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">Z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Z must be 1D&quot;</span><span class="p">)</span>
+            <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">return_Zlist</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">X0</span><span class="o">=</span><span class="n">X</span><span class="p">,</span><span class="n">Z0</span><span class="o">=</span><span class="n">Z</span><span class="p">,</span><span class="n">mult</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">]),</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">Zlist</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="n">Z</span><span class="p">})</span>
+            <span class="k">return</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">X0</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z0</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">mult</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># if x is a 1D series</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;X appears to be a 1D array. Suggest reshaping with X.reshape(-1,1)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rescale</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">inputBounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">inputBounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                                        <span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)])</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">inputBounds</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="n">inputBounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,:]</span> <span class="o">-</span> <span class="n">inputBounds</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]))</span>
+        <span class="n">outputStats</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+            <span class="n">outputStats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">Z</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">Z</span><span class="o">.</span><span class="n">var</span><span class="p">()])</span>
+            <span class="n">Z</span> <span class="o">=</span> <span class="p">(</span><span class="n">Z</span> <span class="o">-</span> <span class="n">outputStats</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">outputStats</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="c1">#X0 = np.unique(X, axis = 0)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">corresp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># np.unique sorts by default -- explicit sorting of the *indices* preserves the order of observations in X</span>
+        <span class="n">indices</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span> 
+        <span class="n">X0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">indices</span><span class="p">,:]</span>
+        <span class="k">if</span> <span class="n">X0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">return_Zlist</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">X0</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z0</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">mult</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">Z</span><span class="p">)),</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">Zlist</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">Z</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Z</span><span class="p">))},</span>
+                  <span class="n">inputBounds</span> <span class="o">=</span> <span class="n">inputBounds</span><span class="p">,</span> <span class="n">outputStats</span> <span class="o">=</span> <span class="n">outputStats</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">X0</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z0</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">mult</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">Z</span><span class="p">)),</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span>
+                <span class="n">inputBounds</span> <span class="o">=</span> <span class="n">inputBounds</span><span class="p">,</span> <span class="n">outputStats</span> <span class="o">=</span> <span class="n">outputStats</span><span class="p">)</span>
+        
+        <span class="c1"># TODO: consider numba-ing this part. Replicating *split* in R is a bit tricky</span>
+        <span class="n">Zlist</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">Z0</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">X0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X0</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">mult</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">X0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">corresp</span><span class="p">[</span><span class="n">indices</span><span class="p">]):</span> 
+            <span class="n">out</span> <span class="o">=</span> <span class="n">Z</span><span class="p">[(</span><span class="n">val</span><span class="o">==</span><span class="n">corresp</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">Zlist</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">Z0</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>    <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">mult</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>  <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">return_Zlist</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">X0</span> <span class="o">=</span> <span class="n">X0</span><span class="p">,</span> <span class="n">Z0</span> <span class="o">=</span> <span class="n">Z0</span><span class="p">,</span> <span class="n">mult</span> <span class="o">=</span> <span class="n">mult</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">Zlist</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span>
+                <span class="n">Zlist</span> <span class="o">=</span> <span class="n">Zlist</span><span class="p">,</span> <span class="n">inputBounds</span> <span class="o">=</span> <span class="n">inputBounds</span><span class="p">,</span> <span class="n">outputStats</span> <span class="o">=</span> <span class="n">outputStats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">X0</span> <span class="o">=</span> <span class="n">X0</span><span class="p">,</span> <span class="n">Z0</span> <span class="o">=</span> <span class="n">Z0</span><span class="p">,</span> <span class="n">mult</span> <span class="o">=</span> <span class="n">mult</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">Zlist</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span> <span class="n">inputBounds</span> <span class="o">=</span> <span class="n">inputBounds</span><span class="p">,</span>
+              <span class="n">outputStats</span> <span class="o">=</span> <span class="n">outputStats</span><span class="p">)</span></div>
+
+    
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, David O&#39;Gara.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

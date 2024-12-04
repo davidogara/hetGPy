@@ -1,0 +1,1145 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hetGPy API reference &mdash; hetGPy 1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=29a6c3e3"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            hetGPy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Welcome to hetGPy’s overview!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">hetGPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="docutils literal notranslate"><span class="pre">hetGPy</span></code> API reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/reference.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hetgpy.find_reps">
+<span id="hetgpy-api-reference"></span><h1><code class="docutils literal notranslate"><span class="pre">hetGPy</span></code> API reference<a class="headerlink" href="#module-hetgpy.find_reps" title="Link to this heading"></a></h1>
+<p>docstring for find_reps</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.find_reps.find_reps">
+<span class="sig-name descname"><span class="pre">find_reps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_Zlist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rescale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputBounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_torch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/find_reps.html#find_reps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.find_reps.find_reps" title="Link to this definition"></a></dt>
+<dd><p>Prepare data for use with <code class="docutils literal notranslate"><span class="pre">mleHomGP</span></code> and <code class="docutils literal notranslate"><span class="pre">mleHetGP</span></code></p>
+<p>In particular to find replicated observations</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">array_like</span></dt><dd><p>matrix of design locations, one point per row</p>
+</dd>
+<dt><strong>Z</strong><span class="classifier">array_like</span></dt><dd><p>vector of observations at <code class="docutils literal notranslate"><span class="pre">X</span></code></p>
+</dd>
+<dt><strong>return_Zlist: bool</strong></dt><dd><p>to return <cite>Zlist</cite>, see below</p>
+</dd>
+<dt><strong>rescale: bool</strong></dt><dd><p>if <code class="docutils literal notranslate"><span class="pre">True</span></code>, the inputs are rescaled to the unit hypercube</p>
+</dd>
+<dt><strong>normalize: bool</strong></dt><dd><p>if <code class="docutils literal notranslate"><span class="pre">True</span></code>, the outputs are centered and normalized</p>
+</dd>
+<dt><strong>inputBounds: array_like</strong></dt><dd><p>optional matrix of known boundaries in original input space, of size 2 times <cite>X.shape[1]</cite>. If not provided, and <code class="docutils literal notranslate"><span class="pre">rescale</span> <span class="pre">==</span> <span class="pre">True</span></code>, it is estimated from the data.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt>dict</dt><dd><p>dictionary of outputs</p>
+</dd>
+<dt>type</dt><dd><p>explain types</p>
+</dd>
+<dt>out</dt><dd><p>dictionary of</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X0</span></code> matrix with unique designs locations, one point per row</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Z0</span></code> vector of averaged observations at <code class="docutils literal notranslate"><span class="pre">X0</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mult</span></code> number of replicates at <code class="docutils literal notranslate"><span class="pre">X0</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Z</span></code> vector with all observations, sorted according to <code class="docutils literal notranslate"><span class="pre">X0</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Zlist</span></code> optional list, each element corresponds to observations at a design in <code class="docutils literal notranslate"><span class="pre">X0</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">inputBounds</span></code> optional matrix, to rescale back to the original input space</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">outputStats</span></code> optional vector, with mean and variance of the original outputs.</p></li>
+</ul>
+</div></blockquote>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Binois et. al (2018)</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.data</span> <span class="kn">import</span> <span class="n">mcycle</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.hetGP</span> <span class="kn">import</span> <span class="n">hetGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">mcycle</span><span class="p">[</span><span class="s1">&#39;times&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">mcycle</span><span class="p">[</span><span class="s1">&#39;accel&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">hetGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">out</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">find_reps</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Z</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hetgpy.hetGP.hetGP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hetGP</span></span><a class="reference internal" href="_modules/hetgpy/hetGP.html#hetGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.hetGP.hetGP" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hetgpy.hetGP.hetGP.LOO_preds_nugs" title="hetgpy.hetGP.hetGP.LOO_preds_nugs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOO_preds_nugs</span></code></a>(i)</p></td>
+<td><p>Leave-out-out predictions for the nugget</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hetgpy.hetGP.hetGP.copy" title="hetgpy.hetGP.hetGP.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a>()</p></td>
+<td><p>Make a copy of the model, which is useful in tandem with the update function</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hetgpy.hetGP.hetGP.dlogLikHet" title="hetgpy.hetGP.hetGP.dlogLikHet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dlogLikHet</span></code></a>(X0, Z0, Z, mult, Delta, theta, g)</p></td>
+<td><p>derivative of log-likelihood for logLikHet_Wood with respect to theta and Lambda with all observations Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information  nu2 is replaced by its plugin estimator in the likelihood</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hetgpy.hetGP.hetGP.logLikHet" title="hetgpy.hetGP.hetGP.logLikHet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logLikHet</span></code></a>(X0, Z0, Z, mult, Delta, theta, g)</p></td>
+<td><p>log-likelihood in the anisotropic case - one lengthscale by variable Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information nu2 is replaced by its plugin estimator in the likelihood</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hetgpy.hetGP.hetGP.mleHetGP" title="hetgpy.hetGP.hetGP.mleHetGP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mleHetGP</span></code></a>(X, Z[, lower, upper, known, ...])</p></td>
+<td><p>Gaussian process modeling with heteroskedastic noise</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hetgpy.hetGP.hetGP.predict" title="hetgpy.hetGP.hetGP.predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code></a>(x[, noise_var, xprime, nugs_only, ...])</p></td>
+<td><p>Gaussian process predictions using a heterogeneous noise GP object (of <code class="docutils literal notranslate"><span class="pre">hetGP</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>get</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>plot</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>summary</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>update</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.hetGP.hetGP.LOO_preds_nugs">
+<span class="sig-name descname"><span class="pre">LOO_preds_nugs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/hetGP.html#hetGP.LOO_preds_nugs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.hetGP.hetGP.LOO_preds_nugs" title="Link to this definition"></a></dt>
+<dd><p>Leave-out-out predictions for the nugget</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>self</strong><span class="classifier">hetGP object</span></dt><dd></dd>
+<dt><strong>i</strong><span class="classifier">int</span></dt><dd><p>index of the point to remove</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>LOO preds</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.hetGP.hetGP.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/hetGP.html#hetGP.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.hetGP.hetGP.copy" title="Link to this definition"></a></dt>
+<dd><p>Make a copy of the model, which is useful in tandem with the update function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>None</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>newmodel: (deep) copy of model</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.hetGP.hetGP.dlogLikHet">
+<span class="sig-name descname"><span class="pre">dlogLikHet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mult</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_theta_g</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_g</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pX</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logN</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SiNK</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SiNK_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hom_ll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/hetGP.html#hetGP.dlogLikHet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.hetGP.hetGP.dlogLikHet" title="Link to this definition"></a></dt>
+<dd><p>derivative of log-likelihood for logLikHet_Wood with respect to theta and Lambda with all observations
+Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information 
+nu2 is replaced by its plugin estimator in the likelihood</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X0</strong><span class="classifier">ndarray_like</span></dt><dd><p>unique designs</p>
+</dd>
+<dt><strong>Z0</strong><span class="classifier">ndarray_like</span></dt><dd><p>averaged observations</p>
+</dd>
+<dt><strong>Z</strong><span class="classifier">ndarray_like</span></dt><dd><p>replicated observations (sorted with respect to X0)</p>
+</dd>
+<dt><strong>mult</strong><span class="classifier">ndarray_like</span></dt><dd><p>number of replicates at each Xi</p>
+</dd>
+<dt><strong>Delta</strong><span class="classifier">ndarray_like</span></dt><dd><p>vector of nuggets corresponding to each X0i or pXi, that are smoothed to give Lambda</p>
+</dd>
+<dt><strong>logN</strong><span class="classifier">bool</span></dt><dd><p>should exponentiated variance be used</p>
+</dd>
+<dt><strong>SiNK</strong><span class="classifier">bool</span></dt><dd><p>should the smoothing come from the SiNK predictor instead of the kriging one</p>
+</dd>
+<dt><strong>theta</strong><span class="classifier">ndarray_like</span></dt><dd><p>scale parameter for the mean process, either one value (isotropic) or a vector (anistropic)</p>
+</dd>
+<dt><strong>k_theta_g: ndarray_like</strong></dt><dd><p>constant used for linking nuggets lengthscale to mean process lengthscale, i.e., theta_g[k] = k_theta_g * theta[k], alternatively theta_g can be used</p>
+</dd>
+<dt><strong>theta_g</strong><span class="classifier">ndarray_like</span></dt><dd><p>either one value (isotropic) or a vector (anistropic), alternative to using k_theta_g</p>
+</dd>
+<dt><strong>g</strong><span class="classifier">ndarray_like</span></dt><dd><p>nugget of the nugget process</p>
+</dd>
+<dt><strong>pX</strong><span class="classifier">ndarray_like</span></dt><dd><p>matrix of pseudo inputs locations of the noise process for Delta (could be replaced by a vector to avoid double loop)</p>
+</dd>
+<dt><strong>components</strong><span class="classifier">ndarray_like</span></dt><dd><p>components to determine which variable are to be taken in the derivation: None for all, otherwise list with elements from ‘theta’, ‘Delta’, ‘theta_g’, ‘k_theta_g’, ‘pX’ and ‘g’.</p>
+</dd>
+<dt><strong>beta0</strong><span class="classifier">float</span></dt><dd><p>mean, if not provided, the MLE estimator is used</p>
+</dd>
+<dt><strong>eps</strong><span class="classifier">float</span></dt><dd><p>minimal value of elements of Lambda</p>
+</dd>
+<dt><strong>covtype: str</strong></dt><dd><p>covariance kernel type</p>
+</dd>
+<dt><strong>penalty</strong><span class="classifier">bool</span></dt><dd><p>should a penalty term on Delta be used?</p>
+</dd>
+<dt><strong>hom_ll</strong><span class="classifier">float</span></dt><dd><p>reference homoskedastic likelihood</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.hetGP.hetGP.logLikHet">
+<span class="sig-name descname"><span class="pre">logLikHet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mult</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_theta_g</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_g</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logN</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SiNK</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pX</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SiNK_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hom_ll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/hetGP.html#hetGP.logLikHet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.hetGP.hetGP.logLikHet" title="Link to this definition"></a></dt>
+<dd><p>log-likelihood in the anisotropic case - one lengthscale by variable
+Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information nu2 is replaced by its plugin estimator in the likelihood</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X0</strong><span class="classifier">ndarray_like</span></dt><dd><p>unique designs</p>
+</dd>
+<dt><strong>Z0</strong><span class="classifier">ndarray_like</span></dt><dd><p>averaged observations</p>
+</dd>
+<dt><strong>Z</strong><span class="classifier">ndarray_like</span></dt><dd><p>replicated observations (sorted with respect to X0)</p>
+</dd>
+<dt><strong>mult</strong><span class="classifier">ndarray_like</span></dt><dd><p>number of replicates at each Xi</p>
+</dd>
+<dt><strong>Delta</strong><span class="classifier">ndarray_like</span></dt><dd><p>vector of nuggets corresponding to each X0i or pXi, that are smoothed to give Lambda</p>
+</dd>
+<dt><strong>logN</strong><span class="classifier">bool</span></dt><dd><p>should exponentiated variance be used</p>
+</dd>
+<dt><strong>SiNK</strong><span class="classifier">bool</span></dt><dd><p>should the smoothing come from the SiNK predictor instead of the kriging one</p>
+</dd>
+<dt><strong>theta</strong><span class="classifier">ndarray_like</span></dt><dd><p>scale parameter for the mean process, either one value (isotropic) or a vector (anistropic)</p>
+</dd>
+<dt><strong>k_theta_g: ndarray_like</strong></dt><dd><p>constant used for linking nuggets lengthscale to mean process lengthscale, i.e., theta_g[k] = k_theta_g * theta[k], alternatively theta_g can be used</p>
+</dd>
+<dt><strong>theta_g</strong><span class="classifier">ndarray_like</span></dt><dd><p>either one value (isotropic) or a vector (anistropic), alternative to using k_theta_g</p>
+</dd>
+<dt><strong>g</strong><span class="classifier">ndarray_like</span></dt><dd><p>nugget of the nugget process</p>
+</dd>
+<dt><strong>pX</strong><span class="classifier">ndarray_like</span></dt><dd><p>matrix of pseudo inputs locations of the noise process for Delta (could be replaced by a vector to avoid double loop)</p>
+</dd>
+<dt><strong>beta0</strong><span class="classifier">float</span></dt><dd><p>mean, if not provided, the MLE estimator is used</p>
+</dd>
+<dt><strong>eps</strong><span class="classifier">float</span></dt><dd><p>minimal value of elements of Lambda</p>
+</dd>
+<dt><strong>covtype: str</strong></dt><dd><p>covariance kernel type</p>
+</dd>
+<dt><strong>penalty</strong><span class="classifier">bool</span></dt><dd><p>should a penalty term on Delta be used?</p>
+</dd>
+<dt><strong>hom_ll</strong><span class="classifier">float</span></dt><dd><p>reference homoskedastic likelihood</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.hetGP.hetGP.mleHetGP">
+<span class="sig-name descname"><span class="pre">mleHetGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noiseControl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'g_bounds':</span> <span class="pre">(1e-06,</span> <span class="pre">1),</span> <span class="pre">'g_max':</span> <span class="pre">100,</span> <span class="pre">'k_theta_g_bounds':</span> <span class="pre">(1,</span> <span class="pre">100)}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'factr':</span> <span class="pre">1000000000.0,</span> <span class="pre">'returnKi':</span> <span class="pre">True}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_torch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/hetGP.html#hetGP.mleHetGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.hetGP.hetGP.mleHetGP" title="Link to this definition"></a></dt>
+<dd><blockquote>
+<div><p>Gaussian process modeling with heteroskedastic noise</p>
+<p>You may also call this function as <cite>model.mle</cite></p>
+<p>Gaussian process regression under input dependent noise based on maximum likelihood estimation of the hyperparameters. 
+A second GP is used to model latent (log-) variances. This function is enhanced to deal with replicated observations.</p>
+</div></blockquote>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>X</strong><span class="classifier">ndarray_like</span></dt><dd><blockquote>
+<div><p>matrix of all designs, one per row, or list with elements:
+- <code class="docutils literal notranslate"><span class="pre">X0</span></code> matrix of unique design locations, one point per row
+- <code class="docutils literal notranslate"><span class="pre">Z0</span></code> vector of averaged observations, of length <code class="docutils literal notranslate"><span class="pre">len(X0)</span></code>
+- <code class="docutils literal notranslate"><span class="pre">mult</span></code> number of replicates at designs in <code class="docutils literal notranslate"><span class="pre">X0</span></code>, of length <code class="docutils literal notranslate"><span class="pre">len(X0)</span></code></p>
+</div></blockquote>
+<dl class="simple">
+<dt>Z<span class="classifier">ndarray_like</span></dt><dd><p>Z vector of all observations. If using a list with <code class="docutils literal notranslate"><span class="pre">X</span></code>, <code class="docutils literal notranslate"><span class="pre">Z</span></code> has to be ordered with respect to <code class="docutils literal notranslate"><span class="pre">X0</span></code>, and of length <code class="docutils literal notranslate"><span class="pre">sum(mult)</span></code></p>
+</dd>
+<dt>lower,upper<span class="classifier">ndarray_like </span></dt><dd><p>optional bounds for the <code class="docutils literal notranslate"><span class="pre">theta</span></code> parameter (see :func: covariance_functions.cov_gen for the exact parameterization).
+In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)</p>
+</dd>
+<dt>noiseControl<span class="classifier">dict</span></dt><dd><p>dict with elements related to optimization of the noise process parameters:
+- <code class="docutils literal notranslate"><span class="pre">g_min</span></code>, <code class="docutils literal notranslate"><span class="pre">g_max</span></code> minimal and maximal noise to signal ratio (of the mean process)
+- <code class="docutils literal notranslate"><span class="pre">lowerDelta</span></code>, <code class="docutils literal notranslate"><span class="pre">upperDelta</span></code> optional vectors (or scalars) of bounds on <code class="docutils literal notranslate"><span class="pre">Delta</span></code>, of length <code class="docutils literal notranslate"><span class="pre">len(X0)</span></code> (default to <code class="docutils literal notranslate"><span class="pre">np.repeat(eps,</span> <span class="pre">X0.shape[0])</span></code> and <code class="docutils literal notranslate"><span class="pre">np.repeat(noiseControl[&quot;g_max&quot;],</span> <span class="pre">X0.shape[0])</span></code> resp., or their <code class="docutils literal notranslate"><span class="pre">log</span></code>) 
+- <code class="docutils literal notranslate"><span class="pre">lowerpX</span></code>, <code class="docutils literal notranslate"><span class="pre">upperpX</span></code> optional vectors of bounds of the input domain if <cite>pX</cite> is used.
+- <code class="docutils literal notranslate"><span class="pre">lowerTheta_g</span></code>, <code class="docutils literal notranslate"><span class="pre">upperTheta_g</span></code> optional vectors of bounds for the lengthscales of the noise process if <code class="docutils literal notranslate"><span class="pre">linkThetas</span> <span class="pre">==</span> <span class="pre">'none'</span></code>. Same as for <code class="docutils literal notranslate"><span class="pre">theta</span></code> if not provided.
+- <code class="docutils literal notranslate"><span class="pre">k_theta_g_bounds</span></code> if <code class="docutils literal notranslate"><span class="pre">linkThetas</span> <span class="pre">==</span> <span class="pre">'joint'</span></code>, vector with minimal and maximal values for <code class="docutils literal notranslate"><span class="pre">k_theta_g</span></code> (default to <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">100)</span></code>). See Details.
+- <code class="docutils literal notranslate"><span class="pre">g_bounds</span></code> vector for minimal and maximal noise to signal ratios for the noise of the noise process, i.e., the smoothing parameter for the noise process. (default to <code class="docutils literal notranslate"><span class="pre">(1e-6,</span> <span class="pre">1)</span></code>).</p>
+</dd>
+</dl>
+</dd>
+<dt><strong>settings</strong><span class="classifier">dict</span></dt><dd><p>dict for options about the general modeling procedure, with elements:
+- <code class="docutils literal notranslate"><span class="pre">linkThetas</span></code> defines the relation between lengthscales of the mean and noise processes. Either <code class="docutils literal notranslate"><span class="pre">'none'</span></code>, <code class="docutils literal notranslate"><span class="pre">'joint'``(default)</span> <span class="pre">or</span> <span class="pre">``'constr'</span></code>, see Details.
+- <code class="docutils literal notranslate"><span class="pre">logN</span></code>, when <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), the log-noise process is modeled.
+- <code class="docutils literal notranslate"><span class="pre">initStrategy</span></code> one of <code class="docutils literal notranslate"><span class="pre">'simple'</span></code>, <code class="docutils literal notranslate"><span class="pre">'residuals'</span></code> (default) and <code class="docutils literal notranslate"><span class="pre">'smoothed'</span></code> to obtain starting values for <code class="docutils literal notranslate"><span class="pre">Delta</span></code>, see Details
+- <code class="docutils literal notranslate"><span class="pre">penalty</span></code>  when <code class="docutils literal notranslate"><span class="pre">True</span></code>, the penalized version of the likelihood is used (i.e., the sum of the log-likelihoods of the mean and variance processes, see References).
+- <code class="docutils literal notranslate"><span class="pre">hardpenalty</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, the log-likelihood from the noise GP is taken into account only if negative (default if <code class="docutils literal notranslate"><span class="pre">maxit</span> <span class="pre">&gt;</span> <span class="pre">1000</span></code>).
+- <code class="docutils literal notranslate"><span class="pre">checkHom</span></code> when <code class="docutils literal notranslate"><span class="pre">True</span></code>, if the log-likelihood with a homoskedastic model is better, then return it.
+- <code class="docutils literal notranslate"><span class="pre">trace</span></code> optional scalar (default to <code class="docutils literal notranslate"><span class="pre">0</span></code>). If positive, tracing information on the fitting process.</p>
+<blockquote>
+<div><p>If <code class="docutils literal notranslate"><span class="pre">1</span></code>, information is given about the result of the heterogeneous model optimization.
+Level <code class="docutils literal notranslate"><span class="pre">2</span></code> gives more details. Level <code class="docutils literal notranslate"><span class="pre">3</span></code> additionaly displays all details about initialization of hyperparameters.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">return_matrices</span></code> boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">return_hom</span></code> boolean to include homoskedastic GP models used for initialization (i.e., <code class="docutils literal notranslate"><span class="pre">modHom</span></code> and <code class="docutils literal notranslate"><span class="pre">modNugs</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">factr</span></code> (default to 1e9) and <code class="docutils literal notranslate"><span class="pre">pgtol</span></code> are available to be passed to <cite>options</cite> for L-BFGS-B in :func: <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code>.</p></li>
+</ul>
+</dd>
+<dt><strong>eps</strong><span class="classifier">float</span></dt><dd><p>jitter used in the inversion of the covariance matrix for numerical stability</p>
+</dd>
+<dt><strong>init,known</strong><span class="classifier">dict</span></dt><dd><p>optional lists of starting values for mle optimization or that should not be optimized over, respectively.
+Values in <code class="docutils literal notranslate"><span class="pre">known</span></code> are not modified, while it can happen to these of <code class="docutils literal notranslate"><span class="pre">init</span></code>, see Details. 
+One can set one or several of the following:
+- <code class="docutils literal notranslate"><span class="pre">theta</span></code> lengthscale parameter(s) for the mean process either one value (isotropic) or a vector (anistropic)
+- <code class="docutils literal notranslate"><span class="pre">Delta</span></code> vector of nuggets corresponding to each design in <code class="docutils literal notranslate"><span class="pre">X0</span></code>, that are smoothed to give <code class="docutils literal notranslate"><span class="pre">Lambda</span></code> (as the global covariance matrix depends on <code class="docutils literal notranslate"><span class="pre">Delta</span></code> and <code class="docutils literal notranslate"><span class="pre">nu_hat</span></code>, it is recommended to also pass values for <code class="docutils literal notranslate"><span class="pre">theta</span></code>)
+- <code class="docutils literal notranslate"><span class="pre">beta0</span></code> constant trend of the mean process
+- <code class="docutils literal notranslate"><span class="pre">k_theta_g</span></code> constant used for link mean and noise processes lengthscales, when <code class="docutils literal notranslate"><span class="pre">settings['linkThetas']</span> <span class="pre">==</span> <span class="pre">'joint'</span></code>
+- <code class="docutils literal notranslate"><span class="pre">theta_g</span></code> either one value (isotropic) or a vector (anistropic) for lengthscale parameter(s) of the noise process, when <code class="docutils literal notranslate"><span class="pre">settings['linkThetas']</span> <span class="pre">!=</span> <span class="pre">'joint'</span></code>
+- <code class="docutils literal notranslate"><span class="pre">g</span></code> scalar nugget of the noise process
+- <code class="docutils literal notranslate"><span class="pre">g_H</span></code> scalar homoskedastic nugget for the initialisation with a :func: homGP.mleHomGP. See Details.
+- <code class="docutils literal notranslate"><span class="pre">pX</span></code> matrix of fixed pseudo inputs locations of the noise process corresponding to Delta</p>
+</dd>
+<dt><strong>covtype</strong><span class="classifier">str</span></dt><dd><p>covariance kernel type, either <code class="docutils literal notranslate"><span class="pre">'Gaussian'</span></code>, <code class="docutils literal notranslate"><span class="pre">'Matern5_2'</span></code> or <code class="docutils literal notranslate"><span class="pre">'Matern3_2'</span></code>, see :func: <code class="docutils literal notranslate"><span class="pre">~covariance_functions.cov_gen</span></code></p>
+</dd>
+<dt><strong>maxit</strong><span class="classifier">int</span></dt><dd><p>maximum number of iterations for <cite>L-BFGS-B</cite> of :func: <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code> dedicated to maximum likelihood optimization</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt>self, with the following attributes:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">theta</span></code>: unless given, maximum likelihood estimate (mle) of the lengthscale parameter(s),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Delta</span></code>: unless given, mle of the nugget vector (non-smoothed),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Lambda</span></code>: predicted input noise variance at <code class="docutils literal notranslate"><span class="pre">X0</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nu_hat</span></code>: plugin estimator of the variance,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">theta_g</span></code>: unless given, mle of the lengthscale(s) of the noise/log-noise process,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">k_theta_g</span></code>: if <code class="docutils literal notranslate"><span class="pre">settings['linkThetas']</span> <span class="pre">==</span> <span class="pre">'joint'</span></code>, mle for the constant by which lengthscale parameters of <code class="docutils literal notranslate"><span class="pre">theta</span></code> are multiplied to get <code class="docutils literal notranslate"><span class="pre">theta_g</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">g</span></code>: unless given, mle of the nugget of the noise/log-noise process,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trendtype</span></code>: either <code class="docutils literal notranslate"><span class="pre">&quot;SK&quot;</span></code> if <code class="docutils literal notranslate"><span class="pre">beta0</span></code> is provided, else <code class="docutils literal notranslate"><span class="pre">&quot;OK&quot;</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta0</span></code>: constant trend of the mean process, plugin-estimator unless given,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nmean</span></code>: plugin estimator for the constant noise/log-noise process mean,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pX</span></code>: if used, matrix of pseudo-inputs locations for the noise/log-noise process,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ll</span></code>: log-likelihood value, (<code class="docutils literal notranslate"><span class="pre">ll_non_pen</span></code>) is the value without the penalty,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nit_opt</span></code>, <code class="docutils literal notranslate"><span class="pre">msg</span></code>: counts and message returned by :func:<code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">modHom</span></code>: homoskedastic GP model of class <code class="docutils literal notranslate"><span class="pre">homGP</span></code> used for initialization of the mean process,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">modNugs</span></code>: homoskedastic GP model of class <code class="docutils literal notranslate"><span class="pre">homGP</span></code> used for initialization of the noise/log-noise process,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nu_hat_var</span></code>: variance of the noise process,</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">used_args</span></code>: list with arguments provided in the call to the function,</dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Ki</span></code>, <code class="docutils literal notranslate"><span class="pre">Kgi</span></code>: inverse of the covariance matrices of the mean and noise processes (not scaled by <code class="docutils literal notranslate"><span class="pre">nu_hat</span></code> and <code class="docutils literal notranslate"><span class="pre">nu_hat_var</span></code>),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X0</span></code>, <code class="docutils literal notranslate"><span class="pre">Z0</span></code>, <code class="docutils literal notranslate"><span class="pre">Z</span></code>, <code class="docutils literal notranslate"><span class="pre">eps</span></code>, <code class="docutils literal notranslate"><span class="pre">logN</span></code>, <code class="docutils literal notranslate"><span class="pre">covtype</span></code>: values given in input,</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">time</span></code>: time to train the model, in seconds.</p></li>
+</ul>
+<p>See also <cite>~hetgpy.hetGP.hetGP.predict</cite> for predictions, <cite>~hetgpy.hetGP.update</cite> for updating an existing model.
+<code class="docutils literal notranslate"><span class="pre">summary</span></code> and <code class="docutils literal notranslate"><span class="pre">plot</span></code> functions are available as well.
+<cite>~hetTP.mleHetTP</cite> provide a Student-t equivalent.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. Binois, Robert B. Gramacy, M. Ludkovski (2018), Practical heteroskedastic Gaussian process modeling for large simulation experiments,
+Journal of Computational and Graphical Statistics, 27(4), 808–821.
+Preprint available on arXiv:1611.05902.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy</span> <span class="kn">import</span> <span class="n">hetGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.example_data</span> <span class="kn">import</span> <span class="n">mcycle</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">mcycle</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">hetGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;times&#39;</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;accel&#39;</span><span class="p">],</span><span class="n">lower</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">],</span><span class="n">upper</span><span class="o">=</span><span class="p">[</span><span class="mf">10.0</span><span class="p">],</span><span class="n">covtype</span><span class="o">=</span><span class="s2">&quot;Matern5_2&quot;</span><span class="p">)</span>    
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.hetGP.hetGP.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xprime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nugs_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval_lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval_upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/hetGP.html#hetGP.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.hetGP.hetGP.predict" title="Link to this definition"></a></dt>
+<dd><p>Gaussian process predictions using a heterogeneous noise GP object (of <code class="docutils literal notranslate"><span class="pre">hetGP</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">ndarray_like</span></dt><dd><p>matrix of designs locations to predict at (one point per row)</p>
+</dd>
+<dt><strong>noise_var: bool (default False)</strong></dt><dd><p>should the variance of the latent variance process be returned?</p>
+</dd>
+<dt><strong>xprime</strong><span class="classifier">ndarray_like</span></dt><dd><p>optional second matrix of predictive locations to obtain the predictive covariance matrix between <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">xprime</span></code></p>
+</dd>
+<dt><strong>nugs_only</strong><span class="classifier">bool (default False)</span></dt><dd><p>if <code class="docutils literal notranslate"><span class="pre">True</span></code>, only return noise variance prediction</p>
+</dd>
+<dt><strong>kwargs</strong><span class="classifier">dict</span></dt><dd><p>optional additional elements (not used)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>dict with elements:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mean</span></code>: kriging mean;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sd2</span></code>: kriging variance (filtered, e.g. without the nugget values)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nugs</span></code>: noise variance prediction</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sd2_var</span></code>: (returned if <code class="docutils literal notranslate"><span class="pre">noise_var</span> <span class="pre">=</span> <span class="pre">True</span></code>) kriging variance of the noise process (i.e., on log-variances if <code class="docutils literal notranslate"><span class="pre">logN</span> <span class="pre">=</span> <span class="pre">TRUE</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cov</span></code>: (returned if <code class="docutils literal notranslate"><span class="pre">xprime</span></code> is given) predictive covariance matrix between <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">xprime</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hetgpy.homGP.homGP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">homGP</span></span><a class="reference internal" href="_modules/hetgpy/homGP.html#homGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.homGP.homGP" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hetgpy.homGP.homGP.copy" title="hetgpy.homGP.homGP.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a>()</p></td>
+<td><p>Make a copy of the model, which is useful in tandem with the update function</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hetgpy.homGP.homGP.mleHomGP" title="hetgpy.homGP.homGP.mleHomGP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mleHomGP</span></code></a>(X, Z[, lower, upper, known, ...])</p></td>
+<td><p>Gaussian process modeling with homoskedastic noise.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>dlogLikHom</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>get</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>logLikHom</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>plot</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>predict</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>rebuild_homGP</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>strip</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>summary</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>update</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.homGP.homGP.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/homGP.html#homGP.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.homGP.homGP.copy" title="Link to this definition"></a></dt>
+<dd><p>Make a copy of the model, which is useful in tandem with the update function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>None</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>newmodel: (deep) copy of model</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hetgpy.homGP.homGP.mleHomGP">
+<span class="sig-name descname"><span class="pre">mleHomGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noiseControl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'g_bounds':</span> <span class="pre">(np.float64(1.4901161193847656e-08),</span> <span class="pre">100.0)}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'factr':</span> <span class="pre">10000000.0,</span> <span class="pre">'returnKi':</span> <span class="pre">True}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/homGP.html#homGP.mleHomGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.homGP.homGP.mleHomGP" title="Link to this definition"></a></dt>
+<dd><p>Gaussian process modeling with homoskedastic noise.</p>
+<p>You may also call this function as <cite>model.mle</cite></p>
+<p>Gaussian process regression under homoskedastic noise based on maximum likelihood estimation of the hyperparameters. This function is enhanced to deal with replicated observations.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>X</strong><span class="classifier">ndarray_like</span></dt><dd><p>matrix of all designs, one per row, or list with elements:
+- <code class="docutils literal notranslate"><span class="pre">X0</span></code> matrix of unique design locations, one point per row
+- <code class="docutils literal notranslate"><span class="pre">Z0</span></code> vector of averaged observations, of length <code class="docutils literal notranslate"><span class="pre">len(X0)</span></code>
+- <code class="docutils literal notranslate"><span class="pre">mult</span></code> number of replicates at designs in <code class="docutils literal notranslate"><span class="pre">X0</span></code>, of length <code class="docutils literal notranslate"><span class="pre">len(X0)</span></code></p>
+</dd>
+<dt><strong>Z</strong><span class="classifier">ndarray_like</span></dt><dd><p>Z vector of all observations. If using a list with <code class="docutils literal notranslate"><span class="pre">X</span></code>, <code class="docutils literal notranslate"><span class="pre">Z</span></code> has to be ordered with respect to <code class="docutils literal notranslate"><span class="pre">X0</span></code>, and of length <code class="docutils literal notranslate"><span class="pre">sum(mult)</span></code></p>
+</dd>
+<dt><strong>lower,upper</strong><span class="classifier">ndarray_like</span></dt><dd><p>optional bounds for the <code class="docutils literal notranslate"><span class="pre">theta</span></code> parameter (see :func: covariance_functions.cov_gen for the exact parameterization).
+In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)</p>
+</dd>
+<dt><strong>noiseControl</strong><span class="classifier">dict</span></dt><dd><p>dict with element:
+- <code class="docutils literal notranslate"><span class="pre">g_bounds</span></code> vector providing minimal and maximal noise to signal ratio (default to <code class="docutils literal notranslate"><span class="pre">(sqrt(MACHINE_DOUBLE_EPS),</span> <span class="pre">100)</span></code>).</p>
+</dd>
+<dt><strong>settings</strong><span class="classifier">dict</span></dt><dd><p>dict for options about the general modeling procedure, with elements:
+- <code class="docutils literal notranslate"><span class="pre">return_Ki</span></code> boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
+- <code class="docutils literal notranslate"><span class="pre">factr</span></code> (default to 1e9) and <code class="docutils literal notranslate"><span class="pre">pgtol</span></code> are available to be passed to <cite>options</cite> for L-BFGS-B in :func: <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code>.</p>
+</dd>
+<dt><strong>eps</strong><span class="classifier">float</span></dt><dd><p>jitter used in the inversion of the covariance matrix for numerical stability</p>
+</dd>
+<dt><strong>known</strong><span class="classifier">dict</span></dt><dd><p>optional dict of known parameters (e.g. <code class="docutils literal notranslate"><span class="pre">beta0</span></code>, <code class="docutils literal notranslate"><span class="pre">theta</span></code>, <code class="docutils literal notranslate"><span class="pre">g</span></code>)</p>
+</dd>
+<dt><strong>init</strong><span class="classifier">dict</span></dt><dd><p>optional lists of starting values for mle optimization:
+- <code class="docutils literal notranslate"><span class="pre">theta_init</span></code> initial value of the theta parameters to be optimized over (default to 10% of the range determined with <code class="docutils literal notranslate"><span class="pre">lower</span></code> and <code class="docutils literal notranslate"><span class="pre">upper</span></code>)
+- <code class="docutils literal notranslate"><span class="pre">g_init</span></code> vector of nugget parameter to be optimized over</p>
+</dd>
+<dt><strong>covtype</strong><span class="classifier">str</span></dt><dd><p>covariance kernel type, either <code class="docutils literal notranslate"><span class="pre">'Gaussian'</span></code>, <code class="docutils literal notranslate"><span class="pre">'Matern5_2'</span></code> or <code class="docutils literal notranslate"><span class="pre">'Matern3_2'</span></code>, see :func: <code class="docutils literal notranslate"><span class="pre">~covariance_functions.cov_gen</span></code></p>
+</dd>
+<dt><strong>maxit</strong><span class="classifier">int</span></dt><dd><p>maximum number of iterations for <cite>L-BFGS-B</cite> of :func: <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code> dedicated to maximum likelihood optimization</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt>self, with the following attributes:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">theta</span></code>: unless given, maximum likelihood estimate (mle) of the lengthscale parameter(s),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nu_hat</span></code>: plugin estimator of the variance,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">g</span></code>: unless given, mle of the nugget of the noise/log-noise process,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trendtype</span></code>: either <code class="docutils literal notranslate"><span class="pre">&quot;SK&quot;</span></code> if <code class="docutils literal notranslate"><span class="pre">beta0</span></code> is provided, else <code class="docutils literal notranslate"><span class="pre">&quot;OK&quot;</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta0</span></code>: constant trend of the mean process, plugin-estimator unless given,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ll</span></code>: log-likelihood value, (<code class="docutils literal notranslate"><span class="pre">ll_non_pen</span></code>) is the value without the penalty,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nit_opt</span></code>, <code class="docutils literal notranslate"><span class="pre">msg</span></code>: counts and message returned by :func:<code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code></p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">used_args</span></code>: list with arguments provided in the call to the function,</dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Ki</span></code>, <code class="docutils literal notranslate"><span class="pre">Kgi</span></code>: inverse of the covariance matrices of the mean and noise processes (not scaled by <code class="docutils literal notranslate"><span class="pre">nu_hat</span></code> and <code class="docutils literal notranslate"><span class="pre">nu_hat_var</span></code>),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X0</span></code>, <code class="docutils literal notranslate"><span class="pre">Z0</span></code>, <code class="docutils literal notranslate"><span class="pre">Z</span></code>, <code class="docutils literal notranslate"><span class="pre">eps</span></code>, <code class="docutils literal notranslate"><span class="pre">logN</span></code>, <code class="docutils literal notranslate"><span class="pre">covtype</span></code>: values given in input,</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">time</span></code>: time to train the model, in seconds.</p></li>
+</ul>
+<p>See also <cite>~hetgpy.homGP.homGP.predict</cite> for predictions, <cite>~hetgpy.homGP.update</cite> for updating an existing model.
+<code class="docutils literal notranslate"><span class="pre">summary</span></code> and <code class="docutils literal notranslate"><span class="pre">plot</span></code> functions are available as well.
+<cite>~homTP.mleHomTP</cite> provide a Student-t equivalent.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. Binois, Robert B. Gramacy, M. Ludkovski (2018), Practical heteroskedastic Gaussian process modeling for large simulation experiments,
+Journal of Computational and Graphical Statistics, 27(4), 808–821.
+Preprint available on arXiv:1611.05902.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy</span> <span class="kn">import</span> <span class="n">homGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.example_data</span> <span class="kn">import</span> <span class="n">mcycle</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">mcycle</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">homGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;times&#39;</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;accel&#39;</span><span class="p">],</span><span class="n">lower</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">],</span><span class="n">upper</span><span class="o">=</span><span class="p">[</span><span class="mf">10.0</span><span class="p">],</span><span class="n">covtype</span><span class="o">=</span><span class="s2">&quot;Matern5_2&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-hetgpy.optim"></span><dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.crit_EI">
+<span class="sig-name descname"><span class="pre">crit_EI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#crit_EI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.crit_EI" title="Link to this definition"></a></dt>
+<dd><p>Expected Improvement (EI) criteria</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x: nd_arraylike</strong></dt><dd><p>model designs, one point per row</p>
+</dd>
+<dt><strong>model: hetgpy.hetGP</strong></dt><dd><p>hetGP or homGP model</p>
+</dd>
+<dt><strong>cst: float</strong></dt><dd><p>optional plugin value of the mean</p>
+</dd>
+<dt><strong>preds: Dict</strong></dt><dd><p>model predictions (optional)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Mockus, J.; Tiesis, V. &amp; Zilinskas, A. (1978). The application of Bayesian methods for seeking the extremum Towards Global Optimization, Amsterdam: Elsevier, 2, 2.
+Vazquez E, Villemonteix J, Sidorkiewicz M, Walter E (2008). Global Optimization Based on Noisy Evaluations: An Empirical Study of Two Statistical Approaches, Journal of Physics: Conference Series, 135, IOP Publishing.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.test_functions</span> <span class="kn">import</span> <span class="n">f1d</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.homGP</span> <span class="kn">import</span> <span class="n">homGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.optim</span> <span class="kn">import</span> <span class="n">crit_EI</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ftest</span> <span class="o">=</span> <span class="n">f1d</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n_init</span> <span class="o">=</span> <span class="mi">5</span> <span class="c1"># number of unique designs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_init</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ftest</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xgrid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">51</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">homGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.01</span><span class="p">]),</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">]),</span> <span class="n">known</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">g</span> <span class="o">=</span> <span class="mf">2e-8</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EI</span> <span class="o">=</span> <span class="n">crit_EI</span><span class="p">(</span><span class="n">xgrid</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">cst</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">Z0</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.crit_logEI">
+<span class="sig-name descname"><span class="pre">crit_logEI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#crit_logEI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.crit_logEI" title="Link to this definition"></a></dt>
+<dd><p>Logarithm of Expected Improvement (EI) criteria</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x: nd_arraylike</strong></dt><dd><p>model designs, one point per row</p>
+</dd>
+<dt><strong>model: hetgpy.hetGP</strong></dt><dd><p>hetGP or homGP model</p>
+</dd>
+<dt><strong>cst: float</strong></dt><dd><p>optional plugin value of the mean</p>
+</dd>
+<dt><strong>preds: Dict</strong></dt><dd><p>model predictions (optional)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Ament, S., Daulton, S., Eriksson, D., Balandat, M., &amp; Bakshy, E. (2024). Unexpected improvements to expected improvement for Bayesian optimization. Advances in Neural Information Processing Systems, 36.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.test_functions</span> <span class="kn">import</span> <span class="n">f1d</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.homGP</span> <span class="kn">import</span> <span class="n">homGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.optim</span> <span class="kn">import</span> <span class="n">crit_logEI</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ftest</span> <span class="o">=</span> <span class="n">f1d</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n_init</span> <span class="o">=</span> <span class="mi">5</span> <span class="c1"># number of unique designs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_init</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ftest</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xgrid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">51</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">homGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.01</span><span class="p">]),</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">]),</span> <span class="n">known</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">g</span> <span class="o">=</span> <span class="mf">2e-8</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">logEI</span> <span class="o">=</span> <span class="n">crit_logEI</span><span class="p">(</span><span class="n">xgrid</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">cst</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">Z0</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.crit_optim">
+<span class="sig-name descname"><span class="pre">crit_optim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Xcand</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'maxit':</span> <span class="pre">100,</span> <span class="pre">'multi_start':</span> <span class="pre">10}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#crit_optim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.crit_optim" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.crit_qEI">
+<span class="sig-name descname"><span class="pre">crit_qEI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#crit_qEI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.crit_qEI" title="Link to this definition"></a></dt>
+<dd><p>Fast approximated batch-Expected Improvement criterion (for minimization)
+Parallel Expected improvement</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x: nd_array</strong></dt><dd><p>matrix of new designs representing the batch of q points, one point per row (q x d)</p>
+</dd>
+<dt><strong>model: homGP/hetGP</strong></dt><dd><p>model object including inverve matrices</p>
+</dd>
+<dt><strong>cst: nd_array</strong></dt><dd><p>optional optional plugin value used in the EI, see details</p>
+</dd>
+<dt><strong>preds: dict</strong></dt><dd><p>optional predictions at x to avoid recomputing if already done (must include the predictive covariance, i.e., the cov slot)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>qEI_cpp</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. Binois (2015), Uncertainty quantification on Pareto fronts and high-dimensional strategies in Bayesian optimization, with applications in multi-objective automotive design.
+Ecole Nationale Superieure des Mines de Saint-Etienne, PhD thesis.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.test_functions</span> <span class="kn">import</span> <span class="n">f1d</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.homGP</span> <span class="kn">import</span> <span class="n">homGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.optim</span> <span class="kn">import</span> <span class="n">crit_qEI</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ftest</span> <span class="o">=</span> <span class="n">f1d</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n_init</span> <span class="o">=</span> <span class="mi">5</span> <span class="c1"># number of unique designs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_init</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ftest</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xgrid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">51</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">homGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mleHomGP</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.01</span><span class="p">]),</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">]),</span> <span class="n">known</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">g</span> <span class="o">=</span> <span class="mf">2e-8</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xbatch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="mf">0.37</span><span class="p">,</span> <span class="mf">0.17</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fqEI</span> <span class="o">=</span> <span class="n">crit_qEI</span><span class="p">(</span><span class="n">xbatch</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">cst</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">Z0</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.deriv_crit_EI">
+<span class="sig-name descname"><span class="pre">deriv_crit_EI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#deriv_crit_EI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.deriv_crit_EI" title="Link to this definition"></a></dt>
+<dd><p>Derivative for crit_EI, used in crit_optim</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x: nd_arraylike</strong></dt><dd><p>model designs, one point per row</p>
+</dd>
+<dt><strong>model: hetgpy.hetGP</strong></dt><dd><p>hetGP or homGP model</p>
+</dd>
+<dt><strong>cst: float</strong></dt><dd><p>optional plugin value of the mean</p>
+</dd>
+<dt><strong>preds: Dict</strong></dt><dd><p>model predictions (optional)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Ginsbourger, D. Multiples metamodeles pour l’approximation et l’optimisation de fonctions numeriques multivariables Ecole Nationale Superieure des Mines de Saint-Etienne, Ecole Nationale Superieure des Mines de Saint-Etienne, 2009
+Roustant, O., Ginsbourger, D., DiceKriging, DiceOptim: Two R packages for the analysis of computer experiments by kriging-based metamodeling and optimization, Journal of Statistical Software, 2012</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.deriv_crit_logEI">
+<span class="sig-name descname"><span class="pre">deriv_crit_logEI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#deriv_crit_logEI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.deriv_crit_logEI" title="Link to this definition"></a></dt>
+<dd><p>Derivative of the logarithm of Expected Improvement (EI) criteria</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x: nd_arraylike</strong></dt><dd><p>model designs, one point per row</p>
+</dd>
+<dt><strong>model: hetgpy.hetGP</strong></dt><dd><p>hetGP or homGP model</p>
+</dd>
+<dt><strong>cst: float</strong></dt><dd><p>optional plugin value of the mean</p>
+</dd>
+<dt><strong>preds: Dict</strong></dt><dd><p>model predictions (optional)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Ament, S., Daulton, S., Eriksson, D., Balandat, M., &amp; Bakshy, E. (2024). Unexpected improvements to expected improvement for Bayesian optimization. Advances in Neural Information Processing Systems, 36.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.dlambda">
+<span class="sig-name descname"><span class="pre">dlambda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#dlambda"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.dlambda" title="Link to this definition"></a></dt>
+<dd><p>Derivative of the student-t pdf</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>z: float</strong></dt><dd><p>input location</p>
+</dd>
+<dt><strong>a: float</strong></dt><dd><p>degree of freedom parameter</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>derivative of student-t pdf</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dlambda</span><span class="p">(</span><span class="mf">0.55</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">)</span> <span class="c1"># -0.2005827</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.dlog_h">
+<span class="sig-name descname"><span class="pre">dlog_h</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(2.220446049250313e-16)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#dlog_h"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.dlog_h" title="Link to this definition"></a></dt>
+<dd><p class="rubric">References</p>
+<p>Ament, S., Daulton, S., Eriksson, D., Balandat, M., &amp; Bakshy, E. (2024). Unexpected improvements to expected improvement for Bayesian optimization. Advances in Neural Information Processing Systems, 36.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.log1mexp">
+<span class="sig-name descname"><span class="pre">log1mexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#log1mexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.log1mexp" title="Link to this definition"></a></dt>
+<dd><p class="rubric">References</p>
+<p>Maechler, Martin (2012). Accurately Computing log(1-exp(-<a href="#id1"><span class="problematic" id="id2">|a|</span></a>)). Assessed from the Rmpfr package.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.log_h">
+<span class="sig-name descname"><span class="pre">log_h</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(2.220446049250313e-16)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#log_h"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.log_h" title="Link to this definition"></a></dt>
+<dd><p class="rubric">References</p>
+<p>Ament, S., Daulton, S., Eriksson, D., Balandat, M., &amp; Bakshy, E. (2024). Unexpected improvements to expected improvement for Bayesian optimization. Advances in Neural Information Processing Systems, 36.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.optim.predict_gr">
+<span class="sig-name descname"><span class="pre">predict_gr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/optim.html#predict_gr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.optim.predict_gr" title="Link to this definition"></a></dt>
+<dd><p>Gradient of the prediction given a model</p>
+</dd></dl>
+
+<span class="target" id="module-hetgpy.IMSE"></span><dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.IMSPE">
+<span class="sig-name descname"><span class="pre">IMSPE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lambda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mult</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#IMSPE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.IMSPE" title="Link to this definition"></a></dt>
+<dd><p>IMSPE of a given design.</p>
+<p>Integrated Mean Square Prediction Error</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>X</strong><span class="classifier"><code class="docutils literal notranslate"><span class="pre">hetgpy.hetGP.hetGP</span></code> or <code class="docutils literal notranslate"><span class="pre">hetgpy.homGP.homGP</span></code> model.</span></dt><dd><p>Alternatively, one can provide a matrix of unique designs considered</p>
+</dd>
+<dt><strong>theta</strong><span class="classifier">ndarray_like</span></dt><dd><p>lengthscales</p>
+</dd>
+<dt><strong>Lambda</strong><span class="classifier">ndarray_like</span></dt><dd><p>diagonal matrix for the noise</p>
+</dd>
+<dt><strong>mult</strong><span class="classifier">ndarray_like</span></dt><dd><p>number of replicates at each design</p>
+</dd>
+<dt><strong>covtype</strong><span class="classifier">str</span></dt><dd><p>either “Gaussian”, “Matern3_2” or “Matern5_2”</p>
+</dd>
+<dt><strong>nu</strong><span class="classifier">float</span></dt><dd><p>variance parameter</p>
+</dd>
+<dt><strong>eps</strong><span class="classifier">float</span></dt><dd><p>numerical nugget</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.Wij">
+<span class="sig-name descname"><span class="pre">Wij</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Gaussian'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#Wij"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.Wij" title="Link to this definition"></a></dt>
+<dd><p>Compute double integral of the covariance kernel over a [0,1]^d domain</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mu1,mu2</strong><span class="classifier">ndarray)like</span></dt><dd><p>input locations considered</p>
+</dd>
+<dt><strong>theta</strong><span class="classifier">ndarray_like</span></dt><dd><p>lengthscale hyperparameter of the kernel</p>
+</dd>
+<dt><strong>type</strong><span class="classifier">str</span></dt><dd><p>kernel type, one of <code class="docutils literal notranslate"><span class="pre">&quot;Gaussian&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Matern5_2&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;Matern3_2&quot;</span></code></p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. Binois, J. Huang, R. B. Gramacy, M. Ludkovski (2019), Replication or exploration? Sequential design for stochastic simulation experiments,
+Technometrics, 61(1), 7-23. Preprint available on arXiv:1710.03206.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.allocate_mult">
+<span class="sig-name descname"><span class="pre">allocate_mult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wijs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_Ki</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#allocate_mult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.allocate_mult" title="Link to this definition"></a></dt>
+<dd><p>Allocation of replicates on existing design locations, based on (29) from (Ankenman et al, 2010)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>model: hetGP model</strong></dt><dd><p>hetGP model</p>
+</dd>
+<dt><strong>N</strong><span class="classifier">int</span></dt><dd><p>total budget of replication to allocate</p>
+</dd>
+<dt><strong>Wijs: ndarray</strong></dt><dd><p>optional previously computed matrix of Wijs, see hetgpy.IMSE.Wij</p>
+</dd>
+<dt><strong>use_Ki</strong><span class="classifier">bool</span></dt><dd><p>should Ki from model be used?</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>vector with approximated best number of replicates per design</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<ol class="upperalpha simple" start="2">
+<li><p>Ankenman, B. Nelson, J. Staum (2010), Stochastic kriging for simulation metamodeling, Operations research, pp. 371–382, 58</p></li>
+</ol>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.deriv_crit_IMSPE">
+<span class="sig-name descname"><span class="pre">deriv_crit_IMSPE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wijs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#deriv_crit_IMSPE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.deriv_crit_IMSPE" title="Link to this definition"></a></dt>
+<dd><p>Derivative of crit_IMSPE</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">ndarray_like</span></dt><dd><p>matrix for the news design (size 1 x d)</p>
+</dd>
+<dt><strong>model</strong><span class="classifier">hetGP or homGP</span></dt><dd><p>model</p>
+</dd>
+<dt><strong>id: None</strong></dt><dd><p>None (but included for compatibility with crit_IMSPE input structure so it can be used in minimize)</p>
+</dd>
+<dt><strong>Wijs</strong><span class="classifier">ndarray_like</span></dt><dd><p>optional previously computed matrix of Wijs, see Wij</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Derivative of the sequential IMSPE with respect to x</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.horizon">
+<span class="sig-name descname"><span class="pre">horizon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_horizon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wijs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#horizon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.horizon" title="Link to this definition"></a></dt>
+<dd><p>Adapt the look-ahead horizon depending on the replicate allocation or a target ratio</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>model</strong><span class="classifier">hetGP or homGP model</span></dt><dd><p>hetGP or homGP model</p>
+</dd>
+<dt><strong>current_horizon</strong><span class="classifier">int</span></dt><dd><p>horizon used for the previous iteration, see details</p>
+</dd>
+<dt><strong>previous_ratio</strong><span class="classifier">float</span></dt><dd><p>ratio before adding the previous new design</p>
+</dd>
+<dt><strong>target</strong><span class="classifier">float</span></dt><dd><p>scalar in [0,1] for desired n/N</p>
+</dd>
+<dt><strong>Wijs</strong><span class="classifier">nd_array</span></dt><dd><p>optional previously computed matrix of Wijs, see hetgpy.IMSE.Wij</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>Randomly selected horizon for next iteration (adpative) if no target is provided,</dt><dd></dd>
+<dt>otherwise returns the update horizon value.</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>M. Binois, J. Huang, R. B. Gramacy, M. Ludkovski (2019), 
+Replication or exploration? Sequential design for stochastic simulation experiments,
+Technometrics, 61(1), 7-23.cr 
+Preprint available on arXiv:1710.03206.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.lhs_EP">
+<span class="sig-name descname"><span class="pre">lhs_EP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#lhs_EP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.lhs_EP" title="Link to this definition"></a></dt>
+<dd><p>From DiceDesign: FUNCTION PERFORMING ELEMENTARY PERMUTATION (EP) IN LHD USED IN SA ALGORITHMS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>m</strong><span class="classifier">nd_arraylike</span></dt><dd><p>the design</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>out</strong><span class="classifier">tuple</span></dt><dd><p>list including design after EP, ligns and columns defining EP</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.maximinSA_LHS">
+<span class="sig-name descname"><span class="pre">maximinSA_LHS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GEOM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Imax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#maximinSA_LHS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.maximinSA_LHS" title="Link to this definition"></a></dt>
+<dd><p>Implementation of maximinSA_LHS from DiceDesign
+Only profile=”GEOM” is implemented (like in hetGP)</p>
+<p>#####maximinSA_LHS#####
+#####Maximin LHS VIA SIMULATED ANNEALING OPTIMIZATION#####</p>
+<p>#—————————————————————————|
+#args :  m     : the design                                                 |
+#        T0    : the initial temperature                                    |
+#        c     : parameter regulating the temperature                       |
+#        it    : the number of iterations                                   |
+#        p     : power required in phiP criterion                           |
+#      profile : temperature down profile                                   |
+#                “GEOM” or “GEOM_MORRIS” or “LINEAR”. By default : “GEOM”   |
+#output        : a list containing all the input arguments plus:            |
+#       a mindist optimized design                                          |
+#       vector of criterion values along the iterations                     |
+#       vector of temperature values along the iterations                   |
+#       vector of acceptation probability values along the iterations       |
+#depends :  phiP,lhs_EP                                                     |
+#—————————————————————————|</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.mi">
+<span class="sig-name descname"><span class="pre">mi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#mi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.mi" title="Link to this definition"></a></dt>
+<dd><p>Compute integral of the covariance kernel over a [0,1]^d domain</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mu1</strong><span class="classifier">ndarray_like</span></dt><dd><p>input locations considered</p>
+</dd>
+<dt><strong>theta</strong><span class="classifier">ndarray_like</span></dt><dd><p>lengthscale hyperparameter of the kernel</p>
+</dd>
+<dt><strong>type</strong><span class="classifier">str</span></dt><dd><p>kernel type, one of <code class="docutils literal notranslate"><span class="pre">&quot;Gaussian&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Matern5_2&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;Matern3_2&quot;</span></code></p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Replication or exploration? Sequential design for stochastic simulation experiments,
+Technometrics, 61(1), 7-23. Preprint available on arXiv:1710.03206.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.IMSE.phiP">
+<span class="sig-name descname"><span class="pre">phiP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/IMSE.html#phiP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.IMSE.phiP" title="Link to this definition"></a></dt>
+<dd><p>Implementation of <cite>phiP.R</cite> from <cite>DiceDesign</cite> (necessary for maximinSA_LHS from DiceDesign which is used by IMSPE_search)</p>
+<p>From DiceDesign:
+Compute the phiP criterion (Lp norm of the sum of the inverses of the design inter-point distances)
+Reference: Pronzato, L. and Muller, W.,2012, Design of computer experiments: space filling and beyond, Statistics and Computing, 22:681-701.
+A higher phiP corresponds to a more regular scaterring of design points</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>fi_p</strong><span class="classifier">np.float</span></dt><dd><p>the phiP criterion</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-hetgpy.LOO"></span><dl class="py function">
+<dt class="sig sig-object py" id="hetgpy.LOO.LOO_preds">
+<span class="sig-name descname"><span class="pre">LOO_preds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hetgpy/LOO.html#LOO_preds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hetgpy.LOO.LOO_preds" title="Link to this definition"></a></dt>
+<dd><p>Provide leave one out predictions, e.g., for model testing and diagnostics.  This is used in the method plot available on GP and TP models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>model: hetgpy.homGP.homGP or hetgpy.hetGP.hetGP</strong></dt><dd><p>hetGPy model to evaluate. TPs not considered at this point.</p>
+</dd>
+<dt><strong>ids: vector of indices of the unique design point considered (defaults to all)</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>dict with mean and variance predictions at x_i assuming this point has not been evaluated</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>For TP models, <cite>psi</cite> is considered fixed</p>
+<p class="rubric">References</p>
+<p>O. Dubrule (1983), Cross validation of Kriging in a unique neighborhood, Mathematical Geology 15, 687–699. cr cr
+F. Bachoc (2013), Cross Validation and Maximum Likelihood estimations of hyper-parameters of Gaussian processes</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy</span> <span class="kn">import</span> <span class="n">homGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.LOO</span> <span class="kn">import</span> <span class="n">LOO_preds</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.find_reps</span> <span class="kn">import</span> <span class="n">find_reps</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">hetgpy.example_data</span> <span class="kn">import</span> <span class="n">mcycle</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">mcycle</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s1">&#39;times&#39;</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="s1">&#39;accel&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">homGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">],</span> <span class="n">upper</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>         <span class="n">covtype</span> <span class="o">=</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">,</span> <span class="n">known</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">beta0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">LOO_p</span> <span class="o">=</span> <span class="n">LOO_preds</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">find_reps</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">Z</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">LOO_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;X0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">2</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;X0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">model_i</span> <span class="o">=</span> <span class="n">homGP</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">model_i</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">X0</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;X0&#39;</span><span class="p">][</span><span class="n">idxs</span><span class="p">,:],</span> <span class="n">Z0</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;Z0&#39;</span><span class="p">][</span><span class="n">idxs</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                <span class="n">mult</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;mult&#39;</span><span class="p">][</span><span class="n">idxs</span><span class="p">]),</span> 
+<span class="gp">&gt;&gt;&gt; </span>                <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;Zlist&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">idxs</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                       <span class="n">lower</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">],</span> <span class="n">upper</span> <span class="o">=</span> <span class="p">[</span><span class="mi">50</span><span class="p">],</span> <span class="n">covtype</span> <span class="o">=</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                       <span class="n">known</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">g</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">g</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                   <span class="n">beta0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">model_i</span><span class="o">.</span><span class="n">nu_hat</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">nu_hat</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">p_i</span> <span class="o">=</span> <span class="n">model_i</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;X0&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,:])</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">LOO_ref</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_i</span><span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">],</span> <span class="n">p_i</span><span class="p">[</span><span class="s1">&#39;sd2&#39;</span><span class="p">]])</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ptp</span><span class="p">(</span><span class="n">LOO_ref</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">LOO_p</span><span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ptp</span><span class="p">(</span><span class="n">LOO_ref</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">LOO_p</span><span class="p">[</span><span class="s1">&#39;sd2&#39;</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, David O&#39;Gara.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

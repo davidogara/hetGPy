@@ -1,0 +1,854 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hetgpy.IMSE &mdash; hetGPy 1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=29a6c3e3"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hetGPy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Welcome to hetGPy’s overview!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hetGPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hetgpy.IMSE</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hetgpy.IMSE</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">hetgpy</span> <span class="kn">import</span> <span class="n">EMSE</span>
+<span class="kn">from</span> <span class="nn">hetgpy</span> <span class="kn">import</span> <span class="n">hetGP</span><span class="p">,</span> <span class="n">homGP</span>
+<span class="kn">from</span> <span class="nn">hetgpy.covariance_functions</span> <span class="kn">import</span> <span class="n">cov_gen</span>
+<span class="kn">from</span> <span class="nn">scipy.linalg.lapack</span> <span class="kn">import</span> <span class="n">dtrtri</span>
+<span class="kn">from</span> <span class="nn">joblib</span> <span class="kn">import</span> <span class="n">Parallel</span><span class="p">,</span> <span class="n">delayed</span>
+<span class="kn">from</span> <span class="nn">hetgpy.covariance_functions</span> <span class="kn">import</span> <span class="n">euclidean_dist</span>
+<span class="kn">from</span> <span class="nn">hetgpy.utils</span> <span class="kn">import</span> <span class="n">duplicated</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">pdist</span>
+<span class="kn">from</span> <span class="nn">scipy.stats.qmc</span> <span class="kn">import</span> <span class="n">LatinHypercube</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span> <span class="k">as</span> <span class="n">copy</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">TYPE</span> <span class="o">=</span> <span class="nb">type</span>
+
+<div class="viewcode-block" id="IMSPE">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.IMSPE">[docs]</a>
+<span class="k">def</span> <span class="nf">IMSPE</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Lambda</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mult</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">covtype</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nu</span><span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    IMSPE of a given design.</span>
+
+<span class="sd">    Integrated Mean Square Prediction Error</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    X : ``hetgpy.hetGP.hetGP`` or ``hetgpy.homGP.homGP`` model. </span>
+<span class="sd">        Alternatively, one can provide a matrix of unique designs considered</span>
+<span class="sd">    theta : ndarray_like</span>
+<span class="sd">        lengthscales</span>
+<span class="sd">    Lambda : ndarray_like</span>
+<span class="sd">        diagonal matrix for the noise</span>
+<span class="sd">    mult : ndarray_like</span>
+<span class="sd">        number of replicates at each design</span>
+<span class="sd">    covtype : str</span>
+<span class="sd">        either &quot;Gaussian&quot;, &quot;Matern3_2&quot; or &quot;Matern5_2&quot;</span>
+<span class="sd">    nu : float</span>
+<span class="sd">        variance parameter</span>
+<span class="sd">    eps : float</span>
+<span class="sd">        numerical nugget</span>
+<span class="sd">    </span>
+<span class="sd">    Details</span>
+<span class="sd">    -------</span>
+<span class="sd">    One can provide directly a model of class ``hetGP`` or ``homGP``, or provide design locations ``X`` and all other arguments</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">==</span><span class="n">hetGP</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">==</span><span class="n">homGP</span><span class="p">:</span>
+        <span class="n">Wij</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">trendtype</span> <span class="o">==</span> <span class="s2">&quot;OK&quot;</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">mi</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">@</span> <span class="n">Wij</span> <span class="o">@</span> <span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">nu_hat</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Ki</span> <span class="o">*</span> <span class="n">Wij</span><span class="p">)</span> <span class="o">+</span> <span class="n">tmp</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">cov_gen</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">covtype</span><span class="p">)</span>
+        <span class="n">Ki</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">C</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">Lambda</span><span class="o">/</span><span class="n">mult</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">Ki</span> <span class="o">=</span> <span class="n">dtrtri</span><span class="p">(</span><span class="n">Ki</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">Ki</span> <span class="o">=</span> <span class="n">Ki</span> <span class="o">@</span> <span class="n">Ki</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">return</span> <span class="n">nu</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Ki</span> <span class="o">*</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">covtype</span><span class="p">)))</span></div>
+
+    
+<span class="k">def</span> <span class="nf">crit_IMSPE</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="c1">## Precalculations</span>
+  
+    <span class="k">if</span> <span class="n">Wijs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+
+
+    <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span><span class="s1">&#39;Lambda&#39;</span><span class="p">):</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">g</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">Lambda</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="o">*</span><span class="n">Wijs</span><span class="p">)</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="p">[:,</span><span class="nb">id</span><span class="p">]</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Wijs</span> <span class="o">@</span> <span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="p">[:,</span><span class="nb">id</span><span class="p">]</span> <span class="o">/</span> <span class="p">((</span><span class="n">model</span><span class="o">.</span><span class="n">mult</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">mult</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="n">tmp</span><span class="p">)</span> <span class="o">-</span> <span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="p">[</span><span class="nb">id</span><span class="p">,</span> <span class="nb">id</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1e-1</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Numerical errors caused negative IMSPE at design location </span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s2">, suggest investigating&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">newWijs</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu2</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+    <span class="n">W11</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu2</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">mu1</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+
+    <span class="n">kn1</span> <span class="o">=</span> <span class="n">cov_gen</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+    
+    <span class="n">new_lambda</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">nugs_only</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)[</span><span class="s1">&#39;nugs&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">nu_hat</span>
+    
+    <span class="n">vn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">kn1</span> <span class="o">@</span> <span class="n">model</span><span class="o">.</span><span class="n">Ki</span> <span class="o">@</span> <span class="n">kn1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">new_lambda</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">eps</span>
+    <span class="n">gn</span> <span class="o">=</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Ki</span> <span class="o">@</span> <span class="n">kn1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="n">vn</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="o">*</span><span class="n">Wijs</span><span class="p">)</span> <span class="o">+</span> <span class="n">gn</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">Wijs</span> <span class="o">@</span> <span class="n">gn</span><span class="p">)</span><span class="o">*</span><span class="n">vn</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">newWijs</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">gn</span> <span class="o">+</span> <span class="n">W11</span> <span class="o">/</span> <span class="n">vn</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Wij">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.Wij">[docs]</a>
+<span class="k">def</span> <span class="nf">Wij</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">mu2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="n">theta</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Compute double integral of the covariance kernel over a [0,1]^d domain</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mu1,mu2 : ndarray)like</span>
+<span class="sd">        input locations considered</span>
+<span class="sd">    theta : ndarray_like</span>
+<span class="sd">        lengthscale hyperparameter of the kernel</span>
+<span class="sd">    type : str </span>
+<span class="sd">        kernel type, one of ``&quot;Gaussian&quot;``, ``&quot;Matern5_2&quot;`` or ``&quot;Matern3_2&quot;``</span>
+<span class="sd">    </span>
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    M. Binois, J. Huang, R. B. Gramacy, M. Ludkovski (2019), Replication or exploration? Sequential design for stochastic simulation experiments,</span>
+<span class="sd">    Technometrics, 61(1), 7-23. Preprint available on arXiv:1710.03206.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;theta required&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">mu1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">mu1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mu2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">Wijs_gauss_sym_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">Wijs_gauss_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">mu2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mu2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">Wijs_mat52_sym_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">Wijs_mat52_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">mu2</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern3_2&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mu2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">Wijs_mat32_sym_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">Wijs_mat32_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">mu2</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="mi">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.mi">[docs]</a>
+<span class="k">def</span> <span class="nf">mi</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Compute integral of the covariance kernel over a [0,1]^d domain</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mu1 : ndarray_like</span>
+<span class="sd">        input locations considered</span>
+<span class="sd">    theta : ndarray_like</span>
+<span class="sd">        lengthscale hyperparameter of the kernel</span>
+<span class="sd">    type : str </span>
+<span class="sd">        kernel type, one of ``&quot;Gaussian&quot;``, ``&quot;Matern5_2&quot;`` or ``&quot;Matern3_2&quot;``</span>
+<span class="sd">    </span>
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Replication or exploration? Sequential design for stochastic simulation experiments,</span>
+<span class="sd">    Technometrics, 61(1), 7-23. Preprint available on arXiv:1710.03206.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">mu1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">mu1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">mi_gauss_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">mi_mat52_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern3_2&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">mi_mat32_cpp</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span></div>
+
+
+<span class="c1">## Wrapper functions</span>
+
+<span class="k">def</span> <span class="nf">d1</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">d_gauss_cpp</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">)</span>
+  
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">d_mat52_cpp</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">)</span>
+  
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern3_2&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">d_mat32_cpp</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">)</span>
+  
+
+<span class="k">def</span> <span class="nf">c1</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">c1_gauss_cpp</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma</span><span class="p">),</span> <span class="n">W</span> <span class="o">=</span> <span class="n">W</span><span class="p">)</span>
+  
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">c1_mat52_cpp</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">W</span><span class="p">)</span>
+  
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern3_2&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">c1_mat32_cpp</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">W</span><span class="p">)</span>
+  
+  
+<span class="k">def</span> <span class="nf">c2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>     <span class="n">x</span>     <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sigma</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+  <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="o">==</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">):</span>     <span class="n">w</span>     <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">c2_gauss_cpp</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma</span><span class="p">),</span> <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="p">)</span>
+  
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">c2_mat52_cpp</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="p">)</span>
+  
+  <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern3_2&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">EMSE</span><span class="o">.</span><span class="n">c2_mat32_cpp</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="deriv_crit_IMSPE">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.deriv_crit_IMSPE">[docs]</a>
+<span class="k">def</span> <span class="nf">deriv_crit_IMSPE</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Derivative of crit_IMSPE</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    </span>
+<span class="sd">    x : ndarray_like</span>
+<span class="sd">        matrix for the news design (size 1 x d)</span>
+<span class="sd">    model : hetGP or homGP</span>
+<span class="sd">        model</span>
+<span class="sd">    id: None</span>
+<span class="sd">        None (but included for compatibility with crit_IMSPE input structure so it can be used in minimize)</span>
+<span class="sd">    Wijs : ndarray_like</span>
+<span class="sd">        optional previously computed matrix of Wijs, see Wij</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    </span>
+<span class="sd">    Derivative of the sequential IMSPE with respect to x</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+  
+    <span class="c1">## Precalculations</span>
+    <span class="k">if</span> <span class="n">Wijs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">kn1</span> <span class="o">=</span> <span class="n">cov_gen</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">TYPE</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">==</span><span class="n">hetGP</span><span class="p">:</span> <span class="n">kng1</span> <span class="o">=</span> <span class="n">cov_gen</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta_g</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+    <span class="n">new_lambda</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">nugs_only</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)[</span><span class="s1">&#39;nugs&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">nu_hat</span>
+    <span class="n">k11</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">new_lambda</span>
+
+    <span class="n">W1</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">mu2</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+    <span class="n">W11</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+  
+    <span class="c1"># compute derivative vectors and scalars</span>
+    <span class="n">Kikn1</span> <span class="o">=</span>  <span class="n">model</span><span class="o">.</span><span class="n">Ki</span> <span class="o">@</span> <span class="n">kn1</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">k11</span> <span class="o">-</span> <span class="p">(</span><span class="n">kn1</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Kikn1</span><span class="p">))</span>
+    <span class="n">g</span> <span class="o">=</span>  <span class="o">-</span> <span class="n">Kikn1</span> <span class="o">/</span> <span class="n">v</span>
+    
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">dlambda</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">TYPE</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">==</span><span class="n">hetGP</span><span class="p">:</span> <span class="n">KgiD</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">Kgi</span> <span class="o">@</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Delta</span> <span class="o">-</span> <span class="n">model</span><span class="o">.</span><span class="n">nmean</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">TYPE</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">==</span><span class="n">hetGP</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">theta_g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">model</span><span class="o">.</span><span class="n">theta_g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="n">Wig</span> <span class="o">=</span> <span class="n">Wijs</span> <span class="o">@</span> <span class="n">g</span>
+  
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+    
+        <span class="n">c1_v</span> <span class="o">=</span> <span class="n">c1</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">[:,</span><span class="n">m</span><span class="p">],</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span><span class="n">m</span><span class="p">],</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">W</span> <span class="o">=</span> <span class="n">W1</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+    
+        <span class="n">dis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">d1</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">[:,</span><span class="n">m</span><span class="p">],</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span><span class="n">m</span><span class="p">],</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span> <span class="o">*</span> <span class="n">kn1</span><span class="p">)</span>
+    
+        <span class="k">if</span> <span class="n">TYPE</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">==</span><span class="n">hetGP</span><span class="p">:</span>
+            <span class="n">dlambda</span> <span class="o">=</span> <span class="p">(</span><span class="n">d1</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">[:,</span><span class="n">m</span><span class="p">],</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span><span class="n">m</span><span class="p">],</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta_g</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span> <span class="o">*</span> <span class="n">kng1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">KgiD</span>
+            <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">logN</span><span class="p">:</span>
+                <span class="n">dlambda</span> <span class="o">=</span> <span class="n">new_lambda</span> <span class="o">*</span><span class="n">dlambda</span>
+    
+        <span class="n">v2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span> <span class="n">dis</span> <span class="o">@</span> <span class="n">Kikn1</span><span class="p">)</span> <span class="o">+</span> <span class="n">dlambda</span><span class="p">)</span> 
+        <span class="n">v1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="n">v</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">v2</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="n">model</span><span class="o">.</span><span class="n">Ki</span> <span class="o">@</span> <span class="p">(</span><span class="n">v1</span> <span class="o">*</span> <span class="n">kn1</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="n">v</span> <span class="o">*</span> <span class="n">dis</span><span class="p">))</span>
+        <span class="n">tmp</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">c1_v</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">g</span><span class="p">)</span> <span class="o">+</span> <span class="n">c2</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span><span class="n">m</span><span class="p">],</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">w</span> <span class="o">=</span> <span class="n">W11</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span> <span class="o">/</span> <span class="n">v</span> <span class="o">+</span> <span class="p">((</span><span class="n">v2</span> <span class="o">*</span> <span class="n">g</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">v</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Wig</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">W1</span><span class="p">)</span> <span class="o">+</span> <span class="n">v1</span> <span class="o">*</span> <span class="n">W11</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">tmp</span></div>
+
+
+
+
+<div class="viewcode-block" id="phiP">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.phiP">[docs]</a>
+<span class="k">def</span> <span class="nf">phiP</span><span class="p">(</span><span class="n">design</span><span class="p">,</span><span class="n">p</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Implementation of `phiP.R` from `DiceDesign` (necessary for maximinSA_LHS from DiceDesign which is used by IMSPE_search)</span>
+<span class="sd">   </span>
+<span class="sd">    From DiceDesign:</span>
+<span class="sd">    Compute the phiP criterion (Lp norm of the sum of the inverses of the design inter-point distances)</span>
+<span class="sd">    Reference: Pronzato, L. and Muller, W.,2012, Design of computer experiments: space filling and beyond, Statistics and Computing, 22:681-701.</span>
+<span class="sd">    A higher phiP corresponds to a more regular scaterring of design points</span>
+<span class="sd">   </span>
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    design : nd_arraylike</span>
+<span class="sd">        design for a computer experiment</span>
+<span class="sd">    p    : int</span>
+<span class="sd">        the &quot;p&quot; in the Lp norm which is taken (default=50) </span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fi_p : np.float</span>
+<span class="sd">        the phiP criterion</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">pdist</span><span class="p">(</span><span class="n">design</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">D</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">fi_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">D</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fi_p</span></div>
+
+
+<div class="viewcode-block" id="lhs_EP">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.lhs_EP">[docs]</a>
+<span class="k">def</span> <span class="nf">lhs_EP</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    From DiceDesign: FUNCTION PERFORMING ELEMENTARY PERMUTATION (EP) IN LHD USED IN SA ALGORITHMS</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    m : nd_arraylike</span>
+<span class="sd">        the design</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : tuple</span>
+<span class="sd">        list including design after EP, ligns and columns defining EP</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">rand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">m</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ligns</span>  <span class="o">=</span> <span class="p">(</span><span class="n">rand</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="n">n</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>      
+    <span class="n">column</span> <span class="o">=</span> <span class="p">(</span><span class="n">rand</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">high</span><span class="o">=</span><span class="n">d</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">G</span><span class="p">[</span><span class="n">ligns</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">column</span><span class="p">]</span>
+    <span class="n">G</span><span class="p">[</span><span class="n">ligns</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">G</span><span class="p">[</span><span class="n">ligns</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">column</span><span class="p">]</span>
+    <span class="n">G</span><span class="p">[</span><span class="n">ligns</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span> 
+    <span class="n">l</span> <span class="o">=</span> <span class="p">(</span><span class="n">G</span><span class="p">,</span><span class="n">ligns</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">ligns</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">column</span><span class="p">)</span>   
+    <span class="k">return</span> <span class="n">l</span></div>
+
+
+<div class="viewcode-block" id="maximinSA_LHS">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.maximinSA_LHS">[docs]</a>
+<span class="k">def</span> <span class="nf">maximinSA_LHS</span><span class="p">(</span><span class="n">design</span><span class="p">,</span><span class="n">T0</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span><span class="n">it</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span><span class="n">p</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span><span class="n">profile</span><span class="o">=</span><span class="s2">&quot;GEOM&quot;</span><span class="p">,</span><span class="n">Imax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Implementation of maximinSA_LHS from DiceDesign</span>
+<span class="sd">    Only profile=&quot;GEOM&quot; is implemented (like in hetGP)</span>
+
+<span class="sd">    #####maximinSA_LHS#####</span>
+<span class="sd">    #####Maximin LHS VIA SIMULATED ANNEALING OPTIMIZATION#####</span>
+
+<span class="sd">    #---------------------------------------------------------------------------|</span>
+<span class="sd">    #args :  m     : the design                                                 |</span>
+<span class="sd">    #        T0    : the initial temperature                                    |</span>
+<span class="sd">    #        c     : parameter regulating the temperature                       |</span>
+<span class="sd">    #        it    : the number of iterations                                   |</span>
+<span class="sd">    #        p     : power required in phiP criterion                           |</span>
+<span class="sd">    #      profile : temperature down profile                                   |</span>
+<span class="sd">    #                &quot;GEOM&quot; or &quot;GEOM_MORRIS&quot; or &quot;LINEAR&quot;. By default : &quot;GEOM&quot;   |</span>
+<span class="sd">    #output        : a list containing all the input arguments plus:            |</span>
+<span class="sd">    #       a mindist optimized design                                          |</span>
+<span class="sd">    #       vector of criterion values along the iterations                     |</span>
+<span class="sd">    #       vector of temperature values along the iterations                   |</span>
+<span class="sd">    #       vector of acceptation probability values along the iterations       |</span>
+<span class="sd">    #depends :  phiP,lhs_EP                                                     |</span>
+<span class="sd">    #---------------------------------------------------------------------------|</span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">crit</span> <span class="o">=</span> <span class="kc">None</span> <span class="p">;</span> <span class="n">temp</span> <span class="o">=</span> <span class="kc">None</span> <span class="p">;</span> <span class="n">proba</span> <span class="o">=</span> <span class="kc">None</span>
+  
+    <span class="k">if</span> <span class="n">profile</span><span class="o">==</span><span class="s2">&quot;GEOM&quot;</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">design</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">T0</span>
+        <span class="n">fi_p</span> <span class="o">=</span> <span class="n">phiP</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">crit</span> <span class="o">=</span> <span class="n">fi_p</span>
+  
+        <span class="k">while</span> <span class="n">T</span><span class="o">&gt;</span><span class="mi">0</span> <span class="o">&amp;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">it</span><span class="p">:</span>       
+            
+            <span class="n">G</span> <span class="o">=</span> <span class="n">lhs_EP</span><span class="p">(</span><span class="n">m</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">fi_p_ep</span> <span class="o">=</span> <span class="n">phiP</span><span class="p">(</span><span class="n">G</span><span class="p">,</span><span class="n">p</span><span class="p">)</span>
+            
+            <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">((</span><span class="n">fi_p</span><span class="o">-</span><span class="n">fi_p_ep</span><span class="p">)</span><span class="o">/</span><span class="n">T</span><span class="p">,</span><span class="n">a_min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">a_max</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># avoids overflows</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">c</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">diff</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">G</span>
+                <span class="n">fi_p</span> <span class="o">=</span> <span class="n">fi_p_ep</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">Bernoulli</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">p</span><span class="o">=</span><span class="n">diff</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">Bernoulli</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">m</span> <span class="o">=</span> <span class="n">G</span>
+                    <span class="n">fi_p</span> <span class="o">=</span> <span class="n">fi_p_ep</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+            <span class="n">crit</span> <span class="o">=</span> <span class="p">(</span><span class="n">crit</span><span class="p">,</span><span class="n">fi_p</span><span class="p">)</span> <span class="p">;</span> <span class="n">temp</span> <span class="o">=</span> <span class="p">(</span><span class="n">temp</span><span class="p">,</span><span class="n">T</span><span class="p">)</span> <span class="p">;</span> <span class="n">proba</span> <span class="o">=</span> <span class="p">(</span><span class="n">proba</span><span class="p">,</span><span class="n">diff</span><span class="p">)</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="o">**</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">T0</span><span class="p">)</span>
+            
+    <span class="n">vals</span> <span class="o">=</span> <span class="p">(</span><span class="n">design</span><span class="p">,</span><span class="n">T0</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">it</span><span class="p">,</span><span class="n">p</span><span class="p">,</span><span class="n">profile</span><span class="p">,</span><span class="n">Imax</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">crit</span><span class="p">,</span><span class="n">temp</span><span class="p">,</span><span class="n">proba</span><span class="p">)</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;InitialDesign&quot;</span><span class="p">,</span><span class="s2">&quot;TO&quot;</span><span class="p">,</span><span class="s2">&quot;c&quot;</span><span class="p">,</span><span class="s2">&quot;it&quot;</span><span class="p">,</span><span class="s2">&quot;p&quot;</span><span class="p">,</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span><span class="s2">&quot;Imax&quot;</span><span class="p">,</span><span class="s2">&quot;design&quot;</span><span class="p">,</span><span class="s2">&quot;critValues&quot;</span><span class="p">,</span><span class="s2">&quot;tempValues&quot;</span><span class="p">,</span><span class="s2">&quot;probaValues&quot;</span><span class="p">)</span> 
+    
+    
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span><span class="n">vals</span><span class="p">)}</span></div>
+
+
+<span class="k">def</span> <span class="nf">IMSPE_search</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">replicate</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">Xcand</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                        <span class="n">control</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tol_dist</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">tol_diff</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">multi_start</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+                                       <span class="n">maxit</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">maximin</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">Xstart</span> <span class="o">=</span> <span class="kc">None</span><span class="p">),</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">ncores</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+  <span class="c1"># Only search on existing designs</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">replicate</span><span class="p">):</span>
+        <span class="c1">## Discrete optimization</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">crit_IMSPE</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="n">i</span><span class="p">,</span> <span class="n">Wijs</span><span class="o">=</span><span class="n">Wijs</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1">#res = Parallel(n_jobs=ncores)(</span>
+        <span class="c1">#delayed(crit_IMSPE)(**kw) </span>
+        <span class="c1">#    for kw in inputs</span>
+        <span class="c1">#)</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">par</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">res</span><span class="p">),:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> 
+            <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">res</span><span class="p">),</span> 
+            <span class="n">new</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="nb">id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">control</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">control</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">multi_start</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">maxit</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
+  
+    <span class="k">if</span> <span class="n">control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;multi_start&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">control</span><span class="p">[</span><span class="s1">&#39;multi_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+  
+    <span class="k">if</span> <span class="n">control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;maxit&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">control</span><span class="p">[</span><span class="s1">&#39;maxit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span>
+  
+    <span class="k">if</span> <span class="n">control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;maximin&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">control</span><span class="p">[</span><span class="s1">&#39;maximin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+  
+    <span class="k">if</span> <span class="n">control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tol_dist&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;tol_dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-6</span>
+    <span class="k">if</span> <span class="n">control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tol_diff&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;tol_diff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-6</span>
+    
+    <span class="n">d</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+  
+    <span class="c1">## Precalculations</span>
+    <span class="k">if</span> <span class="n">Wijs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+    
+
+    <span class="c1">## Optimization</span>
+    <span class="k">if</span> <span class="n">Xcand</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1">## Continuous optimization</span>
+        <span class="k">if</span> <span class="n">control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Xstart&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Xstart</span> <span class="o">=</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;Xstart&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
+                <span class="n">seed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">15</span><span class="p">)</span> <span class="c1">## To be changed?</span>
+            <span class="k">if</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;maximin&#39;</span><span class="p">]:</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="c1"># perturbed 1d equidistant points</span>
+                    <span class="n">Xstart</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;multi_start&#39;</span><span class="p">]</span> <span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;multi_start&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">control</span><span class="p">[</span><span class="s1">&#39;multi_start&#39;</span><span class="p">],</span> <span class="n">low</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">control</span><span class="p">[</span><span class="s1">&#39;multi_start&#39;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sampler</span> <span class="o">=</span> <span class="n">LatinHypercube</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+                    <span class="n">Xstart</span> <span class="o">=</span> <span class="n">maximinSA_LHS</span><span class="p">(</span><span class="n">sampler</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">control</span><span class="p">[</span><span class="s1">&#39;multi_start&#39;</span><span class="p">]))[</span><span class="s1">&#39;design&#39;</span><span class="p">]</span>
+                
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sampler</span> <span class="o">=</span> <span class="n">LatinHypercube</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+                <span class="n">Xstart</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">control</span><span class="p">[</span><span class="s1">&#39;multi_start&#39;</span><span class="p">])</span>
+            
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]),</span> <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        
+        <span class="k">def</span> <span class="nf">local_opt_fun</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
+            <span class="n">x0</span>  <span class="o">=</span> <span class="n">Xstart</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span>
+            <span class="n">fun</span> <span class="o">=</span> <span class="n">crit_IMSPE</span><span class="p">,</span>
+            <span class="n">jac</span> <span class="o">=</span> <span class="n">deriv_crit_IMSPE</span><span class="p">,</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Wijs</span><span class="p">),</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;L-BFGS-B&quot;</span><span class="p">,</span> 
+            <span class="n">bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span>
+            <span class="n">options</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="n">control</span><span class="p">[</span><span class="s1">&#39;maxit&#39;</span><span class="p">],</span> <span class="c1">#,</span>
+                                <span class="n">ftol</span> <span class="o">=</span> <span class="n">control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;factr&#39;</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span><span class="c1">#,</span>
+                                <span class="n">gtol</span> <span class="o">=</span> <span class="n">control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pgtol&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># should map to pgtol</span>
+                                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;fun&#39;</span><span class="p">]</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">foo</span><span class="o">=</span><span class="mi">1</span>
+            <span class="n">python_kws_2_R_kws</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="s1">&#39;par&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;fun&#39;</span><span class="p">:</span> <span class="s1">&#39;value&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;nfev&#39;</span><span class="p">:</span> <span class="s1">&#39;counts&#39;</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">python_kws_2_R_kws</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">val</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">out</span>
+        
+        <span class="n">all_res</span> <span class="o">=</span> <span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="n">ncores</span><span class="p">)(</span><span class="n">delayed</span><span class="p">(</span><span class="n">local_opt_fun</span><span class="p">)(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Xstart</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">all_res_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">all_res</span><span class="p">]</span>
+        <span class="n">res_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">all_res_values</span><span class="p">)</span>
+        <span class="n">par</span> <span class="o">=</span> <span class="n">all_res</span><span class="p">[</span><span class="n">res_min</span><span class="p">][</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+        <span class="n">par</span><span class="p">[</span><span class="n">par</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">par</span><span class="p">[</span><span class="n">par</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> 
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">all_res</span><span class="p">[</span><span class="n">res_min</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">new</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+        
+        
+        <span class="k">if</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;tol_dist&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;tol_diff&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1">## Check if new design is not to close to existing design</span>
+            <span class="n">dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">euclidean_dist</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dists</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;tol_dist&#39;</span><span class="p">]:</span>
+                <span class="n">argmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dists</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">dists</span><span class="o">.</span><span class="n">shape</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">[[</span><span class="n">argmin</span><span class="p">],:],</span>
+                            <span class="n">value</span> <span class="o">=</span> <span class="n">crit_IMSPE</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">[</span><span class="n">argmin</span><span class="p">,:],</span> <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="n">argmin</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">),</span>
+                            <span class="n">new</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="n">argmin</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1">## Check if IMSPE difference between replication and new design is significative</span>
+                <span class="n">id_closest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dists</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">dists</span><span class="o">.</span><span class="n">shape</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c1"># closest point to new design</span>
+                <span class="n">imspe_rep</span> <span class="o">=</span> <span class="n">crit_IMSPE</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="n">id_closest</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">imspe_rep</span> <span class="o">-</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span><span class="o">/</span><span class="n">res</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;tol_diff&#39;</span><span class="p">]:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">[[</span><span class="n">id_closest</span><span class="p">],:],</span>
+                            <span class="n">value</span> <span class="o">=</span> <span class="n">imspe_rep</span><span class="p">,</span>
+                            <span class="n">new</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="n">id_closest</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1">## Discrete optimization</span>
+        <span class="k">def</span> <span class="nf">crit_IMSPE_mcl</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">Wijs</span><span class="p">,</span> <span class="n">Xcand</span><span class="p">):</span> 
+            <span class="k">return</span> <span class="n">crit_IMSPE</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">Xcand</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">)</span>
+        
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Xcand</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;model&#39;</span><span class="p">:</span><span class="n">model</span><span class="p">,</span><span class="s1">&#39;Wijs&#39;</span><span class="p">:</span><span class="n">Wijs</span><span class="p">,</span><span class="s1">&#39;Xcand&#39;</span><span class="p">:</span><span class="n">Xcand</span><span class="p">}</span>
+            <span class="n">kw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kw</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="n">ncores</span><span class="p">)(</span>
+            <span class="n">delayed</span><span class="p">(</span><span class="n">crit_IMSPE_mcl</span><span class="p">)(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span> 
+                <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">inputs</span>
+            <span class="p">)</span>
+        
+        <span class="n">tmp</span> <span class="o">=</span> <span class="p">(</span><span class="n">duplicated</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">Xcand</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">res</span><span class="p">),:]),</span> <span class="n">fromLast</span> <span class="o">=</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> 
+            <span class="k">return</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">Xcand</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">res</span><span class="p">)],:,],</span> <span class="n">value</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">res</span><span class="p">),</span> <span class="n">new</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">))</span>
+        <span class="k">return</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">Xcand</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">res</span><span class="p">)],:],</span> <span class="n">value</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">res</span><span class="p">),</span> <span class="n">new</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="kc">None</span><span class="p">))</span>
+
+<div class="viewcode-block" id="allocate_mult">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.allocate_mult">[docs]</a>
+<span class="k">def</span> <span class="nf">allocate_mult</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">use_Ki</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Allocation of replicates on existing design locations, based on (29) from (Ankenman et al, 2010)</span>
+<span class="sd">   </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model: hetGP model</span>
+<span class="sd">        hetGP model</span>
+<span class="sd">    N : int</span>
+<span class="sd">        total budget of replication to allocate</span>
+<span class="sd">    Wijs: ndarray</span>
+<span class="sd">        optional previously computed matrix of Wijs, see hetgpy.IMSE.Wij</span>
+<span class="sd">    use_Ki : bool</span>
+<span class="sd">        should Ki from model be used?</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    vector with approximated best number of replicates per design</span>
+<span class="sd">    </span>
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    B. Ankenman, B. Nelson, J. Staum (2010), Stochastic kriging for simulation metamodeling, Operations research, pp. 371--382, 58</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1">## Precalculations</span>
+    <span class="k">if</span> <span class="n">Wijs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">use_Ki</span><span class="p">:</span>
+        <span class="n">Ci</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Ki</span> <span class="o">@</span> <span class="n">Wijs</span> <span class="o">@</span> <span class="n">model</span><span class="o">.</span><span class="n">Ki</span><span class="p">),</span><span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">a_max</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="c1"># clip for numerical imprecision</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">Ci</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">cov_gen</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">),</span><span class="n">rcond</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">))</span>
+        <span class="n">Ci</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">Ci</span> <span class="o">@</span> <span class="n">Wijs</span> <span class="o">@</span> <span class="n">Ci</span><span class="p">),</span><span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">==</span><span class="n">hetGP</span><span class="p">:</span> 
+        <span class="n">V</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">Lambda</span>
+    <span class="k">else</span><span class="p">:</span> 
+        <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Z0</span><span class="p">))</span>
+    
+    <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Ci</span> <span class="o">*</span> <span class="n">V</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Ci</span> <span class="o">*</span> <span class="n">V</span><span class="p">)))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+    
+    <span class="c1"># Now get integer results summing to N</span>
+    <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="mi">1</span><span class="p">))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">bdg</span> <span class="o">=</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">res</span><span class="p">)))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># remaining number of points to add after truncating</span>
+    
+    <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bdg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">bdg</span><span class="p">]]</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">bdg</span><span class="p">]]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="horizon">
+<a class="viewcode-back" href="../../reference.html#hetgpy.IMSE.horizon">[docs]</a>
+<span class="k">def</span> <span class="nf">horizon</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">current_horizon</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">previous_ratio</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Adapt the look-ahead horizon depending on the replicate allocation or a target ratio</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : hetGP or homGP model</span>
+<span class="sd">        hetGP or homGP model</span>
+<span class="sd">    current_horizon : int</span>
+<span class="sd">        horizon used for the previous iteration, see details</span>
+<span class="sd">    previous_ratio : float</span>
+<span class="sd">        ratio before adding the previous new design</span>
+<span class="sd">    target : float</span>
+<span class="sd">        scalar in [0,1] for desired n/N</span>
+<span class="sd">    </span>
+<span class="sd">    Wijs : nd_array</span>
+<span class="sd">        optional previously computed matrix of Wijs, see hetgpy.IMSE.Wij</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Randomly selected horizon for next iteration (adpative) if no target is provided,</span>
+<span class="sd">    otherwise returns the update horizon value.</span>
+<span class="sd">    </span>
+<span class="sd">    Details</span>
+<span class="sd">    -------</span>
+<span class="sd">    If target is provided, along with previous_ratio and current_horizon:</span>
+<span class="sd">    \itemize{</span>
+<span class="sd">        \item the horizon is increased by one if more replicates are needed but a new ppint has been added at the previous iteration,</span>
+<span class="sd">        \item the horizon is decreased by one if new points are needed but a replicate has been added at the previous iteration,</span>
+<span class="sd">        \item otherwise it is unchanged.</span>
+<span class="sd">    }</span>
+<span class="sd">    If no target is provided, allocate_mult is used to obtain the best allocation of the existing replicates,</span>
+<span class="sd">    then the new horizon is sampled from the difference between the actual allocation and the best one, bounded below by 0.</span>
+<span class="sd">    See (Binois et al. 2017).</span>
+<span class="sd">    </span>
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    M. Binois, J. Huang, R. B. Gramacy, M. Ludkovski (2019), </span>
+<span class="sd">    Replication or exploration? Sequential design for stochastic simulation experiments,</span>
+<span class="sd">    Technometrics, 61(1), 7-23.\cr </span>
+<span class="sd">    Preprint available on arXiv:1710.03206.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">rand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mult_star</span> <span class="o">=</span> <span class="n">allocate_mult</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mult</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">)</span>
+        <span class="n">tab_input</span> <span class="o">=</span> <span class="n">mult_star</span> <span class="o">-</span> <span class="n">model</span><span class="o">.</span><span class="n">mult</span>
+        <span class="n">tab_input</span><span class="p">[</span><span class="n">tab_input</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">u</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">tab_input</span><span class="p">,</span><span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rand</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">prob</span> <span class="o">=</span> <span class="n">counts</span><span class="o">/</span><span class="n">counts</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    
+    <span class="k">if</span> <span class="n">current_horizon</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">previous_ratio</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Missing arguments to use target </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="n">ratio</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Z0</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Z</span><span class="p">)</span>
+    
+    <span class="c1"># Ratio increased while too small</span>
+    <span class="k">if</span> <span class="n">ratio</span> <span class="o">&lt;</span> <span class="n">target</span> <span class="ow">and</span> <span class="n">ratio</span> <span class="o">&lt;</span> <span class="n">previous_ratio</span><span class="p">:</span>
+        <span class="k">return</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">current_horizon</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="c1"># Ratio decreased while too high</span>
+    <span class="k">if</span> <span class="n">ratio</span> <span class="o">&gt;</span> <span class="n">target</span> <span class="ow">and</span> <span class="n">ratio</span> <span class="o">&gt;</span> <span class="n">previous_ratio</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">current_horizon</span> <span class="o">+</span> <span class="mi">1</span>
+        
+    <span class="k">return</span> <span class="n">current_horizon</span></div>
+
+
+<span class="k">def</span> <span class="nf">IMSPE_optim</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">Xcand</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">control</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tol_dist</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">tol_diff</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">multi_start</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">maxit</span> <span class="o">=</span> <span class="mi">100</span><span class="p">),</span>
+                        <span class="n">Wijs</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ncores</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">Xcand</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;IMSPE works only with [0,1]^d domain for now.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">Xcand</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;IMSPE works only with [0,1]^d domain for now.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">Xcand</span><span class="p">]))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;IMSPE works only with [0,1]^d domain for now.&quot;</span><span class="p">)</span>
+    
+
+    <span class="c1">## Precalculations</span>
+    <span class="k">if</span> <span class="n">Wijs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+    <span class="c1">## A) Setting to beat: first new point then replicate h times</span>
+    <span class="n">IMSPE_A</span>     <span class="o">=</span> <span class="n">IMSPE_search</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">,</span> <span class="n">control</span> <span class="o">=</span> <span class="n">control</span><span class="p">,</span> <span class="n">Xcand</span> <span class="o">=</span> <span class="n">Xcand</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">,</span> <span class="n">ncores</span> <span class="o">=</span> <span class="n">ncores</span><span class="p">)</span>
+    <span class="n">new_designA</span> <span class="o">=</span> <span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">]</span> <span class="c1">## store first considered design to be added</span>
+    <span class="n">path_A</span>      <span class="o">=</span> <span class="p">[</span><span class="n">IMSPE_A</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">h</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">newmodelA</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;new&#39;</span><span class="p">]:</span>
+            <span class="n">newWijs</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">mu2</span> <span class="o">=</span> <span class="n">new_designA</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+            <span class="n">WijsA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">Wijs</span><span class="p">,</span> <span class="n">newWijs</span><span class="p">])</span>
+            <span class="n">WijsA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">WijsA</span><span class="p">,</span> 
+                               <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">newWijs</span><span class="p">,</span> <span class="n">Wij</span><span class="p">(</span><span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)])</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+                    <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">WijsA</span> <span class="o">=</span> <span class="n">Wijs</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">h</span><span class="p">):</span>
+            <span class="n">newmodelA</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">Xnew</span> <span class="o">=</span> <span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">Znew</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]),</span> <span class="n">maxit</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">IMSPE_A</span> <span class="o">=</span> <span class="n">IMSPE_search</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">newmodelA</span><span class="p">,</span> <span class="n">replicate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">control</span> <span class="o">=</span> <span class="n">control</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">WijsA</span><span class="p">,</span> <span class="n">ncores</span> <span class="o">=</span> <span class="n">ncores</span><span class="p">)</span>
+            <span class="n">path_A</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">IMSPE_A</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">h</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">new_designA</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path_A</span><span class="p">)</span>
+
+    <span class="c1">## B) Now compare with waiting to add new point</span>
+    <span class="n">newmodelB</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+  
+    <span class="k">if</span> <span class="n">h</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">IMSPE_B</span> <span class="o">=</span> <span class="n">IMSPE_search</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">newmodelB</span><span class="p">,</span> <span class="n">replicate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">control</span> <span class="o">=</span> <span class="n">control</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">,</span> <span class="n">ncores</span> <span class="o">=</span> <span class="n">ncores</span><span class="p">)</span>
+        <span class="n">new_designB</span> <span class="o">=</span> <span class="n">IMSPE_B</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">]</span> <span class="c1">## store considered design to be added</span>
+        
+        <span class="c1"># search from best replicate</span>
+        <span class="k">if</span> <span class="n">Xcand</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">IMSPE_C</span> <span class="o">=</span> <span class="n">IMSPE_search</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">newmodelB</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">,</span>
+                                <span class="n">control</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Xstart</span> <span class="o">=</span> <span class="n">IMSPE_B</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">maxit</span> <span class="o">=</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;maxit&#39;</span><span class="p">],</span>
+                                            <span class="n">tol_dist</span> <span class="o">=</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;tol_dist&#39;</span><span class="p">],</span> <span class="n">tol_diff</span> <span class="o">=</span> <span class="n">control</span><span class="p">[</span><span class="s1">&#39;tol_diff&#39;</span><span class="p">]),</span> <span class="n">ncores</span> <span class="o">=</span> <span class="n">ncores</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">IMSPE_C</span> <span class="o">=</span> <span class="n">IMSPE_B</span>
+        
+        <span class="k">if</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">min</span><span class="p">(</span><span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">IMSPE_B</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]):</span> 
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">value</span> <span class="o">=</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="n">IMSPE_C</span><span class="p">])</span>
+        
+        <span class="k">if</span> <span class="n">IMSPE_B</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">IMSPE_B</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">value</span> <span class="o">=</span> <span class="n">IMSPE_B</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="n">IMSPE_B</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">h</span><span class="p">):</span>
+            <span class="c1">## Add new replicate</span>
+            <span class="n">IMSPE_B</span> <span class="o">=</span> <span class="n">IMSPE_search</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">newmodelB</span><span class="p">,</span> <span class="n">replicate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">control</span> <span class="o">=</span> <span class="n">control</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">,</span> <span class="n">ncores</span> <span class="o">=</span> <span class="n">ncores</span><span class="p">)</span>
+      
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">new_designB</span> <span class="o">=</span> <span class="n">IMSPE_B</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="c1">##store first considered design to add</span>
+                <span class="n">path_B</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+      
+            <span class="n">path_B</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">IMSPE_B</span><span class="p">)</span>
+            <span class="n">newmodelB</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">Xnew</span> <span class="o">=</span> <span class="n">IMSPE_B</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">Znew</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]),</span> <span class="n">maxit</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+            
+            <span class="c1">## Add new design</span>
+            <span class="n">IMSPE_C</span> <span class="o">=</span> <span class="n">IMSPE_search</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">newmodelB</span><span class="p">,</span> <span class="n">control</span> <span class="o">=</span> <span class="n">control</span><span class="p">,</span> <span class="n">Xcand</span> <span class="o">=</span> <span class="n">Xcand</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">Wijs</span><span class="p">,</span> <span class="n">ncores</span> <span class="o">=</span> <span class="n">ncores</span><span class="p">)</span>
+            <span class="n">path_C</span>  <span class="o">=</span> <span class="p">[</span><span class="n">IMSPE_C</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">:</span>
+                <span class="n">newmodelC</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">newmodelB</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">duplicated</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">]]))):</span>
+                    <span class="n">newWijs</span> <span class="o">=</span> <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">X0</span><span class="p">,</span> <span class="n">mu2</span> <span class="o">=</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+                    <span class="n">WijsC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">Wijs</span><span class="p">,</span> <span class="n">newWijs</span><span class="p">])</span>
+                    <span class="n">WijsC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">WijsC</span><span class="p">,</span> 
+                                       <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                                           <span class="p">[</span><span class="n">newWijs</span><span class="p">,</span> 
+                                            <span class="n">Wij</span><span class="p">(</span><span class="n">mu1</span> <span class="o">=</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covtype</span><span class="p">)</span>
+                                            <span class="p">])</span><span class="o">.</span><span class="n">T</span>
+                                    <span class="p">)</span>
+                            <span class="p">)</span>
+                
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">WijsC</span> <span class="o">=</span> <span class="n">Wijs</span>
+                
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">h</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="c1">## Add remaining replicates</span>
+                    <span class="n">newmodelC</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">Xnew</span> <span class="o">=</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;par&#39;</span><span class="p">],</span> <span class="n">Znew</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]),</span> <span class="n">maxit</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">IMSPE_C</span> <span class="o">=</span> <span class="n">IMSPE_search</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">newmodelC</span><span class="p">,</span> <span class="n">replicate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">control</span> <span class="o">=</span> <span class="n">control</span><span class="p">,</span> <span class="n">Wijs</span> <span class="o">=</span> <span class="n">WijsC</span><span class="p">,</span> <span class="n">ncores</span> <span class="o">=</span> <span class="n">ncores</span><span class="p">)</span>
+                    <span class="n">path_C</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">IMSPE_C</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]:</span> 
+                <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">new_designB</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">IMSPE_C</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path_B</span> <span class="o">+</span> <span class="n">path_C</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">par</span> <span class="o">=</span> <span class="n">new_designA</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">IMSPE_A</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">path</span> <span class="o">=</span> <span class="n">path_A</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, David O&#39;Gara.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

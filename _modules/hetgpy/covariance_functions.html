@@ -1,0 +1,590 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hetgpy.covariance_functions &mdash; hetGPy 1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=29a6c3e3"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hetGPy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Welcome to hetGPy’s overview!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hetGPy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hetgpy.covariance_functions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hetgpy.covariance_functions</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">suite of covariance functions in `hetGPy`</span>
+
+<span class="sd">Note that most of these are not called by the user, but these functions provide</span>
+<span class="sd">the covariance kernels (and their gradients)</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cdist</span>
+<span class="kn">from</span> <span class="nn">hetgpy</span> <span class="kn">import</span> <span class="n">matern</span>
+
+<span class="n">TYPE</span> <span class="o">=</span> <span class="nb">type</span> <span class="c1"># for checking types</span>
+
+<div class="viewcode-block" id="cov_gen">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.cov_gen">[docs]</a>
+<span class="k">def</span> <span class="nf">cov_gen</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Correlation function of selected type, supporting both isotropic and product forms</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X1: ndarray	</span>
+<span class="sd">        matrix of design locations, one point per row</span>
+<span class="sd">    X2: ndarray	</span>
+<span class="sd">        matrix of design locations if correlation is calculated between X1 and X2 (otherwise calculated between X1 and itself)</span>
+<span class="sd">    theta: np.array or scalar	</span>
+<span class="sd">            vector of lengthscale parameters (either of size one if isotropic or of size d if anisotropic)</span>
+<span class="sd">    type: str	</span>
+<span class="sd">        one of &quot;Gaussian&quot;, &quot;Matern5_2&quot;, &quot;Matern3_2&quot;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    matrix of covariances between design locations</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from hetgpy.covariance_functions import cov_gen</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; X = np.random.default_rng(42).integers(low=1,high=20,size=(50,2))</span>
+<span class="sd">    &gt;&gt;&gt; K = cov_gen(X1=X,X2=X,theta=np.array([1,2]),type=&quot;Gaussian&quot;)</span>
+<span class="sd">    </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Definition of univariate correlation function and hyperparameters:</span>
+
+<span class="sd">    -   &quot;Gaussian&quot;: :math:`c(x, y) = \exp(-(x-y)^2/\theta)`</span>
+<span class="sd">    -   &quot;Matern5_2&quot;: :math:`c(x, y) = (1+\sqrt{5}/\theta * |x-y\ + 5/(3*\theta^2)(x-y)^2) * \exp(-\sqrt{5}*|x-y|/\theta)`</span>
+<span class="sd">    -   &quot;Matern3_2&quot;: :math:`c(x, y) = (1+\sqrt{3}/\theta * |x-y|) * \exp(-\sqrt{3}*|x-y|/\theta)`</span>
+<span class="sd">    </span>
+<span class="sd">    Multivariate correlations are product of univariate ones.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="o">==</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span>
+        <span class="n">dists</span>  <span class="o">=</span> <span class="n">cov_Gaussian</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">theta</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="o">==</span><span class="s2">&quot;Matern5_2&quot;</span><span class="p">:</span>
+        <span class="n">dists</span> <span class="o">=</span> <span class="n">cov_Matern5_2</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">theta</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="o">==</span><span class="s2">&quot;Matern3_2&quot;</span><span class="p">:</span>
+        <span class="n">dists</span> <span class="o">=</span> <span class="n">cov_Matern3_2</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">theta</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> not yet implemented&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dists</span></div>
+
+
+<span class="k">def</span> <span class="nf">euclidean_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">):</span>
+    <span class="c1">#dists = np.sum(np.square(X1)[:,np.newaxis,:], axis=2) - 2.0 * X1.dot(X2.T) + np.sum(np.square(X2), axis=1)</span>
+    
+    <span class="c1"># a faster implementation from scipy</span>
+    <span class="n">dists</span> <span class="o">=</span> <span class="n">cdist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="k">return</span> <span class="n">dists</span>
+
+<span class="k">def</span> <span class="nf">abs_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">):</span>
+    <span class="n">dists</span> <span class="o">=</span> <span class="n">cdist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;minkowski&#39;</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dists</span>
+
+<span class="c1"># numba this</span>
+<div class="viewcode-block" id="cov_Gaussian">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.cov_Gaussian">[docs]</a>
+<span class="k">def</span> <span class="nf">cov_Gaussian</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Euclidean distances, scaled by theta</span>
+
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    </span>
+<span class="sd">    For an alternative implementation: https://stackoverflow.com/questions/27948363/numpy-broadcast-to-perform-euclidean-distance-vectorized</span>
+<span class="sd">    threeSums = np.sum(np.square(A)[:,np.newaxis,:], axis=2) - 2 * A.dot(B.T) + np.sum(np.square(B), axis=1)</span>
+<span class="sd">    np.exp(-threeSums/theta)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">X2</span> <span class="o">=</span> <span class="n">X1</span> <span class="k">if</span> <span class="n">X2</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">X2</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">euclidean_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">)</span><span class="o">/</span><span class="n">theta</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">X2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">X1</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="o">*</span><span class="n">euclidean_dist</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">A</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">X1</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">X2</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="o">*</span><span class="n">euclidean_dist</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="partial_d_C_Gaussian_dtheta_k">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_C_Gaussian_dtheta_k">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_C_Gaussian_dtheta_k</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">theta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">euclidean_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X1</span><span class="p">)</span><span class="o">/</span><span class="n">theta</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="partial_d_k_Gaussian_dtheta_k">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_k_Gaussian_dtheta_k">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_k_Gaussian_dtheta_k</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">theta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">euclidean_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">)</span><span class="o">/</span><span class="n">theta</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="partial_d_Cg_Gaussian_d_k_theta_g">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_Cg_Gaussian_d_k_theta_g">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_Cg_Gaussian_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">theta</span><span class="p">,</span><span class="n">k_theta_g</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1">## 1-dimensional/isotropic case</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">euclidean_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">theta</span><span class="o">*</span><span class="n">k_theta_g</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">xx1</span> <span class="o">=</span> <span class="n">X1</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">euclidean_dist</span><span class="p">(</span><span class="n">xx1</span><span class="p">,</span> <span class="n">xx1</span><span class="p">)</span><span class="o">/</span><span class="n">k_theta_g</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="partial_d_kg_Gaussian_d_k_theta_g">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_kg_Gaussian_d_k_theta_g">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_kg_Gaussian_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">,</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1">## 1-dimensional/isotropic case</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">euclidean_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">X2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">theta</span><span class="o">*</span><span class="n">k_theta_g</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">xx1</span> <span class="o">=</span> <span class="n">X1</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    <span class="n">xx2</span> <span class="o">=</span> <span class="n">X2</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">euclidean_dist</span><span class="p">(</span><span class="n">xx1</span><span class="p">,</span> <span class="n">xx2</span><span class="p">)</span><span class="o">/</span><span class="n">k_theta_g</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="partial_d_C_Gaussian_dX_i_j">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_C_Gaussian_dX_i_j">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_C_Gaussian_dX_i_j</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span><span class="n">theta</span><span class="p">,</span><span class="n">i1</span><span class="p">,</span><span class="n">i2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    i1: int</span>
+<span class="sd">        row</span>
+<span class="sd">    i2: int</span>
+<span class="sd">        column</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">partial_d_dist_dX_i1_i2</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+
+    <span class="c1">## 1-dimensional/isotropic case</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">tmp</span><span class="o">/</span><span class="n">theta</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">tmp</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="partial_d_k_Gaussian_dX_i_j">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_k_Gaussian_dX_i_j">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_k_Gaussian_dX_i_j</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    i1: int</span>
+<span class="sd">        row</span>
+<span class="sd">    i2: int</span>
+<span class="sd">        column</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">partial_d_dist_dX1_i1_i2_X2</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+    <span class="c1">## 1-dimensional/isotropic case</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">tmp</span><span class="o">/</span><span class="n">theta</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">tmp</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<span class="k">def</span> <span class="nf">partial_d_dist_dX_i1_i2</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">):</span>
+    <span class="n">nr</span> <span class="o">=</span> <span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nr</span><span class="p">,</span> <span class="n">nr</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr</span><span class="p">):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">i</span> <span class="o">!=</span> <span class="p">(</span><span class="n">i1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
+            <span class="n">s</span><span class="p">[</span><span class="n">i1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">i1</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">X1</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">s</span>
+
+
+<span class="k">def</span> <span class="nf">partial_d_dist_dX1_i1_i2_X2</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">i1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">i1</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">X2</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">s</span>
+
+<span class="k">def</span> <span class="nf">partial_cov_gen</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">k_theta_g</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">,</span> <span class="n">arg</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">i1</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">X2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="o">==</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;theta_k&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_C_Gaussian_dtheta_k</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;k_theta_g&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_Cg_Gaussian_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="o">=</span><span class="n">k_theta_g</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;X_i_j&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_C_Gaussian_dX_i_j</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">TYPE</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">==</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span> 
+                <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;theta_k&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_C_Matern5_2_dtheta_k</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;k_theta_g&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_Cg_Matern5_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="o">=</span><span class="n">k_theta_g</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;X_i_j&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_C_Matern5_2_dX_i_j</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern3_2&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">TYPE</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">==</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span> 
+                <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;theta_k&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_C_Matern3_2_dtheta_k</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;k_theta_g&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_Cg_Matern3_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="o">=</span><span class="n">k_theta_g</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;X_i_j&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_C_Matern3_2_dX_i_j</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Gaussian&quot;</span><span class="p">:</span> 
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;theta_k&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_k_Gaussian_dtheta_k</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;k_theta_g&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_kg_Gaussian_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span><span class="n">k_theta_g</span><span class="o">=</span><span class="n">k_theta_g</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;X_i_j&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_k_Gaussian_dX_i_j</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span><span class="n">i1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern5_2&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;theta_k&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_k_Matern5_2_dtheta_k</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;k_theta_g&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_kg_Matern5_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="o">=</span><span class="n">k_theta_g</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;X_i_j&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_k_Matern5_2_dX_i_j</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;Matern3_2&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">TYPE</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">==</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span> 
+                <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;theta_k&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_C_Matern3_2_dtheta_k</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;k_theta_g&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_Cg_Matern3_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="o">=</span><span class="n">k_theta_g</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s2">&quot;X_i_j&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">partial_d_C_Matern3_2_dX_i_j</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span><span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">)</span>
+            
+
+<span class="k">def</span> <span class="nf">cov_Matern3_2</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">X2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">X2</span> <span class="o">=</span> <span class="n">X1</span>
+    <span class="c1">#dlist = [abs_dist(X1[:,i],X2[:,i], theta = theta[i]) for i in np.arange(X1.shape[1])]</span>
+    <span class="n">dlist</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">abs_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">[:,</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span><span class="n">X2</span><span class="p">[:,</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> 
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">]</span>
+    <span class="k">if</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">klist</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">dlist</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">dlist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">]</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">klist</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+<span class="k">def</span> <span class="nf">cov_Matern5_2</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">X2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">X2</span> <span class="o">=</span> <span class="n">X1</span>
+    <span class="n">abs_dist_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">abs_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">[:,</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span><span class="n">X2</span><span class="p">[:,</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> 
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">]</span>
+    <span class="n">euclid_dist_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">euclidean_dist</span><span class="p">(</span><span class="n">X1</span><span class="p">[:,</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span><span class="n">X2</span><span class="p">[:,</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> 
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">klist</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">abs_dist_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">euclid_dist_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">*</span><span class="n">abs_dist_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">]</span>
+    
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">klist</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="partial_d_C_Matern5_2_dtheta_k">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_C_Matern5_2_dtheta_k">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_C_Matern5_2_dtheta_k</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_1args_theta_k</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_1args_theta_k_iso</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">tmp</span></div>
+
+
+<div class="viewcode-block" id="partial_d_k_Matern5_2_dtheta_k">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_k_Matern5_2_dtheta_k">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_k_Matern5_2_dtheta_k</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_2args_theta_k_iso</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tmp</span></div>
+
+
+<span class="k">def</span> <span class="nf">partial_d_Cg_Matern5_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">):</span>
+<span class="w">  </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">  Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)</span>
+<span class="sd">  &#39;&#39;&#39;</span>
+  <span class="k">if</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span> <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_1args_kthetag</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_1args_kthetag</span><span class="p">(</span><span class="n">X1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">theta</span><span class="p">),</span> <span class="n">k_theta_g</span><span class="p">)</span>
+
+<div class="viewcode-block" id="partial_d_Cg_Matern5_2_d_k_theta_g">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_Cg_Matern5_2_d_k_theta_g">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_Cg_Matern5_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">):</span>
+<span class="w">  </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">  Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)</span>
+<span class="sd">  &#39;&#39;&#39;</span>
+  <span class="k">if</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span> <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_1args_kthetag</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_1args_kthetag</span><span class="p">(</span><span class="n">X1</span> <span class="o">*</span> <span class="mi">1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="partial_d_kg_Matern5_2_d_k_theta_g">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_kg_Matern5_2_d_k_theta_g">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_kg_Matern5_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span> <span class="k">return</span><span class="p">(</span><span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_2args_kthetag</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">X2</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern5_2_2args_kthetag</span><span class="p">(</span><span class="n">X1</span> <span class="o">*</span> <span class="mi">1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">X2</span> <span class="o">*</span> <span class="mi">1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">)</span> </div>
+
+
+
+
+<div class="viewcode-block" id="partial_d_C_Matern5_2_dX_i_j">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_C_Matern5_2_dX_i_j">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_C_Matern5_2_dX_i_j</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    i1: int</span>
+<span class="sd">        row</span>
+<span class="sd">    i2: int</span>
+<span class="sd">        column</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1">## 1-dimensional/isotropic case</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">partial_d_dist_abs_dX_i1_i2</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tmp</span><span class="o">/</span><span class="n">theta</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">partial_d_dist_abs_dX_i1_i2</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="p">],</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tmp</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="partial_d_k_Matern5_2_dX_i_j">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_k_Matern5_2_dX_i_j">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_k_Matern5_2_dX_i_j</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    i1: int </span>
+<span class="sd">        row</span>
+<span class="sd">    i2: int</span>
+<span class="sd">        column</span>
+<span class="sd">    theta: ndarray</span>
+<span class="sd">        lengthscales</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1">## 1-dimensional/isotropic case</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">partial_d_dist_abs_dX1_i1_i2_X2</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">X2</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tmp</span><span class="o">/</span><span class="n">theta</span>
+  
+    <span class="c1"># i2 gets incremented by -1 in matern.partial</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">partial_d_dist_abs_dX1_i1_i2_X2</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">X2</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tmp</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+
+<span class="c1">### C) Matern 3/2 covariance</span>
+
+
+
+<div class="viewcode-block" id="partial_d_C_Matern3_2_dtheta_k">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_C_Matern3_2_dtheta_k">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_C_Matern3_2_dtheta_k</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance matrix with respect to theta[k] (to be multiplied by the covariance matrix) </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern3_2_1args_theta_k</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern3_2_1args_theta_k_iso</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="partial_d_k_Matern3_2_dtheta_k">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_k_Matern3_2_dtheta_k">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_k_Matern3_2_dtheta_k</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance vector with respect to theta[k] (to be multiplied by the covariance vector)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern3_2_2args_theta_k_iso</span><span class="p">(</span><span class="n">X1</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tmp</span></div>
+
+
+
+<div class="viewcode-block" id="partial_d_Cg_Matern3_2_d_k_theta_g">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_Cg_Matern3_2_d_k_theta_g">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_Cg_Matern3_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Partial derivative of the covariance matrix of the noise process with respect to k_theta_g (to be multiplied by the covariance matrix)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span> <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern3_2_1args_kthetag</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern3_2_1args_kthetag</span><span class="p">(</span><span class="n">X1</span> <span class="o">*</span> <span class="mi">1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="partial_d_kg_Matern3_2_d_k_theta_g">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_kg_Matern3_2_d_k_theta_g">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_kg_Matern3_2_d_k_theta_g</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">):</span>
+<span class="w">  </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">  Partial derivative of the covariance vector of the noise process with respect to k_theta_g (to be multiplied by the covariance vector)</span>
+<span class="sd">  &#39;&#39;&#39;</span>
+  <span class="k">if</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span> <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern3_2_2args_kthetag</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">X2</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">matern</span><span class="o">.</span><span class="n">d_matern3_2_2args_kthetag</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">X2</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">k_theta_g</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="partial_d_C_Matern3_2_dX_i_j">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_C_Matern3_2_dX_i_j">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_C_Matern3_2_dX_i_j</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    i1: int</span>
+<span class="sd">        row</span>
+<span class="sd">    i2 : int</span>
+<span class="sd">        column</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1">## 1-dimensional/isotropic case</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">partial_d_dist_abs_dX_i1_i2_m32</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">tmp</span><span class="o">/</span><span class="n">theta</span><span class="p">)</span>
+
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">partial_d_dist_abs_dX_i1_i2_m32</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="p">],</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">tmp</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="partial_d_k_Matern3_2_dX_i_j">
+<a class="viewcode-back" href="../../api/covariance_functions.html#hetgpy.covariance_functions.partial_d_k_Matern3_2_dX_i_j">[docs]</a>
+<span class="k">def</span> <span class="nf">partial_d_k_Matern3_2_dX_i_j</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Derivative with respect to X[i,j]. Useful for pseudo inputs, to be multiplied by the covariance matrix</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    i1: int</span>
+<span class="sd">        row</span>
+<span class="sd">    i2: int</span>
+<span class="sd">        column</span>
+<span class="sd">    theta: int</span>
+<span class="sd">        lengthscales</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1">## 1-dimensional/isotropic case</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">partial_d_dist_abs_dX1_i1_i2_X2_m32</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">X2</span><span class="o">/</span><span class="n">theta</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">tmp</span><span class="o">/</span><span class="n">theta</span><span class="p">)</span>
+  
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">matern</span><span class="o">.</span><span class="n">partial_d_dist_abs_dX1_i1_i2_X2_m32</span><span class="p">(</span><span class="n">X1</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="p">],</span> <span class="n">X2</span><span class="o">/</span><span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="p">],</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">tmp</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="n">i2</span><span class="p">])</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, David O&#39;Gara.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
