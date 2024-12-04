@@ -1,20 +1,18 @@
-name: Build and Test
+name: Deploy Sphinx documentation to Pages
 
-on: push
-
-env:
-  OPENBLAS_NUM_THREADS: 1
-  OMP_NUM_THREADS: 1
+on:
+  push:
+    branches: [main] # branch to trigger deployment
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ['ubuntu-latest'] # [ubuntu-latest, windows-latest, macos-13, macos-14]
-
+  pages:
+    runs-on: ubuntu-20.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       # Used to host cibuildwheel
@@ -29,5 +27,4 @@ jobs:
         run: git submodule update --init --recursive
       - name: Build package
         run: pip install -e .
-      - name: Test
-        run: pytest tests/test*.py -p no:warnings
+      - uses: sphinx-notes/pages@v3
