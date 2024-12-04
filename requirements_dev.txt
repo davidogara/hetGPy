@@ -11,3 +11,4 @@ pybind11>=2.11.1
 joblib
 pandas
 PyYAML
+nbsphinx>=0.9.5
