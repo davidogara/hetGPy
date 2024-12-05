@@ -33,3 +33,5 @@ jobs:
         run: python tests/install_R.py
       - name: Test
         run: pytest
+      - name: Run all jupyter examples
+        run: python examples/run_examples.py
