@@ -4,7 +4,11 @@
 
 This package is designed to be a "pure" Python implementation of `hetGP`, with the goals of:
 *	Matching the behavior of the `R` package
-*	Having minimal dependencies (i.e. `numpy` and `scipy`)
+*	Having minimal dependencies, which are:
+  * `numpy` and `scipy` for computations
+  * `matplotlib` for visualization
+  * `joblib` for parallelization
+  * `tqdm` for progress bars
 
 The motivation for such a package is due to the rising popularity of implementing simulation models (also known as computer experiments) in Python. 
 
