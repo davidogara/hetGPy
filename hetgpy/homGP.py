@@ -120,25 +120,25 @@ class homGP():
             In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)
         noiseControl : dict
             dict with element:
-            - ``g_bounds`` vector providing minimal and maximal noise to signal ratio (default to ``(sqrt(MACHINE_DOUBLE_EPS), 100)``).
+                - ``g_bounds`` vector providing minimal and maximal noise to signal ratio (default to ``(sqrt(MACHINE_DOUBLE_EPS), 100)``).
         settings : dict 
                 dict for options about the general modeling procedure, with elements:
-                - ``return_Ki`` boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
-                - ``factr`` (default to 1e9) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
+                    - ``return_Ki`` boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
+                    - ``factr`` (default to 1e9) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
         eps : float
             jitter used in the inversion of the covariance matrix for numerical stability
         known : dict
             optional dict of known parameters (e.g. ``beta0``, ``theta``, ``g``)
         init :  dict
             optional lists of starting values for mle optimization:
-            - ``theta_init`` initial value of the theta parameters to be optimized over (default to 10% of the range determined with ``lower`` and ``upper``)
-            - ``g_init`` vector of nugget parameter to be optimized over
+                - ``theta_init`` initial value of the theta parameters to be optimized over (default to 10% of the range determined with ``lower`` and ``upper``)
+                - ``g_init`` vector of nugget parameter to be optimized over
         covtype : str 
                 covariance kernel type, either ``'Gaussian'``, ``'Matern5_2'`` or ``'Matern3_2'``, see :func: ``~covariance_functions.cov_gen``
         maxit : int
                 maximum number of iterations for `L-BFGS-B` of :func: ``scipy.optimize.minimize`` dedicated to maximum likelihood optimization
     
-        Details
+        Notes
         -------
         The global covariance matrix of the model is parameterized as ``nu_hat * (C + g * diag(1/mult)) = nu_hat * K``,
         with ``C`` the correlation matrix between unique designs, depending on the family of kernel used (see :func: `~hetgpy.covariance_functions.cov_gen` for available choices) and values of lengthscale parameters.

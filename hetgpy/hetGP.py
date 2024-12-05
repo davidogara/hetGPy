@@ -527,128 +527,126 @@ class hetGP:
             In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)
         noiseControl : dict
             dict with elements related to optimization of the noise process parameters:
-            - ``g_min``, ``g_max`` minimal and maximal noise to signal ratio (of the mean process)
-            - ``lowerDelta``, ``upperDelta`` optional vectors (or scalars) of bounds on ``Delta``, of length ``len(X0)`` (default to ``np.repeat(eps, X0.shape[0])`` and ``np.repeat(noiseControl["g_max"], X0.shape[0])`` resp., or their ``log``) 
-            - ``lowerpX``, ``upperpX`` optional vectors of bounds of the input domain if `pX` is used.
-            - ``lowerTheta_g``, ``upperTheta_g`` optional vectors of bounds for the lengthscales of the noise process if ``linkThetas == 'none'``. Same as for ``theta`` if not provided.
-            - ``k_theta_g_bounds`` if ``linkThetas == 'joint'``, vector with minimal and maximal values for ``k_theta_g`` (default to ``(1, 100)``). See Details.
-            - ``g_bounds`` vector for minimal and maximal noise to signal ratios for the noise of the noise process, i.e., the smoothing parameter for the noise process. (default to ``(1e-6, 1)``).
-    settings : dict 
-            dict for options about the general modeling procedure, with elements:
-            - ``linkThetas`` defines the relation between lengthscales of the mean and noise processes. Either ``'none'``, ``'joint'``(default) or ``'constr'``, see Details.
-            - ``logN``, when ``True`` (default), the log-noise process is modeled.
-            - ``initStrategy`` one of ``'simple'``, ``'residuals'`` (default) and ``'smoothed'`` to obtain starting values for ``Delta``, see Details
-            - ``penalty``  when ``True``, the penalized version of the likelihood is used (i.e., the sum of the log-likelihoods of the mean and variance processes, see References).
-            - ``hardpenalty`` is ``True``, the log-likelihood from the noise GP is taken into account only if negative (default if ``maxit > 1000``).
-            - ``checkHom`` when ``True``, if the log-likelihood with a homoskedastic model is better, then return it.
-            - ``trace`` optional scalar (default to ``0``). If positive, tracing information on the fitting process.
-                If ``1``, information is given about the result of the heterogeneous model optimization.
-                Level ``2`` gives more details. Level ``3`` additionaly displays all details about initialization of hyperparameters.
-            - ``return_matrices`` boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
-            - ``return_hom`` boolean to include homoskedastic GP models used for initialization (i.e., ``modHom`` and ``modNugs``).
-            - ``factr`` (default to 1e9) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
-    eps : float
-        jitter used in the inversion of the covariance matrix for numerical stability
-    init,known :  dict
-        optional lists of starting values for mle optimization or that should not be optimized over, respectively.
-        Values in ``known`` are not modified, while it can happen to these of ``init``, see Details. 
-        One can set one or several of the following:
-        - ``theta`` lengthscale parameter(s) for the mean process either one value (isotropic) or a vector (anistropic)
-        - ``Delta`` vector of nuggets corresponding to each design in ``X0``, that are smoothed to give ``Lambda`` (as the global covariance matrix depends on ``Delta`` and ``nu_hat``, it is recommended to also pass values for ``theta``)
-        - ``beta0`` constant trend of the mean process
-        - ``k_theta_g`` constant used for link mean and noise processes lengthscales, when ``settings['linkThetas'] == 'joint'``
-        - ``theta_g`` either one value (isotropic) or a vector (anistropic) for lengthscale parameter(s) of the noise process, when ``settings['linkThetas'] != 'joint'``
-        - ``g`` scalar nugget of the noise process
-        - ``g_H`` scalar homoskedastic nugget for the initialisation with a :func: homGP.mleHomGP. See Details.
-        - ``pX`` matrix of fixed pseudo inputs locations of the noise process corresponding to Delta
-    covtype : str 
-            covariance kernel type, either ``'Gaussian'``, ``'Matern5_2'`` or ``'Matern3_2'``, see :func: ``~covariance_functions.cov_gen``
-    maxit : int
-            maximum number of iterations for `L-BFGS-B` of :func: ``scipy.optimize.minimize`` dedicated to maximum likelihood optimization
+                - ``g_min``, ``g_max`` minimal and maximal noise to signal ratio (of the mean process)
+                - ``lowerDelta``, ``upperDelta`` optional vectors (or scalars) of bounds on ``Delta``, of length ``len(X0)`` (default to ``np.repeat(eps, X0.shape[0])`` and ``np.repeat(noiseControl["g_max"], X0.shape[0])`` resp., or their ``log``) 
+                - ``lowerpX``, ``upperpX`` optional vectors of bounds of the input domain if `pX` is used.
+                - ``lowerTheta_g``, ``upperTheta_g`` optional vectors of bounds for the lengthscales of the noise process if ``linkThetas == 'none'``. Same as for ``theta`` if not provided.
+                - ``k_theta_g_bounds`` if ``linkThetas == 'joint'``, vector with minimal and maximal values for ``k_theta_g`` (default to ``(1, 100)``). See Notes.
+                - ``g_bounds`` vector for minimal and maximal noise to signal ratios for the noise of the noise process, i.e., the smoothing parameter for the noise process. (default to ``(1e-6, 1)``).
+        settings : dict 
+                dict for options about the general modeling procedure, with elements:
+                    - ``linkThetas`` defines the relation between lengthscales of the mean and noise processes. Either ``'none'``, ``'joint'``(default) or ``'constr'``, see Notes.
+                    - ``logN``, when ``True`` (default), the log-noise process is modeled.
+                    - ``initStrategy`` one of ``'simple'``, ``'residuals'`` (default) and ``'smoothed'`` to obtain starting values for ``Delta``, see Notes
+                    - ``penalty``  when ``True``, the penalized version of the likelihood is used (i.e., the sum of the log-likelihoods of the mean and variance processes, see References).
+                    - ``hardpenalty`` is ``True``, the log-likelihood from the noise GP is taken into account only if negative (default if ``maxit > 1000``).
+                    - ``checkHom`` when ``True``, if the log-likelihood with a homoskedastic model is better, then return it.
+                    - ``trace`` optional scalar (default to ``0``). If positive, tracing information on the fitting process. If ``1``, information is given about the result of the heterogeneous model optimization. Level ``2`` gives more details. Level ``3`` additionaly displays all details about initialization of hyperparameters.
+                    - ``return_matrices`` boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
+                    - ``return_hom`` boolean to include homoskedastic GP models used for initialization (i.e., ``modHom`` and ``modNugs``).
+                    - ``factr`` (default to 1e9) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
+        eps : float
+            jitter used in the inversion of the covariance matrix for numerical stability
+        init,known :  dict
+            optional lists of starting values for mle optimization or that should not be optimized over, respectively.
+            Values in ``known`` are not modified, while it can happen to these of ``init``, see Notes. 
+            One can set one or several of the following:
+                - ``theta`` lengthscale parameter(s) for the mean process either one value (isotropic) or a vector (anistropic)
+                - ``Delta`` vector of nuggets corresponding to each design in ``X0``, that are smoothed to give ``Lambda`` (as the global covariance matrix depends on ``Delta`` and ``nu_hat``, it is recommended to also pass values for ``theta``)
+                - ``beta0`` constant trend of the mean process
+                - ``k_theta_g`` constant used for link mean and noise processes lengthscales, when ``settings['linkThetas'] == 'joint'``
+                - ``theta_g`` either one value (isotropic) or a vector (anistropic) for lengthscale parameter(s) of the noise process, when ``settings['linkThetas'] != 'joint'``
+                - ``g`` scalar nugget of the noise process
+                - ``g_H`` scalar homoskedastic nugget for the initialisation with a :func: homGP.mleHomGP. See Notes.
+                - ``pX`` matrix of fixed pseudo inputs locations of the noise process corresponding to Delta
+        covtype : str 
+                covariance kernel type, either ``'Gaussian'``, ``'Matern5_2'`` or ``'Matern3_2'``, see :func: ``~covariance_functions.cov_gen``
+        maxit : int
+                maximum number of iterations for `L-BFGS-B` of :func: ``scipy.optimize.minimize`` dedicated to maximum likelihood optimization
     
-    Details
-    -------
-    The global covariance matrix of the model is parameterized as ``nu_hat * (C + Lambda * np.diag(1/mult)) = nu_hat * K``,
-    with ``C`` the correlation matrix between unique designs, depending on the family of kernel used (see :func: `~covariance_functions.cov_gen` for available choices) and values of lengthscale parameters.
-    ``nu_hat`` is the plugin estimator of the variance of the process.
-    ``Lambda`` is the prediction on the noise level given by a second (homoskedastic) GP:
-    .. math:: \Lambda = C_g(C_g + \mathrm{diag}(g/\mathrm{mult}))^{-1} \Delta}
-    with ``C_g`` the correlation matrix between unique designs for this second GP, with lengthscales hyperparameters ``theta_g`` and nugget ``g``
-    and ``Delta`` the variance level at ``X0`` that are estimated.
- 
-    It is generally recommended to use :func: ``~find_reps.find_reps`` to pre-process the data, to rescale the inputs to the unit cube and to normalize the outputs.
-     
-    The noise process lengthscales can be set in several ways:
-        - using ``k_theta_g`` (``settings['linkThetas'] == 'joint'``), supposed to be greater than one by default. In this case lengthscales of the noise process are multiples of those of the mean process.
-        - if ``settings['linkThetas'] == 'constr``, then the lower bound on ``theta_g`` correspond to estimated values of a homoskedastic GP fit.
-        - else lengthscales between the mean and noise process are independent (both either anisotropic or not).
-    
-    When no starting nor fixed parameter values are provided with ``init`` or ``known``, 
-    the initialization process consists of fitting first an homoskedastic model of the data, called ``modHom``.
-    ``init['theta']``, initial lengthscales are taken at 10\% of the range determined with ``lower`` and ``upper``,
-    while ``init['g_H']`` may be use to pass an initial nugget value.
-    The resulting lengthscales provide initial values for ``theta`` (or update them if given in ``init``).
-    
-    If necessary, a second homoskedastic model, ``modNugs``, is fitted to the empirical residual variance between the prediction
-    given by ``modHom`` at ``X0`` and ``Z`` (up to ``modHom['nu_hat]'``).
-    Note that when specifying ``settings['linkThetas'] == 'joint', then this second homoskedastic model has fixed lengthscale parameters.
-    Starting values for ``theta_g`` and ``g`` are extracted from ``modNugs``.
-    
-    Finally, three initialization schemes for ``Delta`` are available with ``settings['initStrategy']``: 
-        - for ``settings['initStrategy'] == 'simple'``, ``Delta`` is simply initialized to the estimated ``g`` value of ``modHom``. 
-        Note that this procedure may fail when ``settings['penalty'] == True``.
-        - for ``settings['initStrategy'] == 'residuals'``, ``Delta`` is initialized to the estimated residual variance from the homoskedastic mean prediction.
-        - for  ``settings['initStrategy'] == 'smoothed'``, ``Delta`` takes the values predicted by ``modNugs`` at ``X0``.
+        Notes
+        -------
+        The global covariance matrix of the model is parameterized as ``nu_hat * (C + Lambda * np.diag(1/mult)) = nu_hat * K``,
+        with ``C`` the correlation matrix between unique designs, depending on the family of kernel used (see :func: `~covariance_functions.cov_gen` for available choices) and values of lengthscale parameters.
+        ``nu_hat`` is the plugin estimator of the variance of the process.
+        ``Lambda`` is the prediction on the noise level given by a second (homoskedastic) GP:
+        .. math:: \Lambda = C_g(C_g + \mathrm{diag}(g/\mathrm{mult}))^{-1} \Delta}
+        with ``C_g`` the correlation matrix between unique designs for this second GP, with lengthscales hyperparameters ``theta_g`` and nugget ``g``
+        and ``Delta`` the variance level at ``X0`` that are estimated.
         
-    Notice that ``lower`` and ``upper`` bounds cannot be equal for ``:func: scipy.optimize.minimize``.
-    To use pseudo-input locations for the noise process, one can either provide ``pX`` if they are not to be optimized.
-    Otherwise, initial values are given with ``pXinit``, and optimization bounds with ``lowerpX``, ``upperpX`` in ``init``.
-    Automatic initialization of the other parameters without restriction is available for now only with method 'simple',
-    otherwise it is assumed that pXinit points are a subset of X0.
-
-    Returns
-    -------
-    self, with the following attributes: 
-
-        - ``theta``: unless given, maximum likelihood estimate (mle) of the lengthscale parameter(s),
-        - ``Delta``: unless given, mle of the nugget vector (non-smoothed),
-        - ``Lambda``: predicted input noise variance at ``X0``, 
-        - ``nu_hat``: plugin estimator of the variance,
-        - ``theta_g``: unless given, mle of the lengthscale(s) of the noise/log-noise process,
-        - ``k_theta_g``: if ``settings['linkThetas'] == 'joint'``, mle for the constant by which lengthscale parameters of ``theta`` are multiplied to get ``theta_g``,
-        - ``g``: unless given, mle of the nugget of the noise/log-noise process,
-        - ``trendtype``: either ``"SK"`` if ``beta0`` is provided, else ``"OK"``,
-        - ``beta0``: constant trend of the mean process, plugin-estimator unless given,
-        - ``nmean``: plugin estimator for the constant noise/log-noise process mean,
-        - ``pX``: if used, matrix of pseudo-inputs locations for the noise/log-noise process,
-        - ``ll``: log-likelihood value, (``ll_non_pen``) is the value without the penalty,
-        - ``nit_opt``, ``msg``: counts and message returned by :func:``scipy.optimize.minimize``
-        - ``modHom``: homoskedastic GP model of class ``homGP`` used for initialization of the mean process,
-        - ``modNugs``: homoskedastic GP model of class ``homGP`` used for initialization of the noise/log-noise process,
-        - ``nu_hat_var``: variance of the noise process,
-        - ``used_args``: list with arguments provided in the call to the function,
-            - ``Ki``, ``Kgi``: inverse of the covariance matrices of the mean and noise processes (not scaled by ``nu_hat`` and ``nu_hat_var``),  
-            - ``X0``, ``Z0``, ``Z``, ``eps``, ``logN``, ``covtype``: values given in input,
-        - ``time``: time to train the model, in seconds.
+        It is generally recommended to use :func: ``~find_reps.find_reps`` to pre-process the data, to rescale the inputs to the unit cube and to normalize the outputs.
         
-        See also `~hetgpy.hetGP.hetGP.predict` for predictions, `~hetgpy.hetGP.update` for updating an existing model.
-        ``summary`` and ``plot`` functions are available as well.
-        `~hetTP.mleHetTP` provide a Student-t equivalent.
+        The noise process lengthscales can be set in several ways:
+            - using ``k_theta_g`` (``settings['linkThetas'] == 'joint'``), supposed to be greater than one by default. In this case lengthscales of the noise process are multiples of those of the mean process.
+            - if ``settings['linkThetas'] == 'constr``, then the lower bound on ``theta_g`` correspond to estimated values of a homoskedastic GP fit.
+            - else lengthscales between the mean and noise process are independent (both either anisotropic or not).
+        
+        When no starting nor fixed parameter values are provided with ``init`` or ``known``, 
+        the initialization process consists of fitting first an homoskedastic model of the data, called ``modHom``.
+        ``init['theta']``, initial lengthscales are taken at 10\% of the range determined with ``lower`` and ``upper``,
+        while ``init['g_H']`` may be use to pass an initial nugget value.
+        The resulting lengthscales provide initial values for ``theta`` (or update them if given in ``init``).
+        
+        If necessary, a second homoskedastic model, ``modNugs``, is fitted to the empirical residual variance between the prediction
+        given by ``modHom`` at ``X0`` and ``Z`` (up to ``modHom['nu_hat]'``).
+        Note that when specifying ``settings['linkThetas'] == 'joint', then this second homoskedastic model has fixed lengthscale parameters.
+        Starting values for ``theta_g`` and ``g`` are extracted from ``modNugs`` 
+        
+        Three initialization schemes for ``Delta`` are available with ``settings['initStrategy']``: 
+            - for ``settings['initStrategy'] == 'simple'``, ``Delta`` is simply initialized to the estimated ``g`` value of ``modHom``. 
+            - Note that this procedure may fail when ``settings['penalty'] == True``.
+            - for ``settings['initStrategy'] == 'residuals'``, ``Delta`` is initialized to the estimated residual variance from the homoskedastic mean prediction.
+            - for  ``settings['initStrategy'] == 'smoothed'``, ``Delta`` takes the values predicted by ``modNugs`` at ``X0``.
+            
+        Notice that ``lower`` and ``upper`` bounds cannot be equal for ``:func: scipy.optimize.minimize``.
+        To use pseudo-input locations for the noise process, one can either provide ``pX`` if they are not to be optimized.
+        Otherwise, initial values are given with ``pXinit``, and optimization bounds with ``lowerpX``, ``upperpX`` in ``init``.
+        Automatic initialization of the other parameters without restriction is available for now only with method 'simple',
+        otherwise it is assumed that pXinit points are a subset of X0.
 
-    Examples
-    --------
-    >>> from hetgpy import hetGP
-    >>> from hetgpy.example_data import mcycle
-    >>> m = mcycle()
-    >>> model = hetGP()
-    >>> model.mle(m['times'],m['accel'],lower=[1.0],upper=[10.0],covtype="Matern5_2")    
-    
-    References
-    ----------
-    M. Binois, Robert B. Gramacy, M. Ludkovski (2018), Practical heteroskedastic Gaussian process modeling for large simulation experiments,
-    Journal of Computational and Graphical Statistics, 27(4), 808--821.
-    Preprint available on arXiv:1611.05902.
-    '''
+        Returns
+        -------
+        self, with the following attributes: 
+
+            - ``theta``: unless given, maximum likelihood estimate (mle) of the lengthscale parameter(s),
+            - ``Delta``: unless given, mle of the nugget vector (non-smoothed),
+            - ``Lambda``: predicted input noise variance at ``X0``, 
+            - ``nu_hat``: plugin estimator of the variance,
+            - ``theta_g``: unless given, mle of the lengthscale(s) of the noise/log-noise process,
+            - ``k_theta_g``: if ``settings['linkThetas'] == 'joint'``, mle for the constant by which lengthscale parameters of ``theta`` are multiplied to get ``theta_g``,
+            - ``g``: unless given, mle of the nugget of the noise/log-noise process,
+            - ``trendtype``: either ``"SK"`` if ``beta0`` is provided, else ``"OK"``,
+            - ``beta0``: constant trend of the mean process, plugin-estimator unless given,
+            - ``nmean``: plugin estimator for the constant noise/log-noise process mean,
+            - ``pX``: if used, matrix of pseudo-inputs locations for the noise/log-noise process,
+            - ``ll``: log-likelihood value, (``ll_non_pen``) is the value without the penalty,
+            - ``nit_opt``, ``msg``: counts and message returned by :func:``scipy.optimize.minimize``
+            - ``modHom``: homoskedastic GP model of class ``homGP`` used for initialization of the mean process,
+            - ``modNugs``: homoskedastic GP model of class ``homGP`` used for initialization of the noise/log-noise process,
+            - ``nu_hat_var``: variance of the noise process,
+            - ``used_args``: list with arguments provided in the call to the function,
+                - ``Ki``, ``Kgi``: inverse of the covariance matrices of the mean and noise processes (not scaled by ``nu_hat`` and ``nu_hat_var``),  
+                - ``X0``, ``Z0``, ``Z``, ``eps``, ``logN``, ``covtype``: values given in input,
+            - ``time``: time to train the model, in seconds.
+            
+            See also `~hetgpy.hetGP.hetGP.predict` for predictions, `~hetgpy.hetGP.update` for updating an existing model.
+            ``summary`` and ``plot`` functions are available as well.
+            `~hetTP.mleHetTP` provide a Student-t equivalent.
+
+        Examples
+        --------
+        >>> from hetgpy import hetGP
+        >>> from hetgpy.example_data import mcycle
+        >>> m = mcycle()
+        >>> model = hetGP()
+        >>> model.mle(m['times'],m['accel'],lower=[1.0],upper=[10.0],covtype="Matern5_2")    
+        
+        References
+        ----------
+        M. Binois, Robert B. Gramacy, M. Ludkovski (2018), Practical heteroskedastic Gaussian process modeling for large simulation experiments,
+        Journal of Computational and Graphical Statistics, 27(4), 808--821.
+        Preprint available on arXiv:1611.05902.
+        '''
 
         # copy dicts upon import to make sure they aren't passed around between model runs
         known = known.copy()
@@ -1351,7 +1349,7 @@ class hetGP:
             - ``sd2_var``: (returned if ``noise_var = True``) kriging variance of the noise process (i.e., on log-variances if ``logN = TRUE``)
             - ``cov``: (returned if ``xprime`` is given) predictive covariance matrix between ``x`` and ``xprime``
         
-        Details
+        Notes
         -------
         The full predictive variance corresponds to the sum of ``sd2`` and ``nugs``.
         See :func: `~hetgpy.hetGP.mleHetGP` for examples.
