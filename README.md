@@ -8,6 +8,9 @@ This package is designed to be a "pure" Python implementation of `hetGP`, with t
 
 The motivation for such a package is due to the rising popularity of implementing simulation models (also known as computer experiments) in Python. 
 
+## Documentation
+
+The package documentation is available at: https://hetgpy.readthedocs.io/en/latest/
 
 ## Installing and Environments
 
