@@ -31,3 +31,9 @@ jobs:
         run: pip install -e .
       - name: Test
         run: pytest tests/test*.py -p no:warnings
+      - name: Run Intro Example
+        run: jupyter execute examples/00-hetGPy-Intro.ipynb
+      - name: Run Motorcycle Example
+        run: jupyter execute examples/01-mcycle-example.ipynb
+      - name: Run SIR Example
+        run: jupyter execute examples/02-SIR-example.ipynb
