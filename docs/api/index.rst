@@ -5,7 +5,6 @@ API
 .. currentmodule:: hetgpy
 
 .. toctree::
-   :hidden:
 
    hetGP
    homGP

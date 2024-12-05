@@ -6,35 +6,19 @@
 Welcome to hetGPy's documentation!
 ==================================
 
-.. grid:: 2
-    :gutter: 4
-    .. grid-item-card:: API reference
-        :link: api/index
-        :link-type: doc
-
-        All the gory detail of every function and class.
-
-    .. grid-item-card:: What's new
-        :link: whatsnew
-        :link-type: doc
-
-        See what's hot off the press.
+This landing page contains links to a set of example notebooks and the API reference.
 
 .. toctree::
-   :glob:
    :maxdepth: 2
    :caption: Examples:
 
-   examples/**/index
-   
+   examples/index
+
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-   :hidden:
+   :maxdepth: 1
+   :caption: Reference:
 
-   overview
    api/index
-
 
 Indices and tables
 ==================
