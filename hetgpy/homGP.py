@@ -124,7 +124,7 @@ class homGP():
         settings : dict 
                 dict for options about the general modeling procedure, with elements:
                     - ``return_Ki`` boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
-                    - ``factr`` (default to 1e9) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
+                    - ``factr`` (default to 1e7) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
         eps : float
             jitter used in the inversion of the covariance matrix for numerical stability
         known : dict
