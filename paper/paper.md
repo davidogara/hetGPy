@@ -15,9 +15,9 @@ authors:
     affiliation: 2
   - name: Roman Garnett
     orcid: 0000-0002-0152-5453
-    affiliation: 3
+    affiliation: [1, 3]
   - name: Ross A Hammond
-    affiliation: 4
+    affiliation: [1,4,5,6]
 affiliations:
  - name: Division of Computationl and Data Sciences, Washington University in St. Louis, USA
    index: 1
