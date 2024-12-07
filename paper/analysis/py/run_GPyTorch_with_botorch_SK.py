@@ -62,7 +62,6 @@ def run_homGPyTorch(name,covtype):
         train_Y=torch.from_numpy(Z).reshape(-1,1), 
         likelihood=likelihood,
         covar_module=K)
-    training_iter = 50
     # Find optimal model hyperparameters
     GP.train()
     likelihood.train()
@@ -72,7 +71,6 @@ def run_homGPyTorch(name,covtype):
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, GP)
     s = time()
     losses = []
-    train_x, train_y = torch.from_numpy(X), torch.from_numpy(Z)
     bounds = {'lengthscale': (0.1,5.0)}
     options = {'ftol':1e7*np.finfo(float).eps,'gtol':0}
     def cb(f,i):
@@ -107,8 +105,10 @@ def run_homGPyTorch(name,covtype):
 
 
 if __name__ == "__main__":
-
-    df = pd.concat([
+    nreps = 5
+    dfl = []
+    for i in range(nreps):
+        dfl.append(pd.concat([
         run_homGPyTorch('Branin', "Gaussian"),
         run_homGPyTorch("Goldstein-Price","Gaussian"),
         run_homGPyTorch("Hartmann-4D","Gaussian"),
@@ -119,5 +119,7 @@ if __name__ == "__main__":
         run_homGPyTorch("Hartmann-4D","Matern5_2"),
         run_homGPyTorch("Hartmann-6D","Matern5_2"),
         run_homGPyTorch("Sphere-6D","Matern5_2")
-    ])
+    ]).assign(rep=i+1)
+    )
+    df = pd.concat(dfl)
     df.to_csv('./hetgpy-hom-GPyTorch-tests-SK.csv',index=False)

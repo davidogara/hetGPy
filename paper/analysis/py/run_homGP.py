@@ -34,8 +34,10 @@ def run_homGP(name,covtype):
     )
     return pd.DataFrame([out])
 if __name__ == "__main__":
-
-    df = pd.concat([
+    nreps = 5
+    dfl = []
+    for i in range(nreps):
+        dfl.append(pd.concat([
         run_homGP('Branin', "Gaussian"),
         run_homGP("Goldstein-Price","Gaussian"),
         run_homGP("Hartmann-4D","Gaussian"),
@@ -46,7 +48,9 @@ if __name__ == "__main__":
         run_homGP("Hartmann-4D","Matern5_2"),
         run_homGP("Hartmann-6D","Matern5_2"),
         run_homGP("Sphere-6D","Matern5_2")
-    ])
+        ]).assign(rep=i+1)
+        )
+    df = pd.concat(dfl)
     df.to_csv('./hetgpy-hom-GP-tests.csv',index=False)
 
 
