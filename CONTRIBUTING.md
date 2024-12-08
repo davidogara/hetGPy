@@ -14,6 +14,7 @@ pip install -r requirements_dev.txt
 pip install -e .
 ```
 
+To run the tests in `tests/`, you will need an R installation. Downloads and installation instructions can be found [on the R project website](https://cran.r-project.org/). To install the requisite packages, you should run `tests/install_R.py`.
 
 
 ### Docstrings
