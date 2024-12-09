@@ -23,7 +23,7 @@ def auto_bounds(X, min_cor = 0.01, max_cor = 0.5, covtype = "Gaussian", p = 0.05
             if type(theta)!=np.ndarray:
                 theta = np.array([theta])
                 if len(theta) != X.shape[1]: theta = np.repeat(theta,X.shape[1])
-            return cov_gen(x1,x2,theta=theta,type=covtype) - value
+            return (cov_gen(x1,x2,theta=theta,type=covtype) - value).squeeze()
 
         args_theta_min = (repr_low_dist,covtype,min_cor) 
         args_theta_max = (repr_lar_dist,covtype,max_cor)       
