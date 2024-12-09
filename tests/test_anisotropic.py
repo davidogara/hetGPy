@@ -16,7 +16,7 @@ def test_homGP_gauss():
 def test_hetGP_gauss():
     X,Y = load_data()
     model = hetGP()
-    model.mle(X,Y,lower=[1,1],upper=[10,10],covtype="Gaussian")
+    model.mle(X,Y,lower=[0.01,0.01],upper=[10,10],covtype="Gaussian")
     assert len(model.theta)==X.shape[1]
     return
 
