@@ -14,6 +14,7 @@ from hetgpy.plot import plot_optimization_iterates, plot_diagnostics
 from hetgpy.LOO import LOO_preds
 from hetgpy.update_covar import update_Ki, update_Ki_rep, update_Kgi, update_Kgi_rep
 from copy import copy, deepcopy
+import contextlib
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
@@ -140,8 +141,10 @@ class hetGP:
         psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
         
         psi = (1.0 / N)*((((Z-beta0)/ LambdaN).T @ (Z-beta0)) - ((Z0 - beta0)*mult/Lambda).T @ (Z0-beta0) + psi_0)
-        loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi) + 1/2 * ldetKi - 1/2 * np.sum((mult - 1) * np.log(Lambda) + np.log(mult)) - N/2
-        
+        try:
+            loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi) + 1/2 * ldetKi - 1/2 * np.sum((mult - 1) * np.log(Lambda) + np.log(mult)) - N/2
+        except RuntimeWarning as e:
+            return np.nan
         if penalty:
             nu_hat_var = np.squeeze((Delta - nmean).T @ Kgi @ (Delta - nmean))/ len(Delta)
     
@@ -504,7 +507,7 @@ class hetGP:
                      noiseControl = dict(k_theta_g_bounds = (1, 100), g_max = 100, g_bounds = (1e-06, 1)),
                      init = {},
                      covtype = "Gaussian",
-                     maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9),use_torch=False):
+                     maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9,ignore_MLE_divide_invalid = True),use_torch=False):
         r'''
         Gaussian process modeling with heteroskedastic noise
 
@@ -906,7 +909,10 @@ class hetGP:
             
                 if init.get('g') is None:
                     mean_var_replicates_nugs = np.mean((fast_tUY2(mult, (nugs_est - np.repeat(nugs_est0, mult))**2)/mult))
-                    init['g'] = mean_var_replicates_nugs / np.var(nugs_est0,ddof=1)
+                    if np.var(nugs_est0,ddof=1)==0: 
+                        init['g'] = MACHINE_DOUBLE_EPS
+                    else:
+                        init['g'] = mean_var_replicates_nugs / np.var(nugs_est0,ddof=1)
                     if np.isnan(init['g']):
                         init['g'] = MACHINE_DOUBLE_EPS
                 modNugs = homGP()
@@ -957,7 +963,7 @@ class hetGP:
             noiseControl['upperTheta_g'] = upper
         ### Start of optimization of the log-likelihood
         self.max_loglik = float('-inf')
-        self.arg_max = None
+        self.arg_max = np.array([np.nan]).reshape(-1)
         if settings.get('save_iterates',False): self.iterates = []
         def fn(par, X0, Z0, Z, mult, Delta = None, theta = None, g = None, k_theta_g = None, theta_g = None, logN = False, SiNK = False,
                         beta0 = None, pX = None, hom_ll = None):
@@ -1125,23 +1131,24 @@ class hetGP:
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
             
             self.arg_max = parinit.copy()
-            out = optimize.minimize(
-                fun = fn,
-                args = (X0, Z0, Z, mult, known.get('Delta'), 
-                        known.get('theta'), known.get('g'), 
-                        known.get('k_theta_g'),
-                        known.get('theta_g'), logN, SiNK,
-                        known.get('beta0'),known.get('pX'), hom_ll),
-                x0 = parinit,
-                jac = gr,
-                method="L-BFGS-B",
-                bounds = bounds,
-                # tol=1e-8,
-                options=dict(maxiter=maxit,iprint = settings.get('iprint',-1), #,
-                            ftol = settings.get('factr',10) * np.finfo(float).eps,#,
-                            gtol = settings.get('pgtol',0) # should map to pgtol
-                            )
-            )
+            with np.errstate(divide='ignore',invalid='ignore') if settings.get('ignore_MLE_divide_invalid',True) else contextlib.nullcontext():
+                out = optimize.minimize(
+                    fun = fn,
+                    args = (X0, Z0, Z, mult, known.get('Delta'), 
+                            known.get('theta'), known.get('g'), 
+                            known.get('k_theta_g'),
+                            known.get('theta_g'), logN, SiNK,
+                            known.get('beta0'),known.get('pX'), hom_ll),
+                    x0 = parinit,
+                    jac = gr,
+                    method="L-BFGS-B",
+                    bounds = bounds,
+                    # tol=1e-8,
+                    options=dict(maxiter=maxit,iprint = settings.get('iprint',-1), #,
+                                ftol = settings.get('factr',10) * np.finfo(float).eps,#,
+                                gtol = settings.get('pgtol',0) # should map to pgtol
+                                )
+                )
             python_kws_2_R_kws = {
                 'x':'par',
                 'fun': 'value',

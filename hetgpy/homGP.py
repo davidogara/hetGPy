@@ -14,6 +14,7 @@ from hetgpy.utils import duplicated
 from hetgpy.update_covar import update_Ki, update_Ki_rep
 from hetgpy.plot import plot_diagnostics, plot_optimization_iterates
 from copy import deepcopy
+import contextlib
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 class homGP():
@@ -48,7 +49,12 @@ class homGP():
 
         psi_0 = (Z0 - beta0).T @ Ki @ (Z0 - beta0)
         psi = (1.0 / N) * ((((Z-beta0).T @ (Z-beta0) - ((Z0-beta0)*mult).T @ (Z0-beta0)) / g) + psi_0)
+        
+        # check for divide by zero warnings
+        if psi <=0: return np.nan
+        if g <= 0: return np.nan
         loglik = (-N / 2.0) * np.log(2*np.pi) - (N / 2.0) * np.log(psi) + (1.0 / 2.0) * ldetKi - (N - n)/2.0 * np.log(g) - (1.0 / 2.0) * np.log(mult).sum() - (N / 2.0)
+            
         #print('loglik: ', loglik,'\n')
         return loglik
     
@@ -68,8 +74,8 @@ class homGP():
 
         KiZ0 = Ki @ Z0 ## to avoid recomputing  
         psi  = Z0.T @ KiZ0
-        tmp1 = tmp2 = None
-
+        tmp1 = None
+        tmp2 = None
         # First component, derivative with respect to theta
         if "theta" in components:
             tmp1 = np.repeat(np.nan, len(theta))
@@ -98,7 +104,7 @@ class homGP():
                         noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
                         init = {},
                         covtype = "Gaussian",
-                        maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
+                        maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7,ignore_MLE_divide_invalid = True)):
         r'''
         Gaussian process modeling with homoskedastic noise.
 
@@ -245,7 +251,7 @@ class homGP():
         
         ## General definition of fn and gr
         self.max_loglik = float('-inf')
-        self.arg_max = None
+        self.arg_max = np.array([np.nan]).reshape(-1)
         def fn(par, X0, Z0, Z, mult, beta0, theta, g):
             idx = 0 # to store the first non used element of par
 
@@ -297,20 +303,20 @@ class homGP():
                 lowerOpt = np.append(lowerOpt,g_min)
                 upperOpt = np.append(upperOpt,g_max)
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
-            foo=1
-            out = optimize.minimize(
-                fun=fn, # for maximization
-                args = (X0, Z0, Z, mult, beta0, known.get('theta'), known.get('g')),
-                x0 = parinit,
-                jac=gr,
-                method="L-BFGS-B",
-                bounds = bounds,
-                #tol=1e-8,
-                options=dict(maxiter=maxit, #,
-                            ftol = settings.get('factr',10) * np.finfo(float).eps,#,
-                            gtol = settings.get('pgtol',0) # should map to pgtol
-                            )
-                )
+            with np.errstate(divide='ignore',invalid='ignore') if settings.get('ignore_MLE_divide_invalid',True) else contextlib.nullcontext():
+                out = optimize.minimize(
+                    fun=fn, # for maximization
+                    args = (X0, Z0, Z, mult, beta0, known.get('theta'), known.get('g')),
+                    x0 = parinit,
+                    jac=gr,
+                    method="L-BFGS-B",
+                    bounds = bounds,
+                    #tol=1e-8,
+                    options=dict(maxiter=maxit, #,
+                                ftol = settings.get('factr',10) * np.finfo(float).eps,#,
+                                gtol = settings.get('pgtol',0) # should map to pgtol
+                                )
+                    )
             python_kws_2_R_kws = {
                 'x':'par',
                 'fun': 'value',
