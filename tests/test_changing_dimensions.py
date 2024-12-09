@@ -6,7 +6,7 @@ import numpy as np
 rand = np.random.default_rng(42)
 from hetgpy import hetGP, homGP
 
-SETTINGS = {'ignore_MLE_divide_invalid':True}
+SETTINGS = {'ignore_MLE_divide_invalid':True} # turn this on to supress runtime divide by 0 or NA warnings
 def test_hom():
     n = 50
     p = 3
