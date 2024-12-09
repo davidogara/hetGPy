@@ -502,7 +502,6 @@ class hetGP:
         
 
     
-
     def mleHetGP(self,X, Z, lower = None, upper = None, known = dict(),
                      noiseControl = dict(k_theta_g_bounds = (1, 100), g_max = 100, g_bounds = (1e-06, 1)),
                      init = {},
@@ -838,14 +837,17 @@ class hetGP:
             else:
                 rKI = False
             modHom = homGP()
-            modHom.mleHomGP(
-                        X = dict(X0 = X0, Z0 = Z0, mult = mult), Z = Z, lower = lower,
-                        known = dict(theta = known.get("theta"), g = known.get('g_H'), beta0 = known.get('beta0')),
-                        upper = upper, init = dict(theta = init.get('theta'), g = g_init), 
-                        covtype = covtype, maxit = maxit,
-                        noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
-                        settings = dict(return_Ki = rKI))
-            
+            with (np.errstate(divide='ignore',invalid='ignore') 
+                  if settings.get('ignore_MLE_divide_invalid',True) 
+                  else contextlib.nullcontext()):
+                modHom.mleHomGP(
+                            X = dict(X0 = X0, Z0 = Z0, mult = mult), Z = Z, lower = lower,
+                            known = dict(theta = known.get("theta"), g = known.get('g_H'), beta0 = known.get('beta0')),
+                            upper = upper, init = dict(theta = init.get('theta'), g = g_init), 
+                            covtype = covtype, maxit = maxit,
+                            noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
+                            settings = dict(return_Ki = rKI))
+                
             if known.get("theta") is None:
                 init['theta'] = modHom['theta']
             
@@ -918,7 +920,10 @@ class hetGP:
                 modNugs = homGP()
                 settings_tmp = settings.copy()
                 settings_tmp['return_Ki'] = False
-                modNugs.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = mult), Z = nugs_est,
+                with (np.errstate(divide='ignore',invalid='ignore') 
+                  if settings.get('ignore_MLE_divide_invalid',True) 
+                  else contextlib.nullcontext()):
+                    modNugs.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = mult), Z = nugs_est,
                                     lower = noiseControl.get('lowerTheta_g'), upper = noiseControl.get('upperTheta_g'),
                                     init = dict(theta = init.get('theta_g'), g =  init.get('g')), 
                                     known = dict(),
@@ -936,12 +941,15 @@ class hetGP:
                 modNugs = homGP()
                 settings_tmp = settings.copy()
                 settings_tmp['return_Ki'] = False
-                modNugs.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = np.repeat(1, X0.shape[0])), 
-                                         Z = nugs_est0,
-                                    lower = noiseControl.get('lowerTheta_g'), upper = noiseControl.get('upperTheta_g'),
-                                    init = dict(theta = init.get('theta_g'), g =  init.get('g')), 
-                                    covtype = covtype, noiseControl = noiseControl,
-                                    maxit = maxit, eps = eps, settings = settings_tmp)
+                with (np.errstate(divide='ignore',invalid='ignore') 
+                  if settings.get('ignore_MLE_divide_invalid',True) 
+                  else contextlib.nullcontext()):
+                    modNugs.mleHomGP(X = dict(X0 = X0, Z0 = nugs_est0, mult = np.repeat(1, X0.shape[0])), 
+                                            Z = nugs_est0,
+                                        lower = noiseControl.get('lowerTheta_g'), upper = noiseControl.get('upperTheta_g'),
+                                        init = dict(theta = init.get('theta_g'), g =  init.get('g')), 
+                                        covtype = covtype, noiseControl = noiseControl,
+                                        maxit = maxit, eps = eps, settings = settings_tmp)
                 prednugs = modNugs.predict(x = X0)
                 
             
@@ -1119,10 +1127,13 @@ class hetGP:
             else:
                 ## Compute reference homoskedastic likelihood, with fixed theta for speed
                 hom = homGP()
-                modHom_tmp = hom.mleHomGP(X = dict(X0 = X0, Z0 = Z0, mult = mult), Z = Z, lower = lower, upper = upper,
-                                    known = dict(theta = known.get("theta"), g = known.get('g_H'), beta0 = known.get('beta0')), covtype = covtype, init = init,
-                                    noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
-                                    settings = dict(return_Ki = False))
+                with (np.errstate(divide='ignore',invalid='ignore') 
+                  if settings.get('ignore_MLE_divide_invalid',True) 
+                  else contextlib.nullcontext()):
+                    modHom_tmp = hom.mleHomGP(X = dict(X0 = X0, Z0 = Z0, mult = mult), Z = Z, lower = lower, upper = upper,
+                                        known = dict(theta = known.get("theta"), g = known.get('g_H'), beta0 = known.get('beta0')), covtype = covtype, init = init,
+                                        noiseControl = dict(g_bounds = (noiseControl['g_min'], noiseControl['g_max'])), eps = eps,
+                                        settings = dict(return_Ki = False))
             
                 hom_ll = modHom_tmp['ll']
             parinit  = parinit[parinit!=None].astype(float)
@@ -1131,7 +1142,9 @@ class hetGP:
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
             
             self.arg_max = parinit.copy()
-            with np.errstate(divide='ignore',invalid='ignore') if settings.get('ignore_MLE_divide_invalid',True) else contextlib.nullcontext():
+            with (np.errstate(divide='ignore',invalid='ignore') 
+                  if settings.get('ignore_MLE_divide_invalid',True) 
+                  else contextlib.nullcontext()):
                 out = optimize.minimize(
                     fun = fn,
                     args = (X0, Z0, Z, mult, known.get('Delta'), 

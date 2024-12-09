@@ -104,7 +104,7 @@ class homGP():
                         noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
                         init = {},
                         covtype = "Gaussian",
-                        maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7,ignore_MLE_divide_invalid = True)):
+                        maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
         r'''
         Gaussian process modeling with homoskedastic noise.
 
@@ -303,8 +303,8 @@ class homGP():
                 lowerOpt = np.append(lowerOpt,g_min)
                 upperOpt = np.append(upperOpt,g_max)
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
-            with np.errstate(divide='ignore',invalid='ignore') if settings.get('ignore_MLE_divide_invalid',True) else contextlib.nullcontext():
-                out = optimize.minimize(
+            
+            out = optimize.minimize(
                     fun=fn, # for maximization
                     args = (X0, Z0, Z, mult, beta0, known.get('theta'), known.get('g')),
                     x0 = parinit,
