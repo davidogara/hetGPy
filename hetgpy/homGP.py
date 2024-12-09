@@ -517,7 +517,7 @@ class homGP():
                 noiseControl = self.used_args['noiseControl']
             init = {}
             if settings is None: settings = self.used_args.get('settings')
-            if known is None: known = self.used_args['known']
+            if known == {}: known = self.used_args['known'].copy()
             if known.get('theta') is None: init['theta'] = self.theta
             if known.get('g') is None: init['g'] = self.g
 

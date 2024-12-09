@@ -1604,12 +1604,12 @@ class hetGP:
             if upper is None: upper = self.used_args['upper']
             if lower is None: lower = self.used_args['lower']
             if noiseControl is None:
-                noiseControl = self.used_args['noiseControl']
+                noiseControl = self.used_args['noiseControl'].copy()
                 noiseControl['lowerDelta'] = None
                 noiseControl['upperDelta'] = None ## must be given to noiseControl in update
              
-            if settings is None: settings = self.used_args['settings']
-            if known is None: known = self.used_args['known']
+            if settings is None: settings = self.used_args['settings'].copy()
+            if known == {}: known = self.used_args['known'].copy()
             
             self.mleHetGP(X = dict(X0 = self.X0, Z0 = self.Z0, mult = self.mult), Z = self.Z,
                             noiseControl = noiseControl, lower = lower, upper = upper, covtype = self.covtype, settings = settings,
