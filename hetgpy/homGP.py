@@ -95,6 +95,38 @@ class homGP():
         
     def dlogLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian",
                         eps = MACHINE_DOUBLE_EPS, components = ("theta", "g")):
+        r'''
+        Log likelihood gradient under homoskedastic noise
+
+        Parameters
+        ----------
+        X0: ndarray_like
+            unique design matrix (of size nxd)
+        Z0: ndarray_like
+            averaged responses (size nx1)
+        Z: ndarray_like
+            observation (output) vector (size N)
+        mult: ndarray_like
+            number of replicates as each design location. Note that mult.sum()==N
+        theta: ndarray_like
+            lengthscale
+        g: float
+            noise variance
+        beta0: float
+            trend
+        covtype: str
+            covariance kernel to use
+        eps: float
+            amount of jitter on diagonal of covariance matrix
+        components: list
+            directions for partial derivatives, one or both of 'theta' (lengthscales) or 'g' (for noise)
+        
+        Returns
+        -------
+        out: ndarray_like
+            gradient with respect to hyperparameters
+        
+        '''
         k = len(Z)
         n = X0.shape[0]
         
