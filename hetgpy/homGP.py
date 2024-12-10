@@ -50,6 +50,8 @@ class homGP():
             trend
         covtype: str
             covariance kernel to use
+        eps: float
+            amount of jitter on diagonal of covariance matrix
 
         Returns
         -------
