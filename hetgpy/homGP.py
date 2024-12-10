@@ -464,7 +464,7 @@ class homGP():
         
         if (sd2<0).any():
             sd2[sd2<0] = 0
-            warnings.warn("Numerical errors caused some negative predictive variances to be thresholded to zero. Consider using ginv via rebuild.homGP")
+            warnings.warn("Numerical errors caused some negative predictive variances to be thresholded to zero. Consider using ginv via homGP.rebuild(robust=True)")
 
         if xprime is not None:
             kxprime = self['nu_hat'] * cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype'])
@@ -499,13 +499,13 @@ class homGP():
             
         return preds
 
-    def rebuild_homGP(self, robust = False):
+    def rebuild(self, robust = False):
         r'''
         Rebuilds inverse covariance matrix in homGP object (usually after saving). Works in tandem with `strip`
 
         Parameters
         ----------
-        
+
         robust: bool
             use `np.linalg.pinv` for covariance matrix inversion. Otherwise use cholesky
         
@@ -527,6 +527,12 @@ class homGP():
         return self
 
     def strip(self):
+        r'''
+        Removes larger model objects
+
+        Can be rebuilt with `rebuild`
+        
+        '''
         keys  = ('Ki','Kgi','modHom','modNugs')
         for key in keys:
             if key in self.keys():
@@ -535,6 +541,48 @@ class homGP():
     
     def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
                          known = {}, maxit = 100):
+        r'''
+        Update model object with new observations
+
+        Parameters
+        ----------
+        Xnew: ndarray_like
+            new inputs (one observation per row)
+        Znew: ndarray_like
+            new observations
+        lower: ndarray_like
+            lower bound for lengthscales. If not provided extracted from `self`
+        upper: ndarray_like
+            upper bound for lengthscales. If not provided extracted from `self`
+        noiseControl: dict
+            noise bounds. If not provided extracted from `self`
+        settings: dict
+            options for optimization. If not provided extracted from `self`
+        known: dict
+            known hyperparameters to fix at values
+        maxit: int
+            maximum number of iterations for hyperparameter optimization
+        
+        Returns
+        -------
+        self, potentially with updated hyperparameters
+        
+
+        Notes
+        -----
+        If hyperparameters do not need to be updated, maxit can be set to 0. In this case it is possible to pass NAs in Znew, then the model can still be used to provide updated variance predictions
+        
+        Example
+        -------
+        >>> import numpy as np, from hetgpy import homGP
+        >>> X = np.array([1, 2, 3, 4, 12]).reshape(-1,1)
+        >>> Y = np.array([0, -1.75, -2, -0.5, 5])
+        >>> model = homGP().mle(X,Y,known={'theta':np.array([10.0]),'g':1e-8})
+        >>> Xnew  = np.array([2.5]).reshape(-1,1)
+        >>> Znew  = model.predict(Xnew)['mean']
+        >>> model.update(Xnew,Znew)
+        
+        '''
         # first reduce Xnew/Znew in case of potential replicates
         newdata = find_reps(Xnew, Znew, normalize = False, rescale = False)
   
@@ -627,6 +675,19 @@ class homGP():
         newmodel = deepcopy(self)
         return newmodel
     def plot(self,type='diagnostics'):
+        r'''
+        Plot model behavior. See hetgpy.plot for more details on types of plots
+
+        Parameters
+        ----------
+        type: str
+            type of plot: currently supported are "diagnostics" and "iterates"
+
+
+        Returns
+        -------
+        fig, ax: figure and axis object
+        '''
         ptypes = ('diagnostics','iterates')
         if type not in ptypes:
             raise ValueError(f"{type} not found, select one of {ptypes}")
@@ -636,6 +697,9 @@ class homGP():
             return plot_optimization_iterates(model=self)
     
     def summary(self):
+        r'''
+        Print a summary of the model object and the MLE routine
+        '''
         print("N = ", len(self.Z), " n = ", len(self.Z0), " d = ", self.X0.shape[1], "\n")
         print("Homoskedastic nugget value: ", self.g, "\n")
         print(self.covtype, " covariance lengthscale values: ", self.theta, "\n")
