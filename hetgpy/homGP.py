@@ -29,6 +29,33 @@ class homGP():
         return self.__dict__.get(key)
     
     def logLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS, env = None):
+        r'''
+        Log Likelihood under homoskedastic noise
+
+        Parameters
+        ----------
+        X0: ndarray_like
+            unique design matrix (of size nxd)
+        Z0: ndarray_like
+            averaged responses (size nx1)
+        Z: ndarray_like
+            observation (output) vector (size N)
+        mult: ndarray_like
+            number of replicates as each design location. Note that mult.sum()==N
+        theta: ndarray_like
+            lengthscale
+        g: float
+            noise variance
+        beta0: float
+            trend
+        covtype: str
+            covariance kernel to use
+
+        Returns
+        -------
+        loglik: float
+            log-likelihood
+        '''
         n = X0.shape[0]
         N = Z.shape[0]
 
