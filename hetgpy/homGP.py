@@ -28,7 +28,7 @@ class homGP():
     def get(self,key):
         return self.__dict__.get(key)
     
-    def logLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS, env = None):
+    def logLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS):
         r'''
         Log Likelihood under homoskedastic noise
 
