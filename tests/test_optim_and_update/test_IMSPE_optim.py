@@ -30,11 +30,10 @@ def test_IMSPE_optim():
      ## Sequential IMSPE search
      nsteps <- 1 # Increase for better results
      for(i in 1:nsteps){
-       #res <- IMSPE_optim(model, control = list(multi.start = 30, maxit = 30))
-       #newX <- res$par
-       #newZ <- ftest(newX)
-       #model <- update(object = model, Xnew = newX, Znew = newZ)
-      foo=1
+       res <- IMSPE_optim(model, control = list(multi.start = 30, maxit = 30))
+       newX <- res$par
+       newZ <- ftest(newX)
+       model <- update(object = model, Xnew = newX, Znew = newZ)
      }
     ''')
     X, Z = np.array(r('X')), np.array(r('Z'))
@@ -50,6 +49,6 @@ def test_IMSPE_optim():
     nsteps = np.array(r('nsteps')).astype(int)[0]
     for i in range(nsteps):
         res = IMSPE_optim(model, control = {'mult_start':30,'maxit':30})
-        foo=1
+        assert np.allclose(res['value'],np.array(r('res$value')),atol=0.01)
 if __name__ == "__main__":
     test_IMSPE_optim()
