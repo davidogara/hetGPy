@@ -395,6 +395,37 @@ class homGP():
         if settings["return_Ki"]: self.Ki  = Ki
         return self
     def predict(self, x, xprime = None,interval = None, interval_lower = None, interval_upper = None,**kw):
+        r'''
+        Prediction under homoskedastic noise
+
+        Parameters
+        ----------
+        x : ndarray_like
+            matrix of designs locations to predict at (one point per row)
+        xprime : ndarray_like
+            optional second matrix of predictive locations to obtain the predictive covariance matrix between ``x`` and ``xprime``
+        interval: str
+            one of 'confidence' or 'predictive' which is a convenience method to return confidence/predictive intervals corresponding to `interval_lower` and `interval_upper`
+        interval_lower: float
+            lower of confidence/predictive interval
+        interval_upper: float
+            upper of confidence/predictive interval
+        nugs_only : bool (default False)  
+            if ``True``, only return noise variance prediction
+        kwargs : dict
+            optional additional elements (only used for nugs_only)
+
+        Returns
+        -------
+
+        dict with elements:
+            - ``mean``: kriging mean;
+            - ``sd2``: kriging variance (filtered, e.g. without the nugget values)
+            - ``nugs``: noise variance prediction
+            - ``cov``: (returned if ``xprime`` is given) predictive covariance matrix between ``x`` and ``xprime``
+            - ``confidence_interval``: prediction with kriging variance only
+            - ``predictive_interval``: prediction with kriging and noise variance
+        '''
 
         if len(x.shape) == 1:
             x = x.reshape(-1,1)
@@ -469,6 +500,19 @@ class homGP():
         return preds
 
     def rebuild_homGP(self, robust = False):
+        r'''
+        Rebuilds inverse covariance matrix in homGP object (usually after saving). Works in tandem with `strip`
+
+        Parameters
+        ----------
+        
+        robust: bool
+            use `np.linalg.pinv` for covariance matrix inversion. Otherwise use cholesky
+        
+        Returns
+        -------
+        self with rebuilt inverse covariance matrix
+        '''
         if robust :
             self['Ki'] <- np.linalg.pinv(
                 cov_gen(X1 = self['X0'], theta = self['theta'], type = self['covtype']) + np.diag(self['eps'] + self['g'] / self['mult'])
