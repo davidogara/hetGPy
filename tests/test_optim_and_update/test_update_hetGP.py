@@ -26,13 +26,11 @@ def test_update():
     testpts <- matrix(seq(0, 2*pi, length = 10*n), ncol = 1)
     model <- model_init <- mleHetGP(X = X, Z = Z, lower = rep(0.1, nvar), 
     upper = rep(5, nvar), maxit = 1000)
-    nsteps <- 5
+    nsteps <- 2
     npersteps <- 10
     ''')
     X = np.array(r('X')).reshape(-1,1)
     Z = np.array(r('Z'))
-    n = 20
-    testpts = np.array(r('testpts'))
     model = hetGP()
     model.mleHetGP(
         X = X,
@@ -41,7 +39,6 @@ def test_update():
         upper = 5 + 0.0*np.arange(X.shape[1]),
         maxit = 500
     )
-    model_init = copy(model)
     for i in range(np.array(r('nsteps')).astype(int)[0]):
         print('Running step',i)
         r('''
@@ -56,10 +53,12 @@ def test_update():
         ''')
         newX = np.array(r('newX')).reshape(-1,1)
         newZ = np.array(r('newZ'))
-        model.update(Xnew = newX, Znew = newZ.squeeze(),maxit=500,lower = np.array([0.1]), upper = np.array([5]))
+        model.update(Xnew = newX, Znew = newZ.squeeze(),maxit=500,
+                     lower = np.array([0.1]), 
+                     upper = np.array([5]))
         X = np.vstack([X,newX])        
         Z = np.hstack([Z,newZ.squeeze()])
-    final_preds = model.predict(testpts)
+        assert np.allclose(model.theta,r('model$theta'),atol=0.05)
 
 if __name__ == "__main__":
     test_update()

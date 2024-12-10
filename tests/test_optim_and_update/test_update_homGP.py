@@ -26,13 +26,11 @@ def test_update():
     testpts <- matrix(seq(0, 2*pi, length = 10*n), ncol = 1)
     model <- model_init <- mleHomGP(X = X, Z = Z, lower = rep(0.1, nvar), 
     upper = rep(5, nvar), maxit = 100)
-    nsteps <- 5
+    nsteps <- 2
     npersteps <- 10
     ''')
     X = np.array(r('X')).reshape(-1,1)
     Z = np.array(r('Z'))
-    n = 20
-    testpts = np.array(r('testpts'))
     model = homGP()
     model.mleHomGP(
         X = X,
@@ -41,7 +39,6 @@ def test_update():
         upper = 5 + 0.0*np.arange(X.shape[1]),
         maxit = 100
     )
-    model_init = copy(model)
     for i in range(np.array(r('nsteps')).astype(int)[0]):
         print('Running step',i)
         r('''
