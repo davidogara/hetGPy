@@ -26,6 +26,10 @@ class homGP():
     def __setitem__(self,item,value):
         self.__dict__[item] = value
     def get(self,key):
+        r'''
+        General `get` item (retrives key from self.__dict__)
+        
+        '''
         return self.__dict__.get(key)
     
     def logLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS):
