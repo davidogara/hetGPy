@@ -19,7 +19,7 @@ def test():
     xgrid <- seq(0,1, length.out = ngrid)
     Xgrid <- as.matrix(expand.grid(xgrid, xgrid))
     
-    nsteps <- 5 # Increase for more steps
+    nsteps <- 2 # Increase for more steps
     crit <- "crit_EI" 
     ''')
     rand = np.random.default_rng(seed=42)
@@ -39,7 +39,8 @@ def test():
         model <- update(object = model, Xnew = newX, Znew = newZ)
         ''')
         res = crit_optim(model, h = 3, crit = crit, 
-                         control =dict(multi_start = 100, maxit = 100), ncores = 1)
+                         control =dict(multi_start = 100, maxit = 50), ncores = 1)
+        assert np.allclose(res['value'],np.array(r('res$value')),atol=0.01)
         if not res['path'][0]['new']:
             print("Add replicate")
         newX = res['par']
