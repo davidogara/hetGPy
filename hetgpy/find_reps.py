@@ -2,7 +2,7 @@
 docstring for find_reps
 """
 
-
+from __future__ import annotations
 import numpy as np
 def find_reps(X,Z, return_Zlist = True, rescale = False, normalize = False, inputBounds = None, use_torch=False):
         """Prepare data for use with ``mleHomGP`` and ``mleHetGP``

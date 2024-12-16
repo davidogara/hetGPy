@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 from copy import deepcopy
 from joblib import Parallel, delayed
@@ -366,23 +367,16 @@ def crit_search(model, crit, replicate = False, Xcand = None,
                     res = dict(par = model.X0[[id_closest],:],
                             value = crit_rep,
                             new = False, id = id_closest)
-        else:
-            ## Discrete
-            inputs = []
-            for i in range(Xcand.shape[0]):
-                kw = {'model':model}
-                kw[i] = i
-                inputs.append(kw)
-            res = Parallel(n_jobs=ncores)(
-              delayed(fn)(**kw) 
-                  for kw in inputs
-              )
-            tmp = (duplicated(np.vstack(model.X0, Xcand[np.argmin(res),:]), fromLast = True))
-            if len(tmp) > 0: 
-                par = Xcand[[np.argmin(res)],:,]
-                return(dict(par = par, value = crit_func(par,**crit_to_args[crit]), new = False, id = tmp))
-            par = Xcand[[np.argmin(res)],:,]
-            return dict(par = par, value = crit_func(par,**crit_to_args[crit]), new = True, id = None)
+    else:
+      ## Discrete
+      print('here')
+      res = -1 * crit_func(model=model,x=Xcand)
+      tmp = (duplicated(np.vstack([model.X0, Xcand[np.argmin(res),:]]), fromLast = True))
+      if len(tmp) > 0: 
+          par = Xcand[res.argmin(keepdims=True),:]
+          return(dict(par = par, value = crit_func(model=model,x=par), new = False, id = tmp))
+      par = Xcand[res.argmin(keepdims=True),:]
+      return dict(par = par, value = crit_func(model=model,x=par), new = True, id = None)
     return res
 
 def crit_optim(model, crit, h = 2, Xcand = None, 

@@ -66,6 +66,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
     "numpydoc",
     "nbsphinx", # nbsphinx-0.9.4
     "sphinx_rtd_theme"
@@ -90,3 +91,10 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 add_module_names = False
 master_doc = "index"
+autodoc_typehints = "description"
+autodoc_typehints_format = 'short'
+python_use_unqualified_type_names = True
+autodoc_type_aliases = {
+    'Iterable': 'Iterable',
+    'ArrayLike': 'ArrayLike',
+}

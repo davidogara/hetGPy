@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 import hetgpy
 from hetgpy.covariance_functions import cov_gen
