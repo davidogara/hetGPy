@@ -15,6 +15,8 @@ from hetgpy.update_covar import update_Ki, update_Ki_rep
 from hetgpy.plot import plot_diagnostics, plot_optimization_iterates
 from copy import deepcopy
 import contextlib
+from numpy.typing import ArrayLike, NDArray
+NDArrayInt = NDArray[np.int_]
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 class homGP():
@@ -32,7 +34,7 @@ class homGP():
         '''
         return self.__dict__.get(key)
     
-    def logLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS):
+    def logLikHom(self,X0: ArrayLike, Z0: ArrayLike, Z: ArrayLike, mult: NDArrayInt, theta: ArrayLike, g: float, beta0: float | None = None, covtype: str = "Gaussian", eps: float = MACHINE_DOUBLE_EPS) -> float:
         r'''
         Log Likelihood under homoskedastic noise
 
@@ -93,8 +95,8 @@ class homGP():
     
 
         
-    def dlogLikHom(self,X0, Z0, Z, mult, theta, g, beta0 = None, covtype = "Gaussian",
-                        eps = MACHINE_DOUBLE_EPS, components = ("theta", "g")):
+    def dlogLikHom(self,X0: ArrayLike, Z0: ArrayLike, Z: ArrayLike, mult: NDArrayInt, theta: ArrayLike, g: float, beta0: float | None = None, covtype: str = "Gaussian",
+                        eps: float = MACHINE_DOUBLE_EPS, components: list = ("theta", "g")) -> ArrayLike:
         r'''
         Log likelihood gradient under homoskedastic noise
 
@@ -165,11 +167,11 @@ class homGP():
         #print('dll', out, '\n')
         return out    
 
-    def mleHomGP(self,X, Z, lower = None, upper = None, known = dict(),
-                        noiseControl = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
-                        init = {},
-                        covtype = "Gaussian",
-                        maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e7)):
+    def mleHomGP(self,X: ArrayLike, Z: ArrayLike, lower: ArrayLike | None = None, upper: ArrayLike | None = None, known: dict = dict(),
+                        noiseControl: dict = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
+                        init: dict = {},
+                        covtype: str = "Gaussian",
+                        maxit: int = 100, eps: float = MACHINE_DOUBLE_EPS, settings: dict = dict(returnKi = True, factr = 1e7)) -> None:
         r'''
         Gaussian process modeling with homoskedastic noise.
 
@@ -430,7 +432,7 @@ class homGP():
         
         if settings["return_Ki"]: self.Ki  = Ki
         return self
-    def predict(self, x, xprime = None,interval = None, interval_lower = None, interval_upper = None,**kw):
+    def predict(self, x: ArrayLike, xprime: ArrayLike | None = None,interval: str | None = None, interval_lower: float | None  = None, interval_upper: float | None = None,**kw):
         r'''
         Prediction under homoskedastic noise
 
@@ -575,8 +577,10 @@ class homGP():
                 self.__dict__.pop(key,None)
         return self
     
-    def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
-                         known = {}, maxit = 100):
+    def update(self,Xnew: ArrayLike, Znew: ArrayLike, ginit: float = 1e-2, 
+               lower: ArrayLike | None = None, upper: ArrayLike | None = None, 
+               noiseControl: dict | None = None, settings: dict | None = None,
+                         known: dict = {}, maxit: int = 100):
         r'''
         Update model object with new observations
 
