@@ -1674,6 +1674,19 @@ class hetGP:
 
         newmodel = deepcopy(self)
         return newmodel
+    def strip(self):
+        r'''
+        Removes larger model objects
+
+        Can be rebuilt with `rebuild`
+        
+        '''
+        keys  = ('Ki','Kgi','modHom','modNugs')
+        for key in keys:
+            if key in self.__dict__.keys():
+                self.__dict__.pop(key,None)
+        return self
+
     def rebuild(self, robust = False):
         r'''
         Rebuilds inverse covariance matrix in homGP object (usually after saving). Works in tandem with `strip`
@@ -1688,17 +1701,31 @@ class hetGP:
         -------
         self with rebuilt inverse covariance matrix
         '''
-        if robust :
-            self['Ki'] <- np.linalg.pinv(
+        Cg = cov_gen(X1 = self['X0'],theta = self['theta_g'], type=self['covtype'])
+        if robust:
+            self['Ki'] = np.linalg.pinv(
                 cov_gen(X1 = self['X0'], theta = self['theta'], type = self['covtype']) + np.diag(self['eps'] + self['g'] / self['mult'])
             ).T
-            self['Ki'] /= self['nu_hat']
+            Kgi = np.linalg.pinv(
+                Cg + np.diag(self['eps'] + self['g'] / self['mult'])
+            )
+            self['Kgi'] = Kgi
         else:
             ki = np.linalg.cholesky(
-            cov_gen(X1 = self['X0'], theta = self['theta'], type = self['covtype']) + np.diag(self['eps'] + self['g'] / self['mult'])
+            cov_gen(X1 = self['X0'], theta = self['theta'], type = self['covtype']) + np.diag(self['eps'] + self['Lambda'] / self['mult'])
             ).T
             ki = dtrtri(ki)[0]
             self['Ki'] = ki @ ki.T
+
+            Kgi = np.linalg.cholesky(
+                Cg + np.diag(self['eps'] + self['g'] / self['mult'])
+            )
+            Kgi = dtrtri(Kgi)[0]
+            Kgi = Kgi @ Kgi.T
+            self['Kgi'] = Kgi
+
+
+
         return self
 
     def LOO_preds_nugs(self, i):

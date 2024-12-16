@@ -571,8 +571,8 @@ class homGP():
         '''
         keys  = ('Ki','Kgi','modHom','modNugs')
         for key in keys:
-            if key in self.keys():
-                del self[key]
+            if key in self.__dict__.keys():
+                self.__dict__.pop(key,None)
         return self
     
     def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
