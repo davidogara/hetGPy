@@ -473,7 +473,7 @@ def log1mexp(x):
     if x <= np.log(2):
         return np.log(-np.expm1(-x))
     else:
-        return np.log1p(-exp(-x))
+        return np.log1p(-np.exp(-x))
 
 
 #' log_h function from
@@ -543,7 +543,7 @@ def crit_logEI(x, model, cst = None, preds = None):
         res = (cst - preds["mean"]) * t.cdf(gamma, df=model["nu"] + len(model["Z"]))
         res = res + np.sqrt(preds["sd2"]) * (1 + (gamma**2 - 1) / (model["nu"] + len(model["Z"]) - 1)) * t.pdf(x=gamma, df=model["nu"] + len(model["Z"]))
         res[np.where(res < 1e-12)] = 0  # for stability
-        return log(res)
+        return np.log(res)
 
     xcr = (cst - preds["mean"]) / np.sqrt(preds["sd2"])
     res = np.log(np.sqrt(preds["sd2"]))
