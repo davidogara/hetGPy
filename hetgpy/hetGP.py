@@ -15,6 +15,8 @@ from hetgpy.LOO import LOO_preds
 from hetgpy.update_covar import update_Ki, update_Ki_rep, update_Kgi, update_Kgi_rep
 from copy import copy, deepcopy
 import contextlib
+from numpy.typing import ArrayLike, NDArray
+NDArrayInt = NDArray[np.int_]
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
@@ -32,9 +34,16 @@ class hetGP:
         return self.__dict__.get(key)
     # Part II: hetGP functions
 
-    def logLikHet(self, X0, Z0, Z, mult, Delta, theta, g, k_theta_g = None, theta_g = None, logN = None, SiNK = False,
-                      beta0 = None, pX = None, eps = MACHINE_DOUBLE_EPS, covtype = "Gaussian", SiNK_eps = 1e-4,
-                      penalty = True, hom_ll = None, env = None, trace = 0):
+    def logLikHet(self, X0: ArrayLike, Z0: ArrayLike, 
+                        Z: ArrayLike, mult: NDArrayInt,
+                        Delta: ArrayLike, theta: ArrayLike, 
+                        g: ArrayLike, k_theta_g: ArrayLike | None = None, 
+                        theta_g: ArrayLike | None = None, logN: bool | None = None, 
+                        SiNK: bool = False,beta0: float | None = None, 
+                      pX: ArrayLike | None = None, eps: float = MACHINE_DOUBLE_EPS, 
+                      covtype: str = "Gaussian", SiNK_eps: float = 1e-4,
+                      penalty: bool = True, hom_ll: float | None = None,
+                      trace: int = 0) -> float:
         r'''
         log-likelihood in the anisotropic case - one lengthscale by variable
         Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information nu2 is replaced by its plugin estimator in the likelihood
@@ -161,9 +170,14 @@ class hetGP:
             
         
     
-    def dlogLikHet(self,X0, Z0, Z, mult, Delta, theta, g, k_theta_g = None, theta_g = None, beta0 = None, pX = None,
-                    logN = True, SiNK = False, components = None, eps = MACHINE_DOUBLE_EPS, covtype = "Gaussian", SiNK_eps = 1e-4,
-                    penalty = True, hom_ll = None, env = None):
+    def dlogLikHet(self,
+                   X0: ArrayLike, Z0: ArrayLike, Z: ArrayLike, mult: NDArrayInt, Delta: ArrayLike, 
+                   theta: ArrayLike, g: float, k_theta_g: ArrayLike | None = None, theta_g: ArrayLike| None = None, 
+                   beta0: ArrayLike | None = None, pX: ArrayLike | None = None,
+                   logN: bool = True, SiNK: bool = False, components: list = None, 
+                    eps: float = MACHINE_DOUBLE_EPS, covtype: str = "Gaussian", 
+                    SiNK_eps: float = 1e-4,penalty: bool = True, 
+                    hom_ll: float = None) -> ArrayLike:
         '''
         derivative of log-likelihood for logLikHet_Wood with respect to theta and Lambda with all observations
         Model: K = nu2 * (C + Lambda) = nu using all observations using the replicates information 
@@ -502,11 +516,15 @@ class hetGP:
         
 
     
-    def mleHetGP(self,X, Z, lower = None, upper = None, known = dict(),
-                     noiseControl = dict(k_theta_g_bounds = (1, 100), g_max = 100, g_bounds = (1e-06, 1)),
-                     init = {},
-                     covtype = "Gaussian",
-                     maxit = 100, eps = MACHINE_DOUBLE_EPS, settings = dict(returnKi = True, factr = 1e9,ignore_MLE_divide_invalid = True),use_torch=False):
+    def mleHetGP(self,X: ArrayLike, 
+                 Z: ArrayLike, 
+                 lower: ArrayLike | None = None, upper: ArrayLike | None = None,known: dict = dict(),
+                noiseControl: dict = dict(k_theta_g_bounds = (1, 100), g_max = 100, g_bounds = (1e-06, 1)),
+                init: dict = {},
+                covtype: str = "Gaussian",
+                maxit: int = 100, 
+                eps: float = MACHINE_DOUBLE_EPS, 
+                settings: dict = dict(returnKi = True, factr = 1e9,ignore_MLE_divide_invalid = True),use_torch=False):
         r'''
         Gaussian process modeling with heteroskedastic noise
 
@@ -1342,7 +1360,7 @@ class hetGP:
         
         return self
     
-    def predict(self,x, noise_var = False, xprime = None, nugs_only = False, interval = None, interval_lower = None, interval_upper = None, **kwargs):
+    def predict(self,x: ArrayLike, noise_var: bool = False, xprime: ArrayLike | None = None, nugs_only: bool = False, interval: str | None = None, interval_lower: float | None = None, interval_upper: float | None = None, **kwargs):
         '''
         Gaussian process predictions using a heterogeneous noise GP object (of ``hetGP``) 
 
@@ -1479,8 +1497,8 @@ class hetGP:
             
         return preds
     
-    def update(self,Xnew, Znew, ginit = 1e-2, lower = None, upper = None, noiseControl = None, settings = None,
-                         known = {}, maxit = 100, method = 'quick'):
+    def update(self,Xnew: ArrayLike, Znew: ArrayLike, ginit: float = 1e-2, lower: ArrayLike | None = None, upper: ArrayLike | None = None, noiseControl: dict | None = None, settings: dict | None = None,
+                         known: dict = {}, maxit: int = 100, method: str = 'quick'):
         r'''
         Update model object with new observations
 
