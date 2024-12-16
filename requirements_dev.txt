@@ -12,3 +12,4 @@ joblib
 pandas
 PyYAML
 nbsphinx>=0.9.5
+jaxtyping>=0.2.19
