@@ -524,7 +524,7 @@ class hetGP:
                 covtype: str = "Gaussian",
                 maxit: int = 100, 
                 eps: float = MACHINE_DOUBLE_EPS, 
-                settings: dict = dict(returnKi = True, factr = 1e9,ignore_MLE_divide_invalid = True),use_torch=False):
+                settings: dict = dict(returnKi = True, factr = 1e9,ignore_MLE_divide_invalid = True),use_torch: bool=False) -> None:
         r'''
         Gaussian process modeling with heteroskedastic noise
 
@@ -1360,7 +1360,7 @@ class hetGP:
         
         return self
     
-    def predict(self,x: ArrayLike, noise_var: bool = False, xprime: ArrayLike | None = None, nugs_only: bool = False, interval: str | None = None, interval_lower: float | None = None, interval_upper: float | None = None, **kwargs):
+    def predict(self,x: ArrayLike, noise_var: bool = False, xprime: ArrayLike | None = None, nugs_only: bool = False, interval: str | None = None, interval_lower: float | None = None, interval_upper: float | None = None, **kwargs) -> dict:
         '''
         Gaussian process predictions using a heterogeneous noise GP object (of ``hetGP``) 
 
@@ -1498,7 +1498,7 @@ class hetGP:
         return preds
     
     def update(self,Xnew: ArrayLike, Znew: ArrayLike, ginit: float = 1e-2, lower: ArrayLike | None = None, upper: ArrayLike | None = None, noiseControl: dict | None = None, settings: dict | None = None,
-                         known: dict = {}, maxit: int = 100, method: str = 'quick'):
+                         known: dict = {}, maxit: int = 100, method: str = 'quick') -> None:
         r'''
         Update model object with new observations
 
