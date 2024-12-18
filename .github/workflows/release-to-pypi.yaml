@@ -73,6 +73,8 @@ jobs:
       with:
         name: python-package-distributions
         path: dist/
+    - name: View files
+      run: ls
     - name: Sign the dists with Sigstore
       uses: sigstore/gh-action-sigstore-python@v3.0.0
       with:
