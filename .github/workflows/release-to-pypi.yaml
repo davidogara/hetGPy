@@ -77,7 +77,8 @@ jobs:
       uses: sigstore/gh-action-sigstore-python@v2.1.1
       with:
         inputs: >-
-          ./dist/*.tar.gz # sdist only
+          ./dist/*.tar.gz
+          ./dist/*.whl
     - name: Create GitHub Release
       env:
         GITHUB_TOKEN: ${{ github.token }}
