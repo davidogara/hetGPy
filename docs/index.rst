@@ -12,7 +12,7 @@ This landing page contains links to a set of example notebooks and the API refer
 Statement of Need
 ------------------
 
-`hetGPy` is a Python package for heteroskedastic Gaussian Process modeling. It is a Python port of the `hetGP <https://cran.r-project.org/web/packages/hetGP/index.html>` R package.
+`hetGPy` is a Python package for heteroskedastic Gaussian Process modeling. It is a Python port of the `hetGP <https://cran.r-project.org/web/packages/hetGP/index.html>`_ R package.
 
 `hetGPy` can be used for Gaussian Process regression, surrogate (emulator) modeling, and Bayesian Optimization. 
 
@@ -28,10 +28,10 @@ david.ogara@wustl.edu
 Installation
 ------------
 
-`hetGPy` is available via `PyPI <https://pypi.org/project/hetgpy/>`(``pip install hetgpy```)
+`hetGPy` is available via `PyPI <https://pypi.org/project/hetgpy/>`_ (``pip install hetgpy```)
 
 
-Or from `Github <https://github.com/davidogara/hetGPy>``.
+Or from `Github <https://github.com/davidogara/hetGPy>`_.
 
 
 
