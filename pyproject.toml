@@ -22,7 +22,7 @@ optional-dependencies = {dev = { file = ["requirements_dev.txt"] }}
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools","build" ,"setuptools-cpp","pybind11"]
+requires = ["setuptools","setuptools-cpp","pybind11"]
 
 
 
