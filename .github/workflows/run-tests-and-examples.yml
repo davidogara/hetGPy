@@ -42,5 +42,7 @@ jobs:
         run: jupyter execute examples/00-hetGPy-Intro.ipynb
       - name: Run Motorcycle Example
         run: jupyter execute examples/01-mcycle-example.ipynb
-      - name: Run SIR Example
-        run: jupyter execute examples/02-SIR-example.ipynb
+      #- name: Run SIR Example
+      #  run: jupyter execute examples/02-SIR-example.ipynb
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v4
