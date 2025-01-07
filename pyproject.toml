@@ -13,7 +13,7 @@ requires-python = ">3.10"
 dynamic = ["dependencies", "optional-dependencies"]
 
 [tool.setuptools]
-packages=['hetgpy','docs']
+packages=['hetgpy','docs','tests','tests.R','tests.R.results','tests.data']
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml", "*.mat",".R",""]
