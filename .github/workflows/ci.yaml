@@ -35,11 +35,10 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-  
-      - uses: pypa/cibuildwheel@v2.21
+      - uses: actions/setup-python@v5
         with:
-          ppython-version: ${{ matrix.python-version }}
-  
+          python-version: ${{ matrix.python-version }}
+      - uses: pypa/cibuildwheel@v2.21
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
