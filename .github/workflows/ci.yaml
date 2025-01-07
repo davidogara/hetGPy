@@ -29,6 +29,7 @@ jobs:
       CIBW_ARCHS: auto64
       CIBW_TEST_REQUIRES: pytest
       CIBW_TEST_COMMAND: "pytest {project}/tests/test*.py"
+      CIBW_TEST_EXTRAS: ""
     strategy:
       fail-fast: false
       matrix:
