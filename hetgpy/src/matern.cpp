@@ -418,7 +418,7 @@ Eigen::MatrixXd d_matern3_2_1args_theta_k(Eigen::MatrixXd X1, double theta){
   for(int i = 1; i < nr; i++, ptrX1++){
     for(int j = 0; j < i; j++, ptrs++){
       tmp = std::abs(*ptrX1 - *ptrX2) / theta;
-      *ptrs -= 3*tmp / (1 + sqrt(3.) * tmp) * tmp / theta;
+      *ptrs = 3*tmp / (1 + sqrt(3.) * tmp) * tmp / theta;
       *ptrs2 = *ptrs;
       ptrs2 += nr;
       ptrX2++;
