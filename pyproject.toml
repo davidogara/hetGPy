@@ -16,7 +16,7 @@ dynamic = ["dependencies", "optional-dependencies"]
 packages=['hetgpy','docs','tests','tests.R','tests.R.results','tests.data']
 
 [tool.setuptools.package-data]
-"*" = ["*.yaml", "*.mat",".R",""]
+"*" = ["*.yaml", "*.mat",".R","",'*.py']
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
