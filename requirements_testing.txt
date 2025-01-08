@@ -1,5 +1,2 @@
 pytest>=7.4.3
 PyYAML
-dash>=2.14.1
-ipykernel>=6.27.1
-jupyter>=1.0.0
