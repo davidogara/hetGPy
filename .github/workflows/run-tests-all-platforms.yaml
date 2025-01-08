@@ -1,4 +1,5 @@
-name: Run All Tests
+# run basic tests on push
+name: Run Basic Tests on All Platforms
 
 on: workflow_dispatch
 
@@ -8,34 +9,28 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest'] # [ubuntu-latest, windows-latest, macos-13, macos-14]
-        python-version: ['3.10','3.11','3.12','3.13']
+        os: ['ubuntu-latest','windows-latest','macos-14'] # [ubuntu-latest, windows-latest, macos-14]
+        python-version: ['3.10','3.11', '3.12','3.13'] #, '3.11', '3.12','3.13']
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       # Used to host cibuildwheel
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: '4.3'
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Install dev dependencies
-        run: python -m pip install -r requirements_dev.txt
+        run: python -m pip install -r requirements_testing.txt
       - name: Handle eigen
         run: git submodule update --init --recursive
       - name: Build package
         run: pip install -e .
-      - name: Install R packages for pytest
-        run: python tests/install_R.py
       - name: Test
-        run: pytest
-      - name: Run all jupyter examples
-        run: python examples/run_examples.py
+        run: pytest tests/basic # run basic tests (not those in rpy2 folder)
