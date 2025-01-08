@@ -22,7 +22,7 @@ The package documentation is available at: https://hetgpy.readthedocs.io/en/late
 
 ### pypi
 
-* `hetGPy` is availalbe on pypi:
+* `hetGPy` is available on pypi:
 
 ```
 pip install hetgpy
