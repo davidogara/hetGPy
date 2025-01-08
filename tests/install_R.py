@@ -1,6 +1,6 @@
-from rpy2.robjects import r; 
 
 if __name__ == "__main__":
+    from rpy2.robjects import r; 
     r("""
       dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)  # create personal library
       .libPaths(Sys.getenv("R_LIBS_USER"))  # add to the path

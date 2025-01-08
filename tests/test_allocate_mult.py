@@ -6,7 +6,6 @@ from tests.utils import read_yaml
 import numpy as np
 
 
-
 def test_allocate_mult():
     m = mcycle()
     X, Z = m['times'], m['accel']

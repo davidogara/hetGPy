@@ -16,7 +16,7 @@ def test_hom():
     model.mle(X,Z,covtype='Gaussian',settings=SETTINGS)
 
     model2 = homGP()
-    extra = rand.integers(low=1,high=10,size=n).reshape(-1,1)
+    extra = rand.integers(low=1,high=50,size=n).reshape(-1,1)
     X2 = np.hstack([X, extra])
     model2.mle(X2,Z,covtype='Gaussian',init={},known={},settings=SETTINGS)
 
@@ -29,7 +29,7 @@ def test_het():
     model.mle(X,Z,covtype='Gaussian',settings=SETTINGS)
 
     model2 = hetGP()
-    extra = rand.integers(low=1,high=10,size=n).reshape(-1,1)
+    extra = rand.integers(low=1,high=50,size=n).reshape(-1,1)
     X2 = np.hstack([X, extra])
     model2.mle(X2,
                Z,
