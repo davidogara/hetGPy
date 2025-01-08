@@ -62,8 +62,9 @@ jobs:
     - name: Download all the dists
       uses: actions/download-artifact@v4
       with:
-        name: python-package-distributions
-        path: dist/
+        pattern: cibw-*
+        path: dist
+        merge-multiple: true
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
 
@@ -84,8 +85,9 @@ jobs:
     - name: Download all the dists
       uses: actions/download-artifact@v4
       with:
-        name: python-package-distributions
-        path: dist/
+        pattern: cibw-*
+        path: dist
+        merge-multiple: true
     - name: Install Python
       uses: actions/setup-python@v5
       with:
