@@ -3,7 +3,7 @@ import numpy as np
 rand = np.random.default_rng(42)
 def test_hom():
     x = np.linspace(0,2*np.pi,20).reshape(-1,1)
-    y = np.sin(x)
+    y = np.cos(np.pi*x)
     y+= 0.05*rand.normal(size = y.shape)
 
     model = hetGP()
@@ -11,8 +11,6 @@ def test_hom():
         X = x,
         Z = y,
         covtype="Gaussian",
-        lower = np.array([1e-1]),
-        upper = np.array([10.0]),
         known = {'g':1e-8,'theta':np.array([5.0])}
 
     )
