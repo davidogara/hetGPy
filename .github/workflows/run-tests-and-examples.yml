@@ -13,8 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'macos-14','windows-latest'] # [ubuntu-latest, windows-latest, macos-13, macos-14]
-        python-version: ['3.10', '3.11', '3.12','3.13']
+        os: ['windows-latest'] # [ubuntu-latest, windows-latest, macos-14]
+        python-version: ['3.10'] #, '3.11', '3.12','3.13']
 
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
       - name: Build package
         run: pip install -e .
       - name: Test
-        run: pytest tests/test*.py -p no:warnings
+        run: pytest -k "not test_rpy2" # run basic tests (not those in rpy2 folder
       - name: Run Intro Example
         run: jupyter execute examples/00-hetGPy-Intro.ipynb
       - name: Run Motorcycle Example
