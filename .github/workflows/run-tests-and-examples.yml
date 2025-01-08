@@ -8,7 +8,7 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for $${ matrix.python-version }}
+    name: Build wheels on ${{ matrix.os }} for ${ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -32,7 +32,7 @@ jobs:
       - name: Build package
         run: pip install -e .
       - name: Test
-        run: pytest -k "not test_rpy2" # run basic tests (not those in rpy2 folder
+        run: pytest -k "basic" # run basic tests (not those in rpy2 folder)
       - name: Run Intro Example
         run: jupyter execute examples/00-hetGPy-Intro.ipynb
       - name: Run Motorcycle Example
