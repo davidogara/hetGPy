@@ -57,6 +57,8 @@ jobs:
       url: https://pypi.org/p/hetgpy  # Replace <package-name> with your PyPI project name
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
+      attestations: write
+      contents: read
 
     steps:
     - name: Download all the dists
@@ -80,6 +82,7 @@ jobs:
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases
       id-token: write  # IMPORTANT: mandatory for sigstore
+      attestations: write
 
     steps:
     - name: Download all the dists
@@ -129,6 +132,8 @@ jobs:
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
+      attestations: write
+      contents: read
 
     steps:
     - name: Download all the dists
