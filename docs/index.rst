@@ -28,7 +28,7 @@ david.ogara@wustl.edu
 Installation
 ------------
 
-`hetGPy` is available via `PyPI <https://pypi.org/project/hetgpy/>`_ (``pip install hetgpy```)
+`hetGPy` is available via `PyPI <https://pypi.org/project/hetgpy/>`_ (``pip install hetgpy``)
 
 
 Or from `Github <https://github.com/davidogara/hetGPy>`_.
