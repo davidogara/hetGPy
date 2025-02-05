@@ -1,5 +1,9 @@
 ## hetGPy: Heteroskedastic Gaussian Process Modeling in Python
 
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.07518/status.svg)](https://doi.org/10.21105/joss.07518)
+[![PyPI Downloads](https://static.pepy.tech/badge/hetgpy)](https://pepy.tech/projects/hetgpy)
+[![PyPI version](https://badge.fury.io/py/hetgpy.svg)](https://badge.fury.io/py/hetgpy)
+
 `hetGPy` is a Python implementation of the `hetGP` R library.
 
 This package has the goals of:
