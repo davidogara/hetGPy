@@ -1,5 +1,5 @@
 ---
-title: '`hetGPy`: Heteroskedastic Gaussian Process Modeling in Python'
+title: 'hetGPy: Heteroskedastic Gaussian Process Modeling in Python'
 tags:
   - Python
   - Gaussian Processes
