@@ -4,7 +4,7 @@
 [![PyPI Downloads](https://static.pepy.tech/badge/hetgpy)](https://pepy.tech/projects/hetgpy)
 [![PyPI version](https://badge.fury.io/py/hetgpy.svg)](https://badge.fury.io/py/hetgpy)
 
-`hetGPy` is a Python implementation of the `hetGP` R library.
+`hetGPy` is a Python implementation of the `hetGP` R library. Please see our [JOSS paper](https://joss.theoj.org/papers/10.21105/joss.07518) for an in-depth introduction to the package.
 
 This package has the goals of:
 *	Matching the behavior of the `R` package
