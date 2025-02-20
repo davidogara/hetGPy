@@ -562,7 +562,7 @@ class hetGP:
                     - ``penalty``  when ``True``, the penalized version of the likelihood is used (i.e., the sum of the log-likelihoods of the mean and variance processes, see References).
                     - ``hardpenalty`` is ``True``, the log-likelihood from the noise GP is taken into account only if negative (default if ``maxit > 1000``).
                     - ``checkHom`` when ``True``, if the log-likelihood with a homoskedastic model is better, then return it.
-                    - ``trace`` optional scalar (default to ``0``). If positive, tracing information on the fitting process. If ``1``, information is given about the result of the heterogeneous model optimization. Level ``2`` gives more details. Level ``3`` additionaly displays all details about initialization of hyperparameters.
+                    - ``trace`` optional scalar (default to ``0``). If negative, fit silently. If ``0``, only high level information is given. If ``1``, information is given about the result of the heterogeneous model optimization. Level ``2`` gives more details. Level ``3`` additionaly displays all details about initialization of hyperparameters.
                     - ``return_matrices`` boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
                     - ``return_hom`` boolean to include homoskedastic GP models used for initialization (i.e., ``modHom`` and ``modNugs``).
                     - ``factr`` (default to 1e9) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
