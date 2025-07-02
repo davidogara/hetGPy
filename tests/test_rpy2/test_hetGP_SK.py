@@ -8,8 +8,8 @@ m = mcycle()
 def test():
     '''
     Test performance of `trendtype`="SK"
-    Version 1.0.2 should "fail" (thanks to Ozge Surer, Miami Ohio)
-    Version 1.0.3+ should "pass"
+    Version 1.0.3 and before should "fail" (thanks to Ozge Surer, Miami Ohio)
+    Version 1.0.4+ should "pass"
     '''
 
     model = hetGP()

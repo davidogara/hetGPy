@@ -1,6 +1,10 @@
 
-## Version 1.0.3 -- 2025-07-02
+## Version 1.0.4 -- 2025-07-02
 *   Fixed bug in `hetGP.predict` for kriging variance (`sd2`) under simple kriging trendtype (thanks to Ozge Surer, Miami Ohio, for flagging)
+
+
+## Version 1.0.3 -- 2025-01-31
+*   Clarified verbosity of print statements for optimization routines (thanks to Dan Waxman)
 
 ## Version 1.0.2 -- 2025-01-14
 *   Fixed bug in `src/matern.cpp` for partial derivatives
