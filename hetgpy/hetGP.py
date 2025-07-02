@@ -1457,7 +1457,7 @@ class hetGP:
         kx = cov_gen(X1 = x, X2 = self['X0'], theta = self['theta'], type = self['covtype'])
 
         if self['trendtype'] == 'SK':
-            sd2 = self['nu_hat'] - np.diag(kx @ (self['Ki'] @ kx.T))
+            sd2 = self['nu_hat'] * (1 - np.diag(kx @ (self['Ki'] @ kx.T)))
         else:
             sd2 = self['nu_hat'] * (1 - np.diag(kx @ ((self['Ki'] @ kx.T)))  + (1- (self['Ki'].sum(axis=1))@ kx.T)**2/self['Ki'].sum())
             foo=1
@@ -1466,7 +1466,7 @@ class hetGP:
             warnings.warn("Numerical errors caused some negative predictive variances to be thresholded to zero. Consider using ginv via rebuild.homGP")
 
         if xprime is not None:
-            kxprime = self['nu_hat'] * cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype'])
+            kxprime = cov_gen(X1 = self['X0'], X2 = xprime, theta = self['theta'], type = self['covtype'])
             if self['trendtype'] == 'SK':
                 if x.shape[0] < xprime.shape[0]:
                     cov = self['nu_hat'] *  cov_gen(X1 = x, X2 = xprime, theta = self['theta'], type = self['covtype']) - kx @ self['Ki'] @ kxprime
