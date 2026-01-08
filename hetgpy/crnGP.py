@@ -50,6 +50,11 @@ class crnGP():
         Cs = np.full(shape=(n,n),fill_value=rho,dtype=float)
         Cs[self.ids] = 1.0
         C = Cx * Cs
+        
+        self.C = C
+        self.Cx = Cx
+        self.Cs = Cs
+        
         jitter = (eps+g)*np.eye(n)
         Ki = np.linalg.cholesky(C + jitter).T
         ldetKi = - 2.0 * np.sum(np.log(np.diag(Ki)))
@@ -61,12 +66,48 @@ class crnGP():
         
         self.Ki = Ki
         if beta0 is None:
-            beta0 = Ki.sum(axis=1) @ Z0 / Ki.sum()
+            beta0 = Ki.sum(axis=1) @ Z / Ki.sum()
         self.beta0 = beta0
-        return
+        
+        psi = (((Z - beta0).T @ Ki) @ (Z - beta0)) / n
+        loglik = -0.5 * n * np.log(np.pi) - 0.5 * n + np.log(psi) + 0.5 * ldetKi - 0.5 * n
+        return loglik
     
-    def dloglik(self):
-        return
+    def dloglik(self,X0, S0, Z, theta, g, rho, stype, beta0 = None, covtype = "Gaussian",
+                          eps = MACHINE_DOUBLE_EPS, components = ("theta", "g", "rho")):
+        n, d = X0.shape
+        C = self.C
+        Cx = self.Cx
+        Cs = self.Cs
+        Ki = self.Ki
+
+        if beta0 is None:
+            beta0 = Ki.sum(axis=1) @ Z / Ki.sum()
+
+        Z = (Z - beta0).copy()
+        KiZ = Ki @ Z
+
+        psi = (Z @ KiZ).squeeze() / n
+
+        tmp1 = np.array([])
+        tmp2 = np.array([])
+        tmp3 = np.array([])
+
+        if 'theta' in components:
+            tmp1 = np.full(shape=len(theta),fill_value=np.nan)
+            for i in range(len(theta)):
+                dC_dthetak = partial_cov_gen(X1=X0,theta=theta[i],type=covtype,arg="theta_k") * C
+                tmp1[i] = 0.5 * (KiZ.T @ dC_dthetak) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_dthetak)
+        if 'g' in components:
+            tmp2 = 0.5 * np.sum(KiZ**2) / psi - 0.5 * np.sum(np.diag(Ki))
+            tmp2 = np.array([tmp2])
+        if 'rho' in components:
+            dC_drho = np.ones(shape=(n,n))
+            ids = self.ids
+            dC_drho[ids] = 0
+            dC_drho *= Cx
+            tmp3 = 0.5 * (KiZ.T @ dC_drho) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_drho)
+        return np.concatenate([tmp1,tmp2,tmp3]).squeeze()
     
     def mlecrnGP(self):
         return
