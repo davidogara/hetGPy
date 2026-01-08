@@ -115,11 +115,14 @@ class crnGP():
                 known = None,
                 noiseControl = dict(g_bounds = (10*MACHINE_DOUBLE_EPS, 1e2),
                                     rho_bounds = (0.001, 0.9)),
-                init = None,
+                init = dict(),
                 covtype = "Gaussian",
                 maxit = 100, 
                 eps = MACHINE_DOUBLE_EPS, 
                 settings = dict(return_Ki = True, factr = 1e7)):
+        # copy on instantiation
+        init = init.copy()
+        
         if len(X.shape)==1:
             X = X.reshape(-1,1)
         if T0 is None and X.shape[0] != Z.shape[0]:
@@ -135,5 +138,183 @@ class crnGP():
         if covtype not in covtypes:
             raise ValueError(f"covtype must be one of {covtypes}")
         
-        return
-    
+        X0 = X[:,0:-1]
+        S0 = X[:,-1]
+
+        if T0 is not None and len(T0.shape)==1:
+            T0 = T0.reshape(-1,1)
+        d = X0.shape[1]
+        if np.abs(S0 - S0.astype(int)) > 0:
+            raise ValueError(f"Last col of X is assumed to contain integer-valued seed information.")
+        S0 = S0.astype(int)
+
+        if lower is None or upper is None:
+            auto_thetas = auto_bounds(X = X0, covtype = covtype)
+            if lower is not None:
+                lower = auto_thetas['lower']
+            if upper is not None:
+                upper = auto_thetas['upper']
+            if init.get('theta') is None or len(init['theta']) < len(lower):
+                init['theta'] = np.sqrt(upper * lower)
+        if T0 is not None:
+            auto_thetasT = auto_bounds(X = T0, covtype = covtype)
+            lower = np.concatenate([lower,auto_thetasT['lower']])
+            upper = np.concatenate([upper,auto_thetasT['upper']])
+            if init.get('theta') is None or len(init['theta']) < len(lower):
+                init['theta'] = np.sqrt(upper * lower)
+        tic = time()
+        if settings.get('return_Ki') is None:
+            settings['return_Ki'] = True
+        if noiseControl.get('g_bounds') is None:
+            noiseControl['g_bounds'] = np.array([MACHINE_DOUBLE_EPS, 1e2])
+        if noiseControl.get('rho_bounds') is None:
+            noiseControl['rho_bounds'] = np.array([0, 0.9])
+        
+        g_min, g_max = noiseControl['g_bounds']
+        
+        beta0 = known.get('beta0')
+
+        n = X0.shape[0]
+        
+        if known.get('theta') is None and init.get('theta') is None:
+            init['theta'] = 0.9*lower + 0.1 * upper
+        if known.get('g') is None and init.get('g') is None:
+            init['g'] = 0.1
+        if known.get('rho') is None and init.get('rho') is None:
+            init['rho'] = 0.1
+        
+        trendtype = 'OK'
+        if beta0 is not None:
+            trendtype = 'SK'
+        
+        self.max_loglik = float('inf')
+        self.arg_max = np.nan
+        def fn(par, X0, S0, T0, Z, beta0, theta, g, rho):
+            idx = 0
+            if theta is None:
+                theta = par[0:len(theta)]
+                idx = idx + len(init['theta'])
+            if g is None:
+                g = par[idx]
+                idx = idx + 1
+            if rho is None:
+                rho = par[idx]
+            if T0 is None:
+                loglik = self.loglik(X0 = X0, S0 = S0,
+                                     Z = Z, theta = theta, g = g,
+                                     rho = rho, stype = stype, beta0 = beta0,
+                                     covtype = covtype,eps = eps)
+            if not np.isnan(loglik):
+                if loglik > self.max_loglik:
+                    self.max_loglik = loglik
+                    self.arg_max = par      
+            return loglik
+        def gr(par, X0, S0, T0, Z, beta0, theta, g, rho):
+            idx = 0
+            components = []
+
+            if theta is None:
+                theta = par[0:len(theta)]
+                idx = idx + len(init['theta'])
+                components.append('theta')
+            if g is None:
+                g = par[idx]
+                idx = idx + 1
+                components.append('g')
+            if rho is None:
+                rho = par[idx]
+                components.append('rho')
+            if T0 is None:
+                return self.dloglik(X0 = X0,S0 = S0, Z = Z,
+                                    theta = theta, g = g, rho = rho, 
+                                    stype = stype, beta0 = beta0, covtype = covtype, 
+                                    eps = eps, components = components)
+        
+        if known.get('g') is not None and known.get('theta') is not None and known.get('rho') is not None:
+            theta_out = known['theta']
+            g_out = known['g']
+            rho_out = known['rho']
+            if T0 is None:
+                out = dict(
+                    value = self.loglik(X0 = X0, S0 = S0,
+                                     Z = Z, theta = theta_out, g = g_out,
+                                     rho = rho_out, stype = stype, 
+                                     beta0 = beta0,
+                                     covtype = covtype,eps = eps),
+                    message = 'All hyperparameters given',
+                    counts = 0,
+                    time = time() - tic
+                )
+        else:
+            parinit, lowerOpt, upperOpt = np.array([]), np.array([]), np.array([])
+            if known.get('theta') is None:
+                parinit = init['theta']
+                lowerOpt = np.concatenate([lowerOpt, lower])
+                upperOpt = np.concatenate([upperOpt, upper])
+            if known.get('g') is None:
+                parinit = np.concatenate(parinit, init['g'])
+                lowerOpt = np.concatenate([lowerOpt, g_min])
+                upperOpt = np.concatenate([upperOpt, g_max])
+            if known.get('rho') is None:
+                parinit = np.concatenate(parinit, init['rho'])
+                lowerOpt = np.concatenate([lowerOpt, noiseControl['rho_bounds'][[0]]])
+                upperOpt = np.concatenate([upperOpt, noiseControl['rho_bounds'][[1]]])
+            
+            bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
+            
+            out = optimize.minimize(
+                    fun=fn, # for maximization
+                    args = (X0, S0, T0, Z, beta0, known.get('theta'), known.get('g'), known.get('rho')),
+                    x0 = parinit,
+                    jac=gr,
+                    method="L-BFGS-B",
+                    bounds = bounds,
+                    options=dict(maxiter=maxit,
+                                ftol = settings.get('factr',10) * np.finfo(float).eps,#,
+                                gtol = settings.get('pgtol',0) # should map to pgtol
+                                )
+            )
+            python_kws_2_R_kws = {
+                'x':'par',
+                'fun': 'value',
+                'nit': 'counts'
+            }
+            out['counts'] = dict(nfev=out['nfev'],njev=out['njev'])
+            for key, val in python_kws_2_R_kws.items():
+                out[val] = out[key]
+            if out.success == False:
+                out = dict(par = self.arg_max, value = -1.0 * self.max_loglik, counts = np.nan,
+                message = "Optimization stopped due to NAs, use best value so far")
+            
+            idx = 0
+            theta_out = out['par'][0:len(init['theta'])] if known.get('theta') is None else known['theta']
+            idx = idx + len(init['theta'])
+            g_out = out['par'][idx] if known.get('g') is None else known.get('g')
+            
+            rho_out = out['par'][-1] if known.get('rho') is None else known.get('rho')
+
+            
+
+            Cx = cov_gen(X1 = X0, theta = theta_out, type = covtype)
+            if self.ids is None:
+                # mimics R's outer(S0,S0,'==')
+                self.ids = S0 == S0[:,None]
+            Cs = np.full(shape=(n,n),fill_value=rho_out,dtype=float)
+            Cs[self.ids] = 1.0
+            C = Cx * Cs
+            
+            self.C = C
+            self.Cx = Cx
+            self.Cs = Cs
+            
+            jitter = (eps+g_out)*np.eye(n)
+            Ki = np.linalg.cholesky(C + jitter).T
+            # to mirror R's chol2inv: do the following:
+            # expose dtrtri from lapack (for fast cholesky inversion of a triangular matrix)
+            # use result to compute Ki (should match chol2inv)
+            Ki = dtrtri(Ki)[0] #  -- equivalent of chol2inv -- see https://stackoverflow.com/questions/6042308/numpy-inverting-an-upper-triangular-matrix
+            Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
+            self.Ki = Ki
+
+            self.nu = (Z - beta0).T @ self.Ki
+            return
