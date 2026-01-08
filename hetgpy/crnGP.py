@@ -109,6 +109,31 @@ class crnGP():
             tmp3 = 0.5 * (KiZ.T @ dC_drho) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_drho)
         return np.concatenate([tmp1,tmp2,tmp3]).squeeze()
     
-    def mlecrnGP(self):
+    def mlecrnGP(self,X, Z, T0 = None, 
+                stype = "none", 
+                lower = None, upper = None, 
+                known = None,
+                noiseControl = dict(g_bounds = (10*MACHINE_DOUBLE_EPS, 1e2),
+                                    rho_bounds = (0.001, 0.9)),
+                init = None,
+                covtype = "Gaussian",
+                maxit = 100, 
+                eps = MACHINE_DOUBLE_EPS, 
+                settings = dict(return_Ki = True, factr = 1e7)):
+        if len(X.shape)==1:
+            X = X.reshape(-1,1)
+        if T0 is None and X.shape[0] != Z.shape[0]:
+            raise ValueError(f"Dimension mismatch between Z and X: {Z.shape=}, {X.shape=}")
+        if T0 is not None and X.shape[0] != Z.shape[0]:
+            raise ValueError(f"Dimension mismatch between Z and X: {Z.shape=}, {X.shape=}")
+        
+        stypes = ("none", "XS")
+        if stype not in stypes:
+            raise ValueError(f"stype must be one of {stypes}")
+
+        covtypes = ("Gaussian", "Matern5_2", "Matern3_2")
+        if covtype not in covtypes:
+            raise ValueError(f"covtype must be one of {covtypes}")
+        
         return
     
