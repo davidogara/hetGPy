@@ -322,10 +322,88 @@ class crnGP():
         self.Ki = Ki
         if beta0 is None:
             beta0 = Ki.sum(axis=1) @ Z / Ki.sum()
-        self.nu = (Z - beta0).T @ self.Ki
+        
+        self.X0 = X0
+        self.Z = Z
+        self.covtype = covtype
+        self.S0 = S0
+        self.trendtype = trendtype
+        self.nu_hat = (Z - beta0).T @ self.Ki @ (Z - beta0) / Z.shape[0]
         self.ll = -1.0 * out['value']
         self.theta = theta_out
         self.g = g_out
         self.rho = rho_out
         self.time = time() - tic
         return
+    
+    def predict(self,x,xprime = None,t0 = None):
+        if len(x.shape)==1:
+            x = x.reshape(-1,1)
+            if (x.shape[1]-1) != self.X0.shape[1]:
+                raise ValueError(f"Problem with x format")
+        s = x[:,-1]
+        x = x[:,0:-1]
+        if xprime is not None:
+            if len(xprime.shape)==1:
+                xprime = xprime.reshape(-1,1)
+            if (xprime.shape[1]-1) != self.X0.shape[1]:
+                raise ValueError(f"Problem with xprime format")
+            sp = xprime[:,-1]
+            xprime = xprime[:,0:-1]
+        d = x.shape[1]
+
+        self['Ki'] /= self['nu_hat']
+
+        kx = self['nu_hat'] * cov_gen(X1=x,X2 = self['X0'],theta = self['theta'], type=self['covtype'])
+        tmp = s[:,None] == self['S0']
+        ks = np.full(shape = (x.shape[0],self['X0'].shape[0]),fill_value=self['rho'])
+        ks[tmp] = 1
+        kx = kx * ks
+        
+
+        nugs = np.repeat(self['nu_hat'] * self['g'],x.shape[0])
+        mean = self['beta0'] + kx @ (self['Ki'] @ (self['Z'] - self['beta0']))
+
+        if self['trendtype'] == 'SK':
+            sd2 = self['nu_hat'] - np.diag(kx @ (self['Ki'] @ kx.T))
+        else:
+            sd2 = self['nu_hat'] - np.diag(kx @ ((self['Ki'] @ kx.T))) + (1- (self['Ki'].sum(axis=0))@ kx.T)**2/self['Ki'].sum()
+        
+        if (sd2 < 0).any():
+            warnings.warn('Numerical errors caused some negative predictive variances to be thresholded to zero. Consider using np.inv via rebuild.CRNGP')  
+            sd2[sd2 < 0] = 0
+        if xprime is not None:
+            kxprime = self['nu_hat'] * cov_gen(X1 = self['X0'],X2=xprime,theta = self['theta'],type = self['covtype'])
+            tmp =  self['S0'][:,None] == s
+            ksprime = np.full(shape = (self['X0'].shape[0],xprime.shape[0]),fill_value=self['rho'])
+            ksprime[tmp] = 1
+            kxprime = kxprime * ksprime
+        
+            kxxprime = self['nu_hat'] * cov_gen(X1 = x,X2=xprime,theta = self['theta'],type = self['covtype'])       
+            ksxxprime = np.full(shape = (x.shape[0],xprime.shape[0]),fill_value=self['rho'])
+            tmp = s == sp[:,None]
+            ksxxprime[tmp] = 1
+            kxxprime = kxxprime * ksxxprime
+
+            if self['trendtype'] == 'SK':
+                if x.shape[0] < xprime.shape[0]:
+                    cov = kxxprime - kx @ self['Ki'] @ kxprime
+                else:
+                    cov = kxxprime - kx @ (self['Ki'] @ kxprime)
+            else:
+                if x.shape[0] < xprime.shape[0]:
+                    cov = kxxprime - kx @ self['Ki'] @ kxprime + ((1-(self['Ki'].sum(axis=0,keepdims=True))@ kx.T).T @ (1-self['Ki'].sum(axis=0,keepdims=True) @ kxprime))/self['Ki'].sum() 
+                else:
+                    cov = kxxprime - kx @ (self['Ki'] @ kxprime) + ((1-(self['Ki'].sum(axis=0,keepdims=True))@ kx.T).T @ (1-self['Ki'].sum(axis=0,keepdims=True) @ kxprime))/self['Ki'].sum()
+        else:
+            cov = None
+        # rescale Ki
+        self['Ki'] *= self['nu_hat']
+
+        return dict(
+            mean = mean,
+            sd2 = sd2,
+            nugs = nugs,
+            cov = cov
+        )
+            

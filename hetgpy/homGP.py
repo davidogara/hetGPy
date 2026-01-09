@@ -70,7 +70,8 @@ class homGP():
 
         C = cov_gen(X1 = X0, theta = theta, type = covtype)
         self.C = C
-        Ki = np.linalg.cholesky(C + np.diag(eps + g / mult) ).T
+        jitter = (eps + g / mult) * np.eye(n)
+        Ki = np.linalg.cholesky(C + jitter).T
         ldetKi = - 2.0 * np.sum(np.log(np.diag(Ki)))
         # to mirror R's chol2inv: do the following:
         # expose dtrtri from lapack (for fast cholesky inversion of a triangular matrix)
