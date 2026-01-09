@@ -230,40 +230,29 @@ def partial_cov_gen(X1, X2 = None, theta = None,k_theta_g = None, type = "Gaussi
 def cov_Matern3_2(X1, X2 = None, theta = None):
     if X2 is None:
         X2 = X1
-    #dlist = [abs_dist(X1[:,i],X2[:,i], theta = theta[i]) for i in np.arange(X1.shape[1])]
-    dlist = [
-        abs_dist(X1[:,i:i+1],X2[:,i:i+1]) 
-        for i in range(X1.shape[1])
-        ]
     if theta.shape[0]==1 and X1.shape[1] > 1:
         theta = np.repeat(theta,X1.shape[1])
-    klist = [
-        (1 + np.sqrt(3)/theta[i] * dlist[i]) * np.exp(-1.0*np.sqrt(3)*dlist[i]/theta[i])
-        for i in range(X1.shape[1])
-        ]
-    out = np.prod(klist,axis=0)
+    out = np.full(shape = (X1.shape[0],X2.shape[0]),fill_value=1.0)
+    for i in range(X1.shape[1]):
+        d = abs_dist(X1[:,i:i+1],X2[:,i:i+1]) 
+        K = (1 + np.sqrt(3)/theta[i] * d) * np.exp(-1.0*np.sqrt(3)*d/theta[i])
+        out *= K
     return out
 
 def cov_Matern5_2(X1, X2 = None, theta = None):
     if X2 is None:
         X2 = X1
-    abs_dist_list = [
-        abs_dist(X1[:,i:i+1],X2[:,i:i+1]) 
-        for i in range(X1.shape[1])
-        ]
-    euclid_dist_list = [
-        euclidean_dist(X1[:,i:i+1],X2[:,i:i+1]) 
-        for i in range(X1.shape[1])
-    ]
+    
+    out = np.full(shape = (X1.shape[0],X2.shape[0]),fill_value=1.0)
     if theta.shape[0]==1 and X1.shape[1] > 1:
         theta = np.repeat(theta,X1.shape[1])
-    klist = [
-        (1 + np.sqrt(5)/theta[i] * abs_dist_list[i] + 5 * euclid_dist_list[i]/(3*theta[i]**2)) * np.exp(-1.0*np.sqrt(5)*abs_dist_list[i]/theta[i])
-        for i in range(X1.shape[1])
-        ]
-    
-    out = np.prod(klist,axis=0)
+    for i in range(X1.shape[1]):
+        abs_d = abs_dist(X1[:,i:i+1],X2[:,i:i+1])
+        euclid_dist = euclidean_dist(X1[:,i:i+1],X2[:,i:i+1]) 
+        K = (1 + np.sqrt(5)/theta[i] * abs_d + 5 * euclid_dist/(3*theta[i]**2)) * np.exp(-1.0*np.sqrt(5)*abs_d/theta[i])
+        out *= K
     return out
+    
 
 
 def partial_d_C_Matern5_2_dtheta_k(X1, theta):
