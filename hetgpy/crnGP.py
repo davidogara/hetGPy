@@ -41,6 +41,37 @@ class crnGP():
         return self.__dict__.get(key)
     
     def loglik(self,X0, S0, Z, theta, g, rho, stype, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS):
+        r'''
+        Log Likelihood under correlated noise
+
+        Parameters
+        ----------
+        X0: ndarray_like
+            unique design matrix (of size nxd)
+        S0: ndarray_like
+            vector of seed information (size nx1)
+        Z: ndarray_like
+            observation (output) vector (size N)
+        theta: ndarray_like
+            lengthscale
+        g: float
+            noise variance
+        rho: float
+            seed correlation strength
+        stype: str
+            type of kronecker structure of the data
+        beta0: float
+            trend
+        covtype: str
+            covariance kernel to use
+        eps: float
+            amount of jitter on diagonal of covariance matrix
+
+        Returns
+        -------
+        loglik: float
+            log-likelihood
+        '''
         n = X0.shape[0]
         d = X0.shape[1]
 
@@ -76,6 +107,39 @@ class crnGP():
     
     def dloglik(self,X0, S0, Z, theta, g, rho, stype, beta0 = None, covtype = "Gaussian",
                           eps = MACHINE_DOUBLE_EPS, components = ("theta", "g", "rho")):
+        r'''
+        Gradient of log-likelihood under correlated noise
+
+        Parameters
+        ----------
+        X0: ndarray_like
+            matrix of designs (one point per row)
+        S0: ndarray_like
+            integer vector containing seed information
+        Z: ndarray_like
+            vector of outputs
+        theta: ndarray_like
+            scalar (isotropic) or vector (anisotropic) lengthscale values
+        g: float
+            noise variance
+        rho: float
+            seed correlation
+        stype: str
+            type of kronecker structure of the data
+        beta0: float
+            trend
+        covtype: str
+            covariance kernel to use
+        eps: float
+            amount of jitter on diagonal of covariance matrix
+        components: tuple
+            directions for partial derivatives, one or several of 'theta' (lengthscales) or 'g' (for noise) or 'rho' (seed correlation strength)
+
+
+        Returns
+        -------
+        gradient with respect to hyperparameters (specified via ``components``)
+        '''
         n, d = X0.shape
         C = self.C
         Cx = self.Cx
@@ -122,6 +186,89 @@ class crnGP():
                 maxit = 100, 
                 eps = MACHINE_DOUBLE_EPS, 
                 settings = dict(return_Ki = True, factr = 1e7)):
+        r'''
+        Gaussian process modeling with correlated noise.
+
+        You may also call this function as `crnGP.mle`
+
+        Gaussian process regression under correlated noise based on maximum likelihood estimation of the hyperparameters.
+        
+        Parameters
+        ----------
+        X : ndarray_like
+            matrix of all designs, one per row, or list with elements. The last column is assumed to contain the integer seed value.
+        Z : ndarray_like
+            Z vector of all observations.
+        T0 : ndarray_like:
+            T0 optional vector of times (same for all ``X's``). Not currently supported.
+        lower,upper : ndarray_like 
+            optional bounds for the ``theta`` parameter (see :func: covariance_functions.cov_gen for the exact parameterization).
+            In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)
+        noiseControl : dict
+            dict with element:
+                - ``g_bounds`` vector providing minimal and maximal noise to signal ratio (default to ``(sqrt(MACHINE_DOUBLE_EPS), 100)``).
+        settings : dict 
+                dict for options about the general modeling procedure, with elements:
+                    - ``return_Ki`` boolean to include the inverse covariance matrix in the object for further use (e.g., prediction).
+                    - ``factr`` (default to 1e7) and ``pgtol`` are available to be passed to `options` for L-BFGS-B in :func: ``scipy.optimize.minimize``.   
+        eps : float
+            jitter used in the inversion of the covariance matrix for numerical stability
+        known : dict
+            optional dict of known parameters (e.g. ``beta0``, ``theta``, ``g``)
+        init :  dict
+            optional lists of starting values for mle optimization:
+                - ``theta_init`` initial value of the theta parameters to be optimized over (default to 10% of the range determined with ``lower`` and ``upper``)
+                - ``g_init`` vector of nugget parameter to be optimized over
+        covtype : str 
+                covariance kernel type, either ``'Gaussian'``, ``'Matern5_2'`` or ``'Matern3_2'``, see :func: ``~covariance_functions.cov_gen``
+        maxit : int
+                maximum number of iterations for `L-BFGS-B` of :func: ``scipy.optimize.minimize`` dedicated to maximum likelihood optimization
+    
+        Notes
+        -------
+        The global covariance matrix of the model is parameterized as ``nu_hat * (Cx + g Id) * Cs = nu_hat * K``,
+        with ``Cx`` the spatial correlation matrix between unique designs, depending on the family of kernel used
+        (see ``~covariance_functions.cov_gen`` for available choices) and values of lengthscale parameters. Cs is the correlation matrix between seed values,
+        equal to 1 if the seeds are equal, ``rho`` otherwise. 
+        ``nu_hat`` is the plugin estimator of the variance of the process.
+
+        It is generally recommended to rescale the inputs to the unit cube and to normalize the outputs.
+        
+        Returns
+        -------
+        self, with the following attributes: 
+
+            - ``theta``: unless given, maximum likelihood estimate (mle) of the lengthscale parameter(s),
+            - ``nu_hat``: plugin estimator of the variance,
+            - ``g``: unless given, mle of the nugget of the noise/log-noise process,
+            - ``trendtype``: either ``"SK"`` if ``beta0`` is provided, else ``"OK"``,
+            - ``beta0``: constant trend of the mean process, plugin-estimator unless given,
+            - ``ll``: log-likelihood value,
+            - ``nit_opt``, ``msg``: counts and message returned by :func:``scipy.optimize.minimize``
+            - ``used_args``: list with arguments provided in the call to the function,
+                - ``Ki``, ``Kgi``: inverse of the covariance matrices of the mean and noise processes (not scaled by ``nu_hat`` and ``nu_hat_var``),  
+                - ``X0``, ``Z0``, ``Z``, ``eps``, ``logN``, ``covtype``: values given in input,
+            - ``time``: time to train the model, in seconds.
+
+        References
+        ----------
+        A Fadikar, M Binois, N Collier, A Stevens, KB Toh, J Ozik. Trajectory-oriented optimization of stochastic epidemiological models. 2023 Winter Simulation Conference (WSC), San Antonio, TX, USA, 2023, pp. 1244-1255, doi: 10.1109/WSC60868.2023.10408258
+
+        Examples
+        --------
+        >>> from hetgpy import crnGP
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(1)
+        >>> pps = 10 # points per seed
+        >>> x = np.linspace(0,2*np.pi,pps).reshape(-1,1)
+        >>> X = np.vstack([x,x])
+        >>> seeds = ([1] * pps) + ([5] * pps)
+        >>> X = np.hstack([X,np.array(seeds).reshape(-1,1)])
+        >>> # amplitude and phase shift
+        >>> Z = np.sin(X[:,0] + (np.pi/2)*(X[:,-1]==5)) + X[:,-1]
+        >>> GP = crnGP()
+        >>> GP.mle(X,Z,covtype="Matern5_2")
+        '''
         # copy on instantiation
         init = init.copy()
         known = known.copy()
@@ -336,7 +483,40 @@ class crnGP():
         self.time = time() - tic
         return
     
-    def predict(self,x,xprime = None,t0 = None):
+    def predict(self,x,xprime = None,t0 = None, interval: str | None = None, interval_lower: float | None  = None, interval_upper: float | None = None,**kw):
+        r'''
+        Prediction under correlated noise
+
+        Parameters
+        ----------
+        x : ndarray_like
+            matrix of designs locations to predict at (one point per row)
+        xprime : ndarray_like
+            optional second matrix of predictive locations to obtain the predictive covariance matrix between ``x`` and ``xprime``
+        t0: ndarray_like
+            vector of times (not currently supported)
+        interval: str
+            one of 'confidence' or 'predictive' which is a convenience method to return confidence/predictive intervals corresponding to `interval_lower` and `interval_upper`
+        interval_lower: float
+            lower of confidence/predictive interval
+        interval_upper: float
+            upper of confidence/predictive interval
+        nugs_only : bool (default False)  
+            if ``True``, only return noise variance prediction
+        kwargs : dict
+            optional additional elements (only used for nugs_only)
+
+        Returns
+        -------
+
+        dict with elements:
+            - ``mean``: kriging mean;
+            - ``sd2``: kriging variance (filtered, e.g. without the nugget values)
+            - ``nugs``: noise variance prediction
+            - ``cov``: (returned if ``xprime`` is given) predictive covariance matrix between ``x`` and ``xprime``
+            - ``confidence_interval``: prediction with kriging variance only
+            - ``predictive_interval``: prediction with kriging and noise variance
+        '''
         if len(x.shape)==1:
             x = x.reshape(-1,1)
             if (x.shape[1]-1) != self.X0.shape[1]:
@@ -350,6 +530,17 @@ class crnGP():
                 raise ValueError(f"Problem with xprime format")
             sp = xprime[:,-1]
             xprime = xprime[:,0:-1]
+        
+        interval_types = [None,'confidence','predictive']
+        return_interval = False
+        if interval is not None:
+            list_interval = [interval] if type(interval)==str else interval
+            if 'confidence' not in list_interval and 'predictive' not in list_interval:
+                raise ValueError(f"interval must be one of 'confidence' or 'predictive' not {interval}")
+            return_interval = True
+
+        if "nugs_only" in kw and kw["nugs_only"]:
+            return dict(nugs = np.repeat(self['nu_hat'] * self['g'], x.shape[0]))
         d = x.shape[1]
 
         self['Ki'] /= self['nu_hat']
@@ -400,10 +591,21 @@ class crnGP():
         # rescale Ki
         self['Ki'] *= self['nu_hat']
 
-        return dict(
+        preds = dict(
             mean = mean,
             sd2 = sd2,
             nugs = nugs,
             cov = cov
         )
+        if return_interval:
+            preds['confidence_interval'] = {}
+            if 'confidence' in list_interval:
+                preds['confidence_interval']['lower'] = norm.ppf(interval_lower, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+                preds['confidence_interval']['upper'] = norm.ppf(interval_upper, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+            preds['predictive_interval'] = {}
+            if 'predictive' in list_interval:
+                preds['predictive_interval']['lower'] = norm.ppf(interval_lower, loc = preds['mean'], scale = np.sqrt(preds['sd2'] + preds['nugs'])).squeeze()
+                preds['predictive_interval']['upper'] = norm.ppf(interval_upper, loc = preds['mean'], scale = np.sqrt(preds['sd2'] + preds['nugs'])).squeeze()
+
+        return preds
             
