@@ -175,6 +175,92 @@ class crnGP():
             tmp3 = np.atleast_1d(tmp3)
         return np.concatenate([tmp1,tmp2,tmp3]).squeeze()
     
+    def loglikT(self,X0, S0, T0, Z, theta, g, rho, stype, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS):
+        n = X0.shape[0]
+        N = Z.shape[0]
+        d = X0.shape[1]
+        
+        Cx = cov_gen(X1 = X0, theta = theta, type = covtype)
+        if self.ids is None:
+            # mimics R's outer(S0,S0,'==')
+            self.ids = S0 == S0[:,None]
+        Cs = np.full(shape=(n,n),fill_value=rho,dtype=float)
+        Cs[self.ids] = 1.0
+
+        Ct = cov_gen(X1 = T0, theta = theta[d + 1], type = covtype)
+        self.Cx = Cx
+        self.Cs = Cs
+        self.Ct = Ct
+
+        SCxs = np.linalg.svd(Cx * Cs)
+        SCt = np.linalg.svd(Ct)
+
+        term1 = np.kron(SCt.U,SCxs.U) * np.repeat(1.0 / np.kron(SCt.S,SCxs.S) + g, N)
+        term2 = np.kron(SCt.U,SCxs.U)
+        Ki = term1 @ term2.T
+        ldetKi = -1.0 * np.sum(np.log(np.kron(SCt.S,SCxs.D) + g))
+        self.Ki = Ki
+        
+        if beta0 is None:
+            beta0 = Ki.sum(axis=1) @ Z / Ki.sum()
+        
+        psi = (((Z - beta0).T @ Ki) @ (Z - beta0)) / N
+        loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi) + 1/2 * ldetKi - N/2
+        return loglik
+    def dloglikT(self,X0, T0, S0, Z, theta, g, rho, stype, beta0 = None, covtype = "Gaussian",
+                           eps = MACHINE_DOUBLE_EPS, components = ("theta", "g", "rho")):
+        n = X0.shape[0]
+        N = Z.shape[0]
+        d = X0.shape[1]
+
+        Cx = self.Cx
+        Cs = self.Cs
+        Ct = self.Ct
+        Ki = self.Ki
+
+        if beta0 is None:
+            beta0 = Ki.sum(axis=1) @ Z / Ki.sum()
+
+        Z = (Z - beta0).copy()
+        KiZ = Ki.T @ Z
+
+        psi = (Z.T @ KiZ).squeeze()
+
+        tmp1, tmp2, tmp3 = np.array([]), np.array([]), np.array([])
+
+        if 'theta' in components:
+            tmp1 = np.full(shape=len(theta),fill_value=np.nan)
+            for i in range(len(theta)-1):
+                dC_dthetak = partial_cov_gen(X1=X0,theta=theta[i],type=covtype,arg="theta_k") * Cx * Cs
+                dC_dthetak = np.kron(Ct,dC_dthetak)
+                tmp1[i] = 0.5 * (KiZ.T @ dC_dthetak) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_dthetak)
+            # now for time
+            dC_dthetak = partial_cov_gen(X1=T0,theta=theta[d+1],type=covtype,arg="theta_k") * Ct
+            dC_dthetak = np.kron(dC_dthetak,Cx * Cs)
+            tmp1 = np.concatenate([tmp1,
+                                   np.at_least1d(0.5 * (KiZ.T @ dC_dthetak) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_dthetak))])
+
+        if 'g' in components:
+            tmp2 = (N/2) * np.sum(KiZ**2) / psi - 0.5 * np.sum(np.diag(Ki))
+            tmp2 = np.atleast_1d(tmp2)
+        if 'rho' in components:
+            dC_drho = np.ones(shape=(n,n))
+            ids = self.ids
+            dC_drho[ids] = 0
+            dC_drho *= Cx
+            dC_drho = np.kron(Ct,dC_drho)
+            tmp3 = (N/2) * (KiZ.T @ dC_drho) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_drho)
+            tmp3 = np.atleast_1d(tmp3)
+
+        return np.concatenate([tmp1,tmp2,tmp3])
+
+
+
+
+
+
+
+
     def mlecrnGP(self,X, Z, T0 = None, 
                 stype = "none", 
                 lower = None, upper = None, 
