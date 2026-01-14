@@ -175,19 +175,19 @@ class crnGP():
             tmp3 = np.atleast_1d(tmp3)
         return np.concatenate([tmp1,tmp2,tmp3]).squeeze()
     
-    def loglikT(self,X0, S0, T0, Z, theta, g, rho, stype, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS):
+    def loglikT(self,X0, S0, T0, Z, theta, g, rho, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS):
         n = X0.shape[0]
-        N = Z.shape[0]
+        N = Z.size
         d = X0.shape[1]
         
-        Cx = cov_gen(X1 = X0, theta = theta, type = covtype)
+        Cx = cov_gen(X1 = X0, theta = theta[0:d], type = covtype)
         if self.ids is None:
             # mimics R's outer(S0,S0,'==')
             self.ids = S0 == S0[:,None]
         Cs = np.full(shape=(n,n),fill_value=rho,dtype=float)
         Cs[self.ids] = 1.0
 
-        Ct = cov_gen(X1 = T0, theta = theta[d + 1], type = covtype)
+        Ct = cov_gen(X1 = T0, theta = np.atleast_1d(theta[d]), type = covtype)
         self.Cx = Cx
         self.Cs = Cs
         self.Ct = Ct
@@ -195,22 +195,23 @@ class crnGP():
         SCxs = np.linalg.svd(Cx * Cs)
         SCt = np.linalg.svd(Ct)
 
-        term1 = np.kron(SCt.U,SCxs.U) * np.repeat(1.0 / np.kron(SCt.S,SCxs.S) + g, N)
+        term1 = np.kron(SCt.U,SCxs.U) * np.repeat(1.0 / (np.kron(SCt.S,SCxs.S) + g),N).reshape(N,N).T
         term2 = np.kron(SCt.U,SCxs.U)
         Ki = term1 @ term2.T
-        ldetKi = -1.0 * np.sum(np.log(np.kron(SCt.S,SCxs.D) + g))
+        ldetKi = -1.0 * np.sum(np.log(np.kron(SCt.S,SCxs.S) + g))
         self.Ki = Ki
         
+        Z = Z.flatten(order='F')
         if beta0 is None:
             beta0 = Ki.sum(axis=1) @ Z / Ki.sum()
         
         psi = (((Z - beta0).T @ Ki) @ (Z - beta0)) / N
         loglik = -N/2 * np.log(2*np.pi) - N/2 * np.log(psi) + 1/2 * ldetKi - N/2
         return loglik
-    def dloglikT(self,X0, T0, S0, Z, theta, g, rho, stype, beta0 = None, covtype = "Gaussian",
+    def dloglikT(self,X0, T0, S0, Z, theta, g, rho, beta0 = None, covtype = "Gaussian",
                            eps = MACHINE_DOUBLE_EPS, components = ("theta", "g", "rho")):
         n = X0.shape[0]
-        N = Z.shape[0]
+        N = Z.size
         d = X0.shape[1]
 
         Cx = self.Cx
@@ -218,6 +219,7 @@ class crnGP():
         Ct = self.Ct
         Ki = self.Ki
 
+        Z = Z.flatten(order='F').copy()
         if beta0 is None:
             beta0 = Ki.sum(axis=1) @ Z / Ki.sum()
 
@@ -229,16 +231,16 @@ class crnGP():
         tmp1, tmp2, tmp3 = np.array([]), np.array([]), np.array([])
 
         if 'theta' in components:
-            tmp1 = np.full(shape=len(theta),fill_value=np.nan)
+            tmp1 = np.full(shape=len(theta)-1,fill_value=np.nan)
             for i in range(len(theta)-1):
                 dC_dthetak = partial_cov_gen(X1=X0,theta=theta[i],type=covtype,arg="theta_k") * Cx * Cs
                 dC_dthetak = np.kron(Ct,dC_dthetak)
                 tmp1[i] = 0.5 * (KiZ.T @ dC_dthetak) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_dthetak)
             # now for time
-            dC_dthetak = partial_cov_gen(X1=T0,theta=theta[d+1],type=covtype,arg="theta_k") * Ct
+            dC_dthetak = partial_cov_gen(X1=T0,theta=theta[d],type=covtype,arg="theta_k") * Ct
             dC_dthetak = np.kron(dC_dthetak,Cx * Cs)
             tmp1 = np.concatenate([tmp1,
-                                   np.at_least1d(0.5 * (KiZ.T @ dC_dthetak) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_dthetak))])
+                                   np.atleast_1d(N/2 * (KiZ.T @ dC_dthetak) @ KiZ / psi - 0.5 * np.trace(Ki @ dC_dthetak))])
 
         if 'g' in components:
             tmp2 = (N/2) * np.sum(KiZ**2) / psi - 0.5 * np.sum(np.diag(Ki))
@@ -422,7 +424,7 @@ class crnGP():
         if beta0 is not None:
             trendtype = 'SK'
         
-        self.max_loglik = float('inf')
+        self.max_loglik = -1.0 * float('inf')
         self.arg_max = np.nan
         def fn(par, X0, S0, T0, Z, beta0, theta, g, rho):
             idx = 0
@@ -439,6 +441,10 @@ class crnGP():
                                      Z = Z, theta = theta, g = g,
                                      rho = rho, stype = stype, beta0 = beta0,
                                      covtype = covtype,eps = eps)
+            else:
+                loglik = self.loglikT(X0 = X0, S0 = S0, T0 = T0, Z = Z, 
+                                      theta = theta, g = g, rho = rho, beta0 = beta0, 
+                                      covtype = covtype, eps = eps)
             if not np.isnan(loglik):
                 if loglik > self.max_loglik:
                     self.max_loglik = loglik
@@ -465,6 +471,11 @@ class crnGP():
                                     theta = theta, g = g, rho = rho, 
                                     stype = stype, beta0 = beta0, covtype = covtype, 
                                     eps = eps, components = components)
+            else:
+                return -1.0 * self.dloglikT(X0 = X0, T0 = T0, S0 = S0, Z = Z, 
+                                            theta = theta, g = g, rho = rho, 
+                                            beta0 = beta0, covtype = covtype,
+                                            eps = eps, components = components)
         
         if known.get('g') is not None and known.get('theta') is not None and known.get('rho') is not None:
             theta_out = known['theta']
@@ -481,6 +492,17 @@ class crnGP():
                     counts = 0,
                     time = time() - tic
                 )
+            else:
+                out = dict(
+                    value = -1.0 * self.loglikT(X0 = X0, S0 = S0, T0 = T0, Z = Z, 
+                                                theta = theta_out, g = g_out, rho = rho_out,
+                                                beta0 = beta0, 
+                                                covtype = covtype, eps = eps),
+                    message = 'All hyperparameters given',
+                    counts = 0,
+                    time = time() - tic                 
+                )
+
         else:
             parinit, lowerOpt, upperOpt = np.array([]), np.array([]), np.array([])
             if known.get('theta') is None:
@@ -525,15 +547,19 @@ class crnGP():
                 message = "Optimization stopped due to NAs, use best value so far")
         
         idx = 0
-        theta_out = out['par'][0:len(init['theta'])] if known.get('theta') is None else known['theta']
-        idx = idx + len(init['theta'])
+        if known.get('theta') is None:
+            idx += len(init['theta'])
+            theta_out = out['par'][0:idx]
+            
+        else:
+            theta_out = known['theta']
         g_out = out['par'][idx] if known.get('g') is None else known.get('g')
         
         rho_out = out['par'][-1] if known.get('rho') is None else known.get('rho')
 
         
 
-        Cx = cov_gen(X1 = X0, theta = theta_out, type = covtype)
+        Cx = cov_gen(X1 = X0, theta = np.atleast_1d(theta_out), type = covtype)
         if self.ids is None:
             # mimics R's outer(S0,S0,'==')
             self.ids = S0 == S0[:,None]
@@ -545,23 +571,33 @@ class crnGP():
         self.Cx = Cx
         self.Cs = Cs
         
-        jitter = (eps+g_out)*np.eye(n)
-        Ki = np.linalg.cholesky(C + jitter).T
-        # to mirror R's chol2inv: do the following:
-        # expose dtrtri from lapack (for fast cholesky inversion of a triangular matrix)
-        # use result to compute Ki (should match chol2inv)
-        Ki = dtrtri(Ki)[0] #  -- equivalent of chol2inv -- see https://stackoverflow.com/questions/6042308/numpy-inverting-an-upper-triangular-matrix
-        Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
-        self.Ki = Ki
+        if T0 is not None:
+            Ct = cov_gen(X1 = T0, theta = np.atleast_1d(theta_out[d]), type = covtype)
+            SCxs = np.linalg.svd(Cx*Cs)
+            SCt = np.linalg.svd(Ct)
+            term1 = np.kron(SCt.U,SCxs.U) * (1.0 / np.kron(SCt.S,SCxs.S) + g_out)
+            term2 = np.kron(SCt.U,SCxs.U)
+            Ki = term1 @ term2.T
+        else:
+            jitter = (eps+g_out)*np.eye(n)
+            Ki = np.linalg.cholesky(C + jitter).T
+            # to mirror R's chol2inv: do the following:
+            # expose dtrtri from lapack (for fast cholesky inversion of a triangular matrix)
+            # use result to compute Ki (should match chol2inv)
+            Ki = dtrtri(Ki)[0] #  -- equivalent of chol2inv -- see https://stackoverflow.com/questions/6042308/numpy-inverting-an-upper-triangular-matrix
+            Ki = Ki @ Ki.T     #  -- equivalent of chol2inv
+            self.Ki = Ki
+        
+        Zf = Z.flatten(order='F')
         if beta0 is None:
-            beta0 = Ki.sum(axis=1) @ Z / Ki.sum()
+            beta0 = Ki.sum(axis=1) @ Zf / Ki.sum()
         
         self.X0 = X0
         self.Z = Z
         self.covtype = covtype
         self.S0 = S0
         self.trendtype = trendtype
-        self.nu_hat = (Z - beta0).T @ self.Ki @ (Z - beta0) / Z.shape[0]
+        self.nu_hat = (Zf - beta0).T @ self.Ki @ (Zf - beta0) / Zf.shape[0]
         self.ll = -1.0 * out['value']
         self.theta = theta_out
         self.g = g_out

@@ -21,6 +21,23 @@ def test_known():
     
     return
 
+def test_known_with_time():
+
+    compare = read_yaml('tests/R/results/crnGP_known_with_time.yaml')
+
+    XS = np.array(compare['XS']).reshape(-1,2,order='F')
+    ids = np.array(compare['ids']) - 1
+    t = np.array(compare['t'])
+    Y0 = np.array(compare['Y0']).reshape(50,len(t),order='F')
+
+    model = crnGP()
+    known = dict(theta = np.array([0.3,0.5]), g = np.array([1e-3]), rho = np.array([0.3]))
+    model.mle(XS[ids,:], Z = Y0, T0=t, covtype="Matern5_2",known=known)
+    model.beta0 = model.Ki.sum(axis=1) @ model.Z.flatten(order='F') / model.Ki.sum()
+    for key in ['ll','theta','g','rho','beta0']:
+        assert np.allclose(model[key],np.array(compare[key]))
+    foo=1
+
 def test_predict_OK():
     compare = read_yaml('tests/R/results/crnGP_preds_OK.yaml')
     pps = 10 # points per seed
@@ -78,4 +95,4 @@ def test_predict_SK():
 
 
 if __name__ == "__main__":
-    test_predict_SK()
+    test_known_with_time()
