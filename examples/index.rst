@@ -12,6 +12,7 @@ hetGPy Example Notebooks
    04-IMSPE.ipynb
    05-Update.ipynb
    06-Sequential-Design.ipynb
+   07-crnGP-example.ipynb
 
 .. _hetGPy Intro:
   ./00-hetGPy-Intro.ipynb
@@ -33,3 +34,6 @@ hetGPy Example Notebooks
 
 .. _Sequential Design:
   ./06-Sequential-Design.ipynb
+
+.. _Common Random Number GP:
+  ./07-crnGP-example.ipynb
