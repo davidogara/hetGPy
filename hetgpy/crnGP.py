@@ -20,6 +20,8 @@ from hetgpy.update_covar import update_Ki, update_Ki_rep
 from hetgpy.plot import plot_diagnostics, plot_optimization_iterates
 from copy import deepcopy
 import contextlib
+from itertools import combinations, product
+import math
 from numpy.typing import ArrayLike, NDArray
 NDArrayInt = NDArray[np.int_]
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
@@ -39,7 +41,40 @@ class crnGP():
         
         '''
         return self.__dict__.get(key)
-    
+    def pairwise_rho(self,S0r, S0c = None,rho = None):
+        rho = np.atleast_1d(rho)
+
+        if S0c is None:
+            S0c = S0r.copy()
+        nr, nc = S0r.shape[0], S0c.shape[0]
+        rho_indices = np.array(list(combinations(np.unique(S0r),2)))
+
+        # iterate over rho indices and make pointer to rho and its reverse
+        rho_mapper = {}
+        for i, idx in enumerate(rho_indices):
+            s = tuple(sorted(idx))
+            s_rev = tuple(reversed(s))
+            rho_mapper[s] = rho[i]
+            rho_mapper[s_rev] = rho[i]
+        
+        seed_pairs = np.array(list(product(S0r,S0c)))
+        seed_pairs = np.concatenate([seed_pairs,np.arange(len(seed_pairs)).reshape(-1,1)],axis=1)
+
+        out = []
+        default_rho = rho.mean()
+        for row1 in seed_pairs:
+            s1, s2, idx = tuple(row1.astype(int))
+            if s1 != s2:
+                r = rho_mapper.get((s1,s2),default_rho)
+                out.append([s1,s2,idx,r])
+
+        out = np.array(out)
+        Cs = np.zeros(shape = (nr,nc),dtype=float).flatten()
+        Cs[out[:,-2].astype(int)] = out[:,-1]
+        Cs = Cs.reshape(nr,nc)
+        mask = S0r[:,None]==S0c
+        Cs[mask] = 1.0
+        return Cs
     def loglik(self,X0, S0, Z, theta, g, rho, stype, beta0 = None, covtype = "Gaussian", eps = MACHINE_DOUBLE_EPS):
         r'''
         Log Likelihood under correlated noise
@@ -79,7 +114,10 @@ class crnGP():
         if self.ids is None:
             # mimics R's outer(S0,S0,'==')
             self.ids = S0 == S0[:,None]
-        Cs = np.full(shape=(n,n),fill_value=rho,dtype=float)
+        if isinstance(rho,float) or rho.size==1:
+            Cs = np.full(shape=(n,n),fill_value=rho,dtype=float)
+        else:
+            Cs = self.pairwise_rho(S0c=S0,S0r=S0,rho=rho)
         Cs[self.ids] = 1.0
         C = Cx * Cs
         
@@ -263,12 +301,13 @@ class crnGP():
 
 
 
-    def mlecrnGP(self,X, Z, T0 = None, 
+    def mlecrnGP(self,X, Z, T0 = None,
+                rhotype = "simple", 
                 stype = "none", 
                 lower = None, upper = None, 
                 known = dict(),
                 noiseControl = dict(g_bounds = np.array((10*MACHINE_DOUBLE_EPS, 1e2)),
-                                    rho_bounds = np.array((0.001, 0.9))),
+                                    rho_bounds = None),
                 init = dict(),
                 covtype = "Gaussian",
                 maxit = 100, 
@@ -360,6 +399,7 @@ class crnGP():
         # copy on instantiation
         init = init.copy()
         known = known.copy()
+        noiseControl = noiseControl.copy()
         if len(X.shape)==1:
             X = X.reshape(-1,1)
         if T0 is None and X.shape[0] != Z.shape[0]:
@@ -385,6 +425,8 @@ class crnGP():
             raise ValueError(f"Last col of X is assumed to contain integer-valued seed information.")
         S0 = S0.astype(int)
 
+        if rhotype not in ['simple']:
+            raise ValueError("rhotype must be one of ['simple']")
         if lower is None or upper is None:
             auto_thetas = auto_bounds(X = X0, covtype = covtype)
             if lower is None:
@@ -405,20 +447,20 @@ class crnGP():
         if noiseControl.get('g_bounds') is None:
             noiseControl['g_bounds'] = np.array([MACHINE_DOUBLE_EPS, 1e2])
         if noiseControl.get('rho_bounds') is None:
-            noiseControl['rho_bounds'] = np.array([0, 0.9])
-        
+            if rhotype == 'simple':
+                noiseControl['rho_bounds'] = np.array([0.001, 0.9])
         g_min, g_max = noiseControl['g_bounds']
         
         beta0 = known.get('beta0')
-
         n = X0.shape[0]
         
         if known.get('theta') is None and init.get('theta') is None:
             init['theta'] = 0.9*lower + 0.1 * upper
         if known.get('g') is None and init.get('g') is None:
             init['g'] = 0.1  
-        if known.get('rho') is None and init.get('rho') is None:
+        if known.get('rho') is None and init.get('rho') is None and rhotype == "simple":
             init['rho'] = 0.1
+
         
         trendtype = 'OK'
         if beta0 is not None:
@@ -435,7 +477,7 @@ class crnGP():
                 g = par[idx]
                 idx = idx + 1
             if rho is None:
-                rho = par[idx]
+                rho = par[idx:].squeeze()
             if T0 is None:
                 loglik = self.loglik(X0 = X0, S0 = S0,
                                      Z = Z, theta = theta, g = g,
@@ -464,7 +506,7 @@ class crnGP():
                 idx = idx + 1
                 components.append('g')
             if rho is None:
-                rho = par[idx]
+                rho = par[idx:].squeeze()
                 components.append('rho')
             if T0 is None:
                 return -1.0 * self.dloglik(X0 = X0,S0 = S0, Z = Z,
@@ -515,10 +557,16 @@ class crnGP():
                 g_max = np.atleast_1d(g_max)
                 lowerOpt = np.concatenate([lowerOpt, g_min])
                 upperOpt = np.concatenate([upperOpt, g_max])
-            if known.get('rho') is None:
-                parinit = np.concatenate([parinit, np.array([init['rho']])])
-                lowerOpt = np.concatenate([lowerOpt, noiseControl['rho_bounds'][[0]]])
-                upperOpt = np.concatenate([upperOpt, noiseControl['rho_bounds'][[1]]])
+            if known.get('rho') is None:   
+                parinit = np.concatenate([parinit, np.atleast_1d(init['rho'])])
+                lowerOpt = np.concatenate([
+                                lowerOpt,
+                                np.atleast_1d(noiseControl['rho_bounds'][0])
+                            ])
+                upperOpt = np.concatenate([
+                                upperOpt,
+                                np.atleast_1d(noiseControl['rho_bounds'][1])
+                            ])
             
             bounds = [(l,u) for l,u in zip(lowerOpt,upperOpt)]
             
@@ -555,7 +603,7 @@ class crnGP():
             theta_out = known['theta']
         g_out = out['par'][idx] if known.get('g') is None else known.get('g')
         
-        rho_out = out['par'][-1] if known.get('rho') is None else known.get('rho')
+        rho_out = out['par'][(idx+1):] if known.get('rho') is None else known.get('rho')
 
         
 
@@ -563,7 +611,8 @@ class crnGP():
         if self.ids is None:
             # mimics R's outer(S0,S0,'==')
             self.ids = S0 == S0[:,None]
-        Cs = np.full(shape=(n,n),fill_value=rho_out,dtype=float)
+        if rhotype == 'simple':
+            Cs = np.full(shape=(n,n),fill_value=rho_out,dtype=float)
         Cs[self.ids] = 1.0
         C = Cx * Cs
         
@@ -669,7 +718,11 @@ class crnGP():
 
         kx = self['nu_hat'] * cov_gen(X1=x,X2 = self['X0'],theta = self['theta'], type=self['covtype'])
         tmp = s[:,None] == self['S0']
-        ks = np.full(shape = (x.shape[0],self['X0'].shape[0]),fill_value=self['rho'])
+        if isinstance(self['rho'],float) or self['rho'].size==1:
+            ks = np.full(shape = (x.shape[0],self['X0'].shape[0]),fill_value=self['rho'])
+        else:
+            ks = self.pairwise_rho(S0r=s,S0c=self['S0'],rho=self['rho'])
+        
         ks[tmp] = 1
         kx = kx * ks
         
