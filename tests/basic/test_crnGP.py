@@ -3,6 +3,12 @@ sys.path.append('./')
 import numpy as np
 from hetgpy import crnGP
 from tests.utils import read_yaml
+
+
+
+
+
+
 def test_known():
     compare = read_yaml('tests/R/results/crnGP_known.yaml')
 
@@ -95,4 +101,4 @@ def test_predict_SK():
 
 
 if __name__ == "__main__":
-    test_known_with_time()
+    test_known()
