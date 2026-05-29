@@ -1213,10 +1213,11 @@ class hetGP:
                 idx = idx + len(init['Delta'])
                 # reconcile Deltas with R implementation
                 if trace > 1:
-                    for ii in range(np.ceil(len(mle_par['Delta'])/5)):
-                        i_tmp = np.arange(1 + 5*(ii-1),min(5*ii, len(mle_par['Delta'])))
-                        if logN: print("Delta |", mle_par['Delta'][i_tmp], " | ", np.max(np.log(eps * mult[i_tmp]), init['Delta'][i_tmp] - np.log(1000)), " | ", init['Delta'][i_tmp] + np.log(100), "\n")
-                        if not logN: print("Delta |", mle_par['Delta'][i_tmp], " | ", np.max(mult[i_tmp] * eps, init['Delta'][i_tmp] / 1000), " | ", init['Delta'][i_tmp] * 100, "\n")
+                    for ii in range(np.ceil(len(mle_par['Delta'])/5).astype(np.uint64)):
+                        i_tmp = np.arange(5 * ii,min(5 * (ii + 1), len(mle_par['Delta'])))
+                        if logN: 
+                            print("Delta |", mle_par['Delta'][i_tmp], " | ", np.maximum(np.log(eps * mult[i_tmp]), init['Delta'][i_tmp] - np.log(1000)), " | ", init['Delta'][i_tmp] + np.log(100), "\n")
+                        if not logN: print("Delta |", mle_par['Delta'][i_tmp], " | ", np.maximum(mult[i_tmp] * eps, init['Delta'][i_tmp] / 1000), " | ", init['Delta'][i_tmp] * 100, "\n")
             if jointThetas:
                 if known.get('k_theta_g') is None:
                     mle_par['k_theta_g'] = out['par'][idx]
