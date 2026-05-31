@@ -1,4 +1,7 @@
 
+## Version 1.0.5 2026-05-31
+*	Fixed bug in `hetGP.mle` (pull request 32, thanks to Marie Cloet, KU Leuven for flagging and for fixing)
+	
 ## Version 1.0.4 -- 2025-07-02
 *   Fixed bug in `hetGP.predict` for kriging variance (`sd2`) under simple kriging trendtype (thanks to Ozge Surer, Miami Ohio, for flagging)
 
