@@ -45,7 +45,7 @@ def plot_optimization_iterates(object, keys_and_title = None):
         i+=1
     return fig, ax
 
-def plot_diagnostics(model):
+def plot_diagnostics(model, interval:str='predictive'):
     r'''
     Diagnostics plot which mirrors the plot(model) routine in hetGP
     
@@ -54,22 +54,25 @@ def plot_diagnostics(model):
     Parameters
     ----------
     model: hetGPy model
+    interval: str
+        one of 'confidence' or 'predictive' 
 
     Returns
     -------
     fig, ax: matplotlib figure and axes
     '''
-    preds = model.predict(model.X0)
-    preds['upper'] = norm.ppf(0.95, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
-    preds['lower'] = norm.ppf(0.05, loc = preds['mean'], scale = np.sqrt(preds['sd2'])).squeeze()
+    preds = model.predict(model.X0, interval=interval, interval_lower=0.05, interval_upper=0.95)
+    pred_interval = preds['confidence_interval'] if interval == 'confidence' else preds['predictive_interval']
+
 
     fig, ax = plt.subplots()
     idxs = np.repeat(np.arange(len(model.X0)),model.mult)
     ax.hlines(
         y=preds['mean'],
-        xmin=preds['lower'],
-        xmax=preds['upper'],
-        label='Prediction Interval',zorder=-10)
+        xmin=pred_interval['lower'],
+        xmax=pred_interval['upper'],
+        label='Prediction Interval' if interval == 'predictive' else 'Confidence Interval',
+        zorder=-10)
     ax.scatter(model.Z,
         preds['mean'][idxs],
         facecolors='none',
@@ -79,7 +82,7 @@ def plot_diagnostics(model):
 
     ax.scatter(model.Z0[(model.mult>1).nonzero()[0]],
             preds['mean'][(model.mult>1).nonzero()[0]],
-            label='Averages (if mult > 1)',color='red',zorder=10)
+            label=r'Averages (if mult \textgreater 1)',color='red',zorder=10)
     ax.legend(loc='upper left',edgecolor='black')
     ax.set_title('Model Diagnostics')
     ax.set_xlabel('Observed')
