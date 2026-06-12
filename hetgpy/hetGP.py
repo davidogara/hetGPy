@@ -14,6 +14,7 @@ from hetgpy import homGP
 from hetgpy.plot import plot_optimization_iterates, plot_diagnostics
 from hetgpy.LOO import LOO_preds
 from hetgpy.update_covar import update_Ki, update_Ki_rep, update_Kgi, update_Kgi_rep
+from hetgpy.score import score
 from copy import copy, deepcopy
 import contextlib
 from numpy.typing import ArrayLike, NDArray
@@ -1821,7 +1822,11 @@ class hetGP:
         
         print("MLE optimization: \n", "Log-likelihood = ", self.ll, "; Nb of evaluations (obj, gradient) by L-BFGS-B: ", self.nit_opt, "; message: ", self.msg, "\n")
   
-
+    def score(self,Xtest: np.ndarray, Ztest: np.ndarray,return_rmse: bool = False):
+        r'''
+        Wrapper for score function
+        '''
+        return score(model = self, Xtest = Xtest, Ztest = Ztest, return_rmse = return_rmse)
 
 class hetTP():
     def __init__():

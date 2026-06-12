@@ -14,6 +14,7 @@ from hetgpy.find_reps import find_reps
 from hetgpy.utils import duplicated
 from hetgpy.update_covar import update_Ki, update_Ki_rep
 from hetgpy.plot import plot_diagnostics, plot_optimization_iterates
+from hetgpy.score import score
 from copy import deepcopy
 import contextlib
 from numpy.typing import ArrayLike, NDArray
@@ -751,6 +752,12 @@ class homGP():
         else:
             print("Estimated constant trend value: ", self.beta0, "\n")
         print("MLE optimization: \n", "Log-likelihood = ", self.ll, "; Nb of evaluations (obj, gradient) by L-BFGS-B: ", self.nit_opt, "; message: ", self.msg, "\n")
+
+    def score(self,Xtest: np.ndarray, Ztest: np.ndarray,return_rmse: bool = False):
+        r'''
+        Wrapper for score function
+        '''
+        return score(model = self, Xtest = Xtest, Ztest = Ztest, return_rmse = return_rmse)
 
 class homTP():
     pass
