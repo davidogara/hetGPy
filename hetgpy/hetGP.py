@@ -1176,7 +1176,8 @@ class hetGP:
                     method="L-BFGS-B",
                     bounds = bounds,
                     # tol=1e-8,
-                    options=dict(maxiter=maxit,iprint = settings.get('iprint',-1), #,
+                    options=dict(maxiter=maxit,
+                                # iprint = settings.get('iprint',-1),  # `disp` and `iprint` options of the L-BFGS-B solver are deprecated and will be removed in SciPy 1.18.0.
                                 ftol = settings.get('factr',10) * np.finfo(float).eps,#,
                                 gtol = settings.get('pgtol',0) # should map to pgtol
                                 )
