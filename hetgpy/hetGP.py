@@ -537,12 +537,12 @@ class hetGP:
         Parameters
         ----------
         X : ndarray_like
-            matrix of all designs, one per row, or list with elements:
+            matrix of all designs, one per row, or dict with elements:
             - ``X0`` matrix of unique design locations, one point per row
             - ``Z0`` vector of averaged observations, of length ``len(X0)``
             - ``mult`` number of replicates at designs in ``X0``, of length ``len(X0)``
         Z : ndarray_like
-            Z vector of all observations. If using a list with ``X``, ``Z`` has to be ordered with respect to ``X0``, and of length ``sum(mult)``
+            Z vector of all observations. If using a dict with ``X``, ``Z`` has to be ordered with respect to ``X0``, and of length ``sum(mult)``
         lower,upper : ndarray_like 
             optional bounds for the ``theta`` parameter (see :func: covariance_functions.cov_gen for the exact parameterization).
             In the multivariate case, it is possible to give vectors for bounds (resp. scalars) for anisotropy (resp. isotropy)
