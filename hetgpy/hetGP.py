@@ -1176,7 +1176,8 @@ class hetGP:
                     method="L-BFGS-B",
                     bounds = bounds,
                     # tol=1e-8,
-                    options=dict(maxiter=maxit,iprint = settings.get('iprint',-1), #,
+                    options=dict(maxiter=maxit,
+                                # iprint = settings.get('iprint',-1),  # `disp` and `iprint` options of the L-BFGS-B solver are deprecated and will be removed in SciPy 1.18.0.
                                 ftol = settings.get('factr',10) * np.finfo(float).eps,#,
                                 gtol = settings.get('pgtol',0) # should map to pgtol
                                 )
@@ -1451,7 +1452,7 @@ class hetGP:
         if noise_var:
             if self.get('nu_hat_var') is None:
                 self['nu_hat_var'] = max(self['eps'], np.squeeze(((self['Delta'] - self['nmean']).T @ self['Kgi'])) @ (self['Delta'] - self['nmean'])/len(self['Delta'])) ## To avoid 0 variance
-                sd2var = self['nu_hat'] * self['nu_hat_var']* np.squeeze(1 - np.diag(kg @ (self['Kgi']@ kg.T)) + (1 - ((self['Kgi'].sum(axis=0))@ kg.T))**2/sum(self['Kgi']))
+            sd2var = self['nu_hat'] * self['nu_hat_var'] * np.squeeze(1 - np.diag(kg @ (self['Kgi']@ kg.T)) + (1 - ((self['Kgi'].sum(axis=0)) @ kg.T))**2/np.sum(self['Kgi']))
         else:
             sd2var = None
         
