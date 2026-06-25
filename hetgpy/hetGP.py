@@ -1451,7 +1451,7 @@ class hetGP:
         if noise_var:
             if self.get('nu_hat_var') is None:
                 self['nu_hat_var'] = max(self['eps'], np.squeeze(((self['Delta'] - self['nmean']).T @ self['Kgi'])) @ (self['Delta'] - self['nmean'])/len(self['Delta'])) ## To avoid 0 variance
-                sd2var = self['nu_hat'] * self['nu_hat_var']* np.squeeze(1 - np.diag(kg @ (self['Kgi']@ kg.T)) + (1 - ((self['Kgi'].sum(axis=0))@ kg.T))**2/sum(self['Kgi']))
+            sd2var = self['nu_hat'] * self['nu_hat_var'] * np.squeeze(1 - np.diag(kg @ (self['Kgi']@ kg.T)) + (1 - ((self['Kgi'].sum(axis=0)) @ kg.T))**2/np.sum(self['Kgi']))
         else:
             sd2var = None
         
