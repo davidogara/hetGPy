@@ -1,4 +1,9 @@
 
+## Verion 1.0.5rc1 2026-06-25
+*   Fixed bug in hetGP.predict to properly return `sd2var` when `noise_var=True`
+*   Removed `iprint` in `scipy.optimize.minimize`
+*   Confirmed that numpy `matmul` warnings are fixed for `numpy>=2.3.0` (requires python>=3.11)
+
 ## Version 1.0.5 2026-05-31
 *	Fixed bug in `hetGP.mle` (pull request 32, thanks to Marie Cloet, KU Leuven for flagging and for fixing)
 	
