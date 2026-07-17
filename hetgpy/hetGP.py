@@ -6,6 +6,7 @@ from scipy.linalg.lapack import dtrtri
 from scipy import optimize
 from scipy.special import digamma, polygamma
 from scipy.stats import norm
+from hetgpy.baseGP import GP
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen
 from hetgpy.utils import fast_tUY2, rho_AN, duplicated
 from hetgpy.find_reps import find_reps
@@ -21,11 +22,11 @@ NDArrayInt = NDArray[np.int_]
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 
-class hetGP:
+class hetGP(GP):
     def __init__(self):
+        super().__init__()
         self.iterates = [] # for saving iterates during MLE
         self.use_torch = False
-        self.mle = self.mleHetGP
         return
     def __getitem__(self, key):
         return self.__dict__[key]
@@ -517,7 +518,7 @@ class hetGP:
         
 
     
-    def mleHetGP(self,X: ArrayLike, 
+    def mle(self,X: ArrayLike, 
                  Z: ArrayLike, 
                  lower: ArrayLike | None = None, upper: ArrayLike | None = None,known: dict = dict(),
                 noiseControl: dict = dict(k_theta_g_bounds = (1, 100), g_max = 100, g_bounds = (1e-06, 1)),
@@ -529,7 +530,7 @@ class hetGP:
         r'''
         Gaussian process modeling with heteroskedastic noise
 
-        You may also call this function as `model.mle`
+        You may also call this function as `model.mleHetGP`
 
         Gaussian process regression under input dependent noise based on maximum likelihood estimation of the hyperparameters. 
         A second GP is used to model latent (log-) variances. This function is enhanced to deal with replicated observations.
@@ -1362,7 +1363,8 @@ class hetGP:
             self.modNugs = modNugs
         
         return self
-    
+    # -- alias the mle method
+    mleHetGP = mle
     def predict(self,x: ArrayLike, noise_var: bool = False, xprime: ArrayLike | None = None, nugs_only: bool = False, interval: str | None = None, interval_lower: float | None = None, interval_upper: float | None = None, **kwargs) -> dict:
         '''
         Gaussian process predictions using a heterogeneous noise GP object (of ``hetGP``) 

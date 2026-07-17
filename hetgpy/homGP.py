@@ -6,6 +6,7 @@ from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
 from scipy.stats import norm
+from hetgpy.baseGP import GP
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.utils import fast_tUY2, rho_AN
 from hetgpy.find_reps import find_reps
@@ -20,9 +21,9 @@ from numpy.typing import ArrayLike, NDArray
 NDArrayInt = NDArray[np.int_]
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
-class homGP():
+class homGP(GP):
     def __init__(self):
-        self.mle = self.mleHomGP
+        super().__init__()
         return
     def __getitem__(self, key):
         return self.__dict__[key]
@@ -169,7 +170,7 @@ class homGP():
         #print('dll', out, '\n')
         return out    
 
-    def mleHomGP(self,X: ArrayLike, Z: ArrayLike, lower: ArrayLike | None = None, upper: ArrayLike | None = None, known: dict = dict(),
+    def mle(self,X: ArrayLike, Z: ArrayLike, lower: ArrayLike | None = None, upper: ArrayLike | None = None, known: dict = dict(),
                         noiseControl: dict = dict(g_bounds = (MACHINE_DOUBLE_EPS, 1e2)),
                         init: dict = {},
                         covtype: str = "Gaussian",
@@ -177,7 +178,7 @@ class homGP():
         r'''
         Gaussian process modeling with homoskedastic noise.
 
-        You may also call this function as `model.mle`
+        You may also call this function as `model.mleHomGP`
 
         Gaussian process regression under homoskedastic noise based on maximum likelihood estimation of the hyperparameters. This function is enhanced to deal with replicated observations.
         
@@ -434,6 +435,8 @@ class homGP():
         
         if settings["return_Ki"]: self.Ki  = Ki
         return self
+    # -- alias the mle method
+    mleHomGP = mle
     def predict(self, x: ArrayLike, xprime: ArrayLike | None = None,interval: str | None = None, interval_lower: float | None  = None, interval_upper: float | None = None,**kw):
         r'''
         Prediction under homoskedastic noise

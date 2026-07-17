@@ -1,7 +1,8 @@
 
 import numpy as np
 from hetgpy import EMSE
-from hetgpy import hetGP, homGP
+import hetgpy
+#from hetgpy import hetGP, homGP
 from hetgpy.covariance_functions import cov_gen
 from scipy.linalg.lapack import dtrtri
 from joblib import Parallel, delayed
@@ -12,7 +13,6 @@ from scipy.stats.qmc import LatinHypercube
 from scipy.optimize import minimize
 from copy import deepcopy as copy
 import warnings
-TYPE = type
 
 def IMSPE(model, theta = None, Lambda = None, mult = None, covtype = None, nu= None, eps = np.sqrt(np.finfo(float).eps)):
     '''
@@ -42,7 +42,7 @@ def IMSPE(model, theta = None, Lambda = None, mult = None, covtype = None, nu= N
     -------
     One can provide directly a model of class ``hetGP`` or ``homGP``, or provide design locations ``X`` and all other arguments
     '''
-    if type(model)==hetGP or type(model)==homGP:
+    if (isinstance(model,hetgpy.homGP) or isinstance(model,hetgpy.hetGP)):
         Wijs = Wij(mu1 = model.X0, theta = model.theta, type = model.covtype)
         if model.trendtype == "OK":
             tmp = np.squeeze(1 - 2 * model.Ki.sum(axis=0) @ mi(mu1 = model.X0, theta = model.theta, type = model.covtype) + model.Ki.sum(axis=0) @ Wijs @ model.Ki.sum(axis=1))/model.Ki.sum()
@@ -221,7 +221,7 @@ def deriv_crit_IMSPE(x, model, id = None, Wijs = None):
     if len(x.shape) == 1: x = x.reshape(1,-1)
     kn1 = cov_gen(model.X0, x, theta = model.theta, type = model.covtype).squeeze()
     
-    if TYPE(model)==hetGP: kng1 = cov_gen(model.X0, x, theta = model.theta_g, type = model.covtype).squeeze()
+    if isinstance(model,hetgpy.hetGP): kng1 = cov_gen(model.X0, x, theta = model.theta_g, type = model.covtype).squeeze()
     new_lambda = model.predict(x = x, nugs_only = True)['nugs']/model.nu_hat
     k11 = 1 + new_lambda
 
@@ -235,9 +235,9 @@ def deriv_crit_IMSPE(x, model, id = None, Wijs = None):
     
     tmp = np.repeat(np.nan, x.shape[1]).reshape(-1,1)
     dlambda = 0
-    if TYPE(model)==hetGP: KgiD = model.Kgi @ (model.Delta - model.nmean)
+    if isinstance(model,hetgpy.hetGP): KgiD = model.Kgi @ (model.Delta - model.nmean)
     if model.theta.shape[0] < x.shape[1]: model.theta = np.repeat(model.theta, x.shape[1])
-    if TYPE(model)==hetGP and model.theta_g.shape[0] < x.shape[1]: model.theta_g = np.repeat(model.theta, x.shape[1])
+    if isinstance(model,hetgpy.hetGP) and model.theta_g.shape[0] < x.shape[1]: model.theta_g = np.repeat(model.theta, x.shape[1])
     
     Wig = Wijs @ g
   
@@ -247,7 +247,7 @@ def deriv_crit_IMSPE(x, model, id = None, Wijs = None):
     
         dis = np.squeeze(d1(X = model.X0[:,m], x = x[:,m], sigma = model.theta[m], type = model.covtype) * kn1)
     
-        if TYPE(model)==hetGP:
+        if isinstance(model,hetgpy.hetGP):
             dlambda = (d1(X = model.X0[:,m], x = x[:,m], sigma = model.theta_g[m], type = model.covtype) * kng1).T @ KgiD
             if model.logN:
                 dlambda = new_lambda *dlambda
@@ -542,7 +542,7 @@ def allocate_mult(model = None, N = None, Wijs = None, use_Ki = False):
         Ci = np.linalg.pinv(cov_gen(model.X0, theta = model.theta, type = model.covtype),rcond=np.sqrt(np.finfo(float).eps))
         Ci = np.clip(np.diag(Ci @ Wijs @ Ci),a_min=0, a_max = None)
     
-    if type(model)==hetGP: 
+    if isinstance(model,hetgpy.hetGP): 
         V = model.Lambda
     else: 
         V = np.repeat(model.g, len(model.Z0))

@@ -10,6 +10,7 @@ from time import time
 from scipy.linalg.lapack import dtrtri
 from scipy import optimize
 from scipy.stats import norm
+from hetgpy.baseGP import GP
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.utils import fast_tUY2, rho_AN
 from hetgpy.find_reps import find_reps
@@ -26,9 +27,9 @@ from numpy.typing import ArrayLike, NDArray
 NDArrayInt = NDArray[np.int_]
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
-class crnGP():
+class crnGP(GP):
     def __init__(self):
-        self.mle = self.mlecrnGP
+        super().__init__()
         self.ids = None
         return
     def __getitem__(self, key):
@@ -301,7 +302,7 @@ class crnGP():
 
 
 
-    def mlecrnGP(self,X, Z, T0 = None,
+    def mle(self,X, Z, T0 = None,
                 rhotype = "simple", 
                 stype = "none", 
                 lower = None, upper = None, 
@@ -316,7 +317,7 @@ class crnGP():
         r'''
         Gaussian process modeling with correlated noise.
 
-        You may also call this function as `crnGP.mle`
+        You may also call this function as `crnGP.mlecrnGP`
 
         Gaussian process regression under correlated noise based on maximum likelihood estimation of the hyperparameters.
         
@@ -653,7 +654,8 @@ class crnGP():
         self.rho = rho_out
         self.time = time() - tic
         return
-    
+    # -- alias the mle method
+    mlecrnGP = mle
     def predict(self,x,xprime = None,t0 = None, interval: str | None = None, interval_lower: float | None  = None, interval_upper: float | None = None,**kw):
         r'''
         Prediction under correlated noise
