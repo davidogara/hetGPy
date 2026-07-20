@@ -15,9 +15,6 @@ class GP(ABC):
         General `get` item (retrives key from self.__dict__) with optional default
         '''
         return self.__dict__.get(key,default)
-    def crit_EI(self,x,cst = None, preds = None):
-        from hetgpy.optim import crit_EI
-        return crit_EI(x = x, model = self, cst = cst, preds = preds)
     @abstractmethod
     def mle(self,X: ArrayLike,
              Z: ArrayLike, 
@@ -30,3 +27,7 @@ class GP(ABC):
         Predict method, must minimally supply `x` to make predictions on new data
         '''
         pass
+    # -- acquisition functions
+    def crit_EI(self,x,cst = None, preds = None):
+        from hetgpy.optim import crit_EI
+        return crit_EI(x = x, model = self, cst = cst, preds = preds)
