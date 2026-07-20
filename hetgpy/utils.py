@@ -1,9 +1,11 @@
 # utils.py
 # utility functions that are not vectorized (will likely be sped up with numba)
-
+import warnings
 import numpy as np
 from scipy.linalg.lapack import dtrtri
 from hetgpy.covariance_functions import cov_gen
+from scipy.stats.qmc import scale
+
 MACHINE_DOUBLE_EPS = np.sqrt(np.finfo(float).eps)
 
 def fast_tUY2(mult,Y2):
@@ -95,3 +97,21 @@ def duplicated(X,fromLast = False):
     arr = arr[::-1]
 
   return arr
+
+
+
+def scale_01(X, l_bounds=None, u_bounds=None):
+    '''Scale native units -> [0,1]^d. Wraps scipy.stats.qmc.scale(reverse=True).
+    If bounds are omitted, they are inferred from the column-wise min/max of X.'''
+    if X.ndim < 2:
+        X = X.reshape(-1, 1)
+    if l_bounds is None or u_bounds is None:
+        l_bounds = X.min(axis=0)
+        u_bounds = X.max(axis=0)
+        warnings.warn(f'Inferring bounds from data:\nl_bounds: {l_bounds}\nu_bounds: {u_bounds}')
+    return scale(X, l_bounds=l_bounds, u_bounds=u_bounds, reverse=True)
+def scale_native(X, l_bounds, u_bounds):
+    '''Scale [0,1]^d -> native units. Wraps scipy.stats.qmc.scale(reverse=False).'''
+    if X.ndim < 2:
+        X = X.reshape(-1, 1)
+    return scale(X, l_bounds=l_bounds, u_bounds=u_bounds, reverse=False)
