@@ -84,6 +84,10 @@ class GP(ABC):
     def crit_MCU(self,x, thres = 0, gamma = 2, preds = None):
         from hetgpy.contour import crit_MCU
         return crit_MCU(model = self, x = x, thres = thres, gamma = gamma, preds = preds)
+    def crit_TS(self,x,n_TS = 1, rng = None, check_PSD = True):
+        from hetgpy.optim import crit_TS
+        return crit_TS(model = self, x = x, n_TS = n_TS, rng = rng, check_PSD = check_PSD)
+    
     
 
     

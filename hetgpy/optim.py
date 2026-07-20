@@ -629,3 +629,38 @@ def deriv_crit_logEI(x, model, cst=None, preds=None):
         eitmp = eitmp + np.sqrt(preds["sd2"]) * (1 + (z**2 - 1) / (model["nu"] + len(model["Z"]) - 1)) * t.pdf(x=z, df=model["nu"] + len(model["Z"]))
         res = res/eitmp
     return res
+
+def crit_TS(x, model, n_TS = 1, rng = None, check_PSD = True):
+  '''
+  Thompson sampling
+
+  Parameters
+  ----------
+  x: np.ndarray
+      set of designs (n x d, one point per row) over which to evaluate samples
+  model: hetgpy.baseGP
+  '''
+  if rng is None:
+     rng = np.random.default_rng()
+  elif isinstance(rng,int):
+     rng = np.random.default_rng(rng)
+  elif isinstance(rng,np.random.Generator):
+     pass
+  elif not isinstance(rng,np.random.Generator):
+     raise ValueError(f"rng must be an int or np.random.Generator, got {type(rng)}")
+     
+  preds = model.predict(x, xprime = x)
+  # numerically stabiltize covariance
+  preds['cov'] = 0.5 * (preds['cov'] + preds['cov'].T)
+
+  if check_PSD:
+    # ensure PSD
+    eigval, eigvec = np.linalg.eigh(preds['cov'])
+    if (eigval<0).any():
+        print('Covariance matrix is not positive semidefinite. Clipping negative eigenvalues.')
+        eigval[eigval < 0] = 0
+        preds['cov'] = eigvec @ np.diag(eigval) @ eigvec.T
+  # sample
+  samples = rng.multivariate_normal(mean = preds['mean'], cov = preds['cov'], size = n_TS)
+
+  return samples
