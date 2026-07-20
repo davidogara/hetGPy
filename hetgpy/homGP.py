@@ -25,16 +25,6 @@ class homGP(GP):
     def __init__(self):
         super().__init__()
         return
-    def __getitem__(self, key):
-        return self.__dict__[key]
-    def __setitem__(self,item,value):
-        self.__dict__[item] = value
-    def get(self,key):
-        r'''
-        General `get` item (retrives key from self.__dict__)
-        
-        '''
-        return self.__dict__.get(key)
     
     def logLikHom(self,X0: ArrayLike, Z0: ArrayLike, Z: ArrayLike, mult: NDArrayInt, theta: ArrayLike, g: float, beta0: float | None = None, covtype: str = "Gaussian", eps: float = MACHINE_DOUBLE_EPS) -> float:
         r'''

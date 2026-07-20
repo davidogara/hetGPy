@@ -28,12 +28,6 @@ class hetGP(GP):
         self.iterates = [] # for saving iterates during MLE
         self.use_torch = False
         return
-    def __getitem__(self, key):
-        return self.__dict__[key]
-    def __setitem__(self,item,value):
-        self.__dict__[item] = value
-    def get(self,key):
-        return self.__dict__.get(key)
     # Part II: hetGP functions
 
     def logLikHet(self, X0: ArrayLike, Z0: ArrayLike, 

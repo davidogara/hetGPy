@@ -32,16 +32,7 @@ class crnGP(GP):
         super().__init__()
         self.ids = None
         return
-    def __getitem__(self, key):
-        return self.__dict__[key]
-    def __setitem__(self,item,value):
-        self.__dict__[item] = value
-    def get(self,key):
-        r'''
-        General `get` item (retrives key from self.__dict__)
-        
-        '''
-        return self.__dict__.get(key)
+    
     def pairwise_rho(self,S0r, S0c = None,rho = None):
         rho = np.atleast_1d(rho)
 
