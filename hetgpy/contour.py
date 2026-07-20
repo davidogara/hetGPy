@@ -36,7 +36,7 @@ def crit_MEE(x, model, thres = 0, preds = None):
     if len(x.shape)==1: x = x.reshape(-1,1)
     if preds is None: preds = model.predict(x = x)
     ## TP case
-    if type(model) == hetgpy.homGP.homTP or type(model)==hetgpy.hetGP.hetTP: 
+    if isinstance(model,hetgpy.homTP) or isinstance(model,hetgpy.hetTP): 
         return t.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(preds['sd2']), df = model.nu + len(model.Z))
     ## GP case
     return norm.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(preds['sd2']))
@@ -65,7 +65,7 @@ def crit_cSUR(x, model, thres = 0, preds = None):
     
     if len(x.shape)==1: x = x.reshape(-1,1)
     if preds is None: preds = model.predict(x = x, xprime = x)
-    if type(model) == hetgpy.homGP.homTP or type(model)==hetgpy.hetGP.hetTP:
+    if isinstance(model,hetgpy.homTP) or isinstance(model,hetgpy.hetTP):
     
         # unscale the predictive variance and covariance (e.g., go back to the GP case)
         # (since psi is updated separately)
@@ -94,7 +94,7 @@ def crit_cSUR(x, model, thres = 0, preds = None):
 
         return(norm.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(preds['sd2'])) - norm.cdf(-np.abs(preds['mean'] - thres)/np.sqrt(sd2_new)))
     
-def crit_ICU(x, model, thres = 0, Xref = None, w = None, preds = None, kxprime = None):
+def crit_ICU(x, model,Xref,thres = 0, w = None, preds = None, kxprime = None):
     r'''
     Computes ICU infill criterion
     
@@ -123,13 +123,13 @@ def crit_ICU(x, model, thres = 0, Xref = None, w = None, preds = None, kxprime =
     '''
     if len(x.shape)==1: x = x.reshape(-1,1)
     if preds is None: preds = model.predict(x = Xref)
-    if w is None: w = np.repeat(1, Xref.shape[0])
+    if w is None: w = np.repeat(1, x.shape[0])
 
     predx = model.predict(x = x)
     if kxprime is None:
         covnew = model.predict(x = x, xprime = Xref)['cov']
     else:
-        if type(model)==hetgpy.homTP or type(model)==hetgpy.hetTP:
+        if isinstance(model,hetgpy.homTP) or isinstance(model,hetgpy.hetTP):
             kxprime = kxprime * model.sigma2
             kx = model.sigma2 * cov_gen(X1 = x, X2 = model.X0, theta = model.theta, type = model.covtype)
             covnew = (model.nu + model.psi - 2) / (model.nu + len(model.Z) - 2) * (model.sigma2 * cov_gen(X1 = x, X2 = Xref, theta = model.theta, type = model.covtype) - (kx @ model.Ki) @ kxprime)
@@ -142,7 +142,7 @@ def crit_ICU(x, model, thres = 0, Xref = None, w = None, preds = None, kxprime =
             else:
                 covnew = model.nu_hat * cov_gen(X1 = x, X2 = Xref, theta = model.theta, type = model.covtype) - (kx @ model.Ki) @ kxprime + (1 - (np.sum(model.Ki,axis=0,keepdims=True)@ kx.T)).T @ (1 - np.sum(model.Ki,axis=0,keepdims=True) @ kxprime)/np.sum(model.Ki)
 
-    if type(model)==hetgpy.homTP or type(model)==hetgpy.hetTP:
+    if isinstance(model,hetgpy.homTP) or isinstance(model,hetgpy.hetTP):
       
         # unscale the predictive variance and covariances (e.g., go back to the GP case)
         # (since psi is updated separately)
@@ -161,7 +161,7 @@ def crit_ICU(x, model, thres = 0, Xref = None, w = None, preds = None, kxprime =
         
         return(- np.sum(w * t.pdf(-np.abs(preds['mean'] - thres)/np.sqrt(sd2_new), df = model.nu + len(model.Z) + 1)))
     else:
-        sd2_new <- preds['sd2'] - np.squeeze(covnew**2)/(predx['sd2'] + predx['nugs'] + model.eps)
+        sd2_new = preds['sd2'] - np.squeeze(covnew**2)/(predx['sd2'] + predx['nugs'] + model.eps)
         sd2_new[sd2_new<0] = 0
         return - np.sum(w * norm.pdf(-np.abs(preds['mean'] - thres)/np.sqrt(sd2_new)))
 
@@ -234,7 +234,7 @@ def crit_MCU(x, model, thres = 0, gamma = 2, preds = None):
 
 
     ## TP case
-    if type(model)==hetgpy.homTP or type(model)==hetgpy.hetTP:
+    if isinstance(model,hetgpy.homTP) or isinstance(model,hetgpy.hetTP):
         return(-np.abs(preds['mean'] - thres) + gamma * np.sqrt(preds['sd2']))
 
     ## GP case
