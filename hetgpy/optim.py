@@ -125,10 +125,34 @@ def predict_gr(model, x):
   Gradient of the prediction given a model
   '''
   if len(x.shape) == 1: x = x.reshape(-1,1)
-  kvec =  cov_gen(X1 = model.X0, X2 = x, theta = model.theta, type = model.covtype)
-  
   dm = np.full(fill_value=np.nan, shape = (x.shape[0], x.shape[1]))
   ds2 = dm.copy()
+
+  if isinstance(model,hetgpy.crnGP):
+    # crnGP treatment differs slightly due to seed treatment
+    s = x[:, -1]; xs = x[:, :-1]          # split seed
+    dm = np.full(fill_value=np.nan, shape = (xs.shape[0], xs.shape[1]))
+    ds2 = dm.copy()
+    kvec = cov_gen(X1=model.X0, X2=xs, theta=model.theta, type=model.covtype)
+    ks = np.full((xs.shape[0], model.X0.shape[0]), model.rho)
+    ks[s[:,None] == model.S0] = 1         # seed correlation, same as predict
+
+    for i in range(x.shape[0]):
+        dkvec = np.full(fill_value=np.nan, shape=(model.X0.shape[0], xs.shape[1]))
+        for j in range(xs.shape[1]):
+          dkvec[:,j] = np.squeeze(partial_cov_gen(xs[i:i+1], model.X0, theta = model.theta, i1 = 1, i2=j+1, type = model.covtype, arg = "X_i_j") * kvec[:,i]  * ks[i,:])
+
+        dm[i,:] = ((model.Z - model.beta0).T @ model.Ki) @ dkvec
+        kw = kvec[:, i] * ks[i, :] 
+        if model.trendtype == "OK": 
+            tmp = np.squeeze(1 - (model.Ki.sum(axis=1)) @ kw) / (np.sum(model.Ki)) \
+                  * (model.Ki.sum(axis=1)) @ dkvec 
+        else: 
+            tmp = 0
+        
+        ds2[i, :] = -2 * ((kw.T @ model.Ki) @ dkvec + tmp)
+    return dict(mean = dm, sd2 = model.nu_hat * ds2)
+  kvec =  cov_gen(X1 = model.X0, X2 = x, theta = model.theta, type = model.covtype)
   
   for i in range(x.shape[0]):
     dkvec = np.full(fill_value=np.nan, shape=(model.X0.shape[0], x.shape[1]))
@@ -142,7 +166,7 @@ def predict_gr(model, x):
       tmp = 0
     ds2[i,:] = -2 * ((kvec[:,i].T @ model.Ki) @ dkvec + tmp)
   
-  if isinstance(model,hetgpy.homGP) or isinstance(model,hetgpy.hetGP):
+  if isinstance(model,hetgpy.baseGP.GP):
     return dict(mean = dm, sd2 = model.nu_hat * ds2)
   else:
     return dict(mean = model.sigma2 * dm, sd2 =  (model.nu + model.psi - 2) / (model.nu + len(model.Z) - 2) * model.sigma2**2 * ds2)
