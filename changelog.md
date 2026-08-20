@@ -1,5 +1,11 @@
 
-## Verion 1.0.5rc1 2026-06-25
+## 1.0.06 2026-08-20
+*   Add `baseGP` class
+*   Add acqusitions functions to model class as part of baseGP
+*   Fix bugs in predictive gradient
+*   Fix bug in Matern3_2 partial derivative
+
+## Version 1.0.5rc1 2026-06-25
 *   Fixed bug in hetGP.predict to properly return `sd2var` when `noise_var=True`
 *   Removed `iprint` in `scipy.optimize.minimize`
 *   Confirmed that numpy `matmul` warnings are fixed for `numpy>=2.3.0` (requires python>=3.11)
