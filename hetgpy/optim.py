@@ -688,3 +688,21 @@ def crit_TS(x, model, n_TS = 1, rng = None, check_PSD = True):
   samples = rng.multivariate_normal(mean = preds['mean'], cov = preds['cov'], size = n_TS)
 
   return samples
+
+def crit_bape(model, x,log=True):
+    '''
+    BAPE acquisition function (Kandasamy et al. 2015): variance of the
+    exponentiated (lognormal) posterior. Model is a GP on the log-likelihood.
+    
+    Parameters
+    ----------
+    model: fitted model
+    x: candidate point
+    log: convert to log scale (default True)
+    '''
+    pred = model.predict(x)
+    mu, sd2 = pred['mean'], pred['sd2']
+    if log:
+       return np.log(np.expm1(sd2)) + 2*mu + sd2
+    return (np.exp(sd2) - 1) * np.exp(2*mu + sd2)
+   
