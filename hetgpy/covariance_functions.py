@@ -217,14 +217,12 @@ def partial_cov_gen(X1, X2 = None, theta = None,k_theta_g = None, type = "Gaussi
             if arg == "X_i_j":
                 return partial_d_k_Matern5_2_dX_i_j(X1 = X1, X2 = X2, theta = theta, i1 = i1, i2 = i2)
         if type == "Matern3_2":
-            if TYPE(theta)==np.ndarray: 
-                theta = theta[0]
             if arg == "theta_k":
                 return partial_d_C_Matern3_2_dtheta_k(X1 = X1, X2 = X2, theta = theta)
             if arg == "k_theta_g":
                 return partial_d_Cg_Matern3_2_d_k_theta_g(X1 = X1, X2 = X2, theta = theta, k_theta_g=k_theta_g)
             if arg == "X_i_j":
-                return partial_d_C_Matern3_2_dX_i_j(X1 = X1,X2 = X2, theta = theta, i1 = i1, i2 = i2)
+                return partial_d_k_Matern3_2_dX_i_j(X1 = X1,X2 = X2, theta = theta, i1 = i1, i2 = i2)
             
 
 def cov_Matern3_2(X1, X2 = None, theta = None):
@@ -408,7 +406,7 @@ def partial_d_k_Matern3_2_dX_i_j(X1, X2, theta, i1, i2):
     theta: int
         lengthscales
     '''
-    ## 1-dimensional/isotropic case
+    ## 1-dimensional/isotropic case partial_d_dist_abs_dX1_i1_i2_X2_m32
     if len(theta) == 1:
         tmp = matern.partial_d_dist_abs_dX1_i1_i2_X2_m32(X1/theta, X2/theta, i1, i2)
         return(tmp/theta)

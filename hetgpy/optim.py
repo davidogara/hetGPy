@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 from joblib import Parallel, delayed
 import hetgpy
-from hetgpy import hetGP, homGP
+#from hetgpy import hetGP, homGP
 from hetgpy.contour import crit_cSUR, crit_ICU, crit_MCU, crit_MEE, crit_tMSE
 from hetgpy.covariance_functions import cov_gen, partial_cov_gen, euclidean_dist
 from hetgpy.qEI import qEI_cpp
@@ -100,7 +100,7 @@ def deriv_crit_EI(x, model, cst = None, preds = None):
   
   z = (cst - preds['mean'])/np.sqrt(preds['sd2'])
   
-  if type(model)==homGP or type(model)==hetGP:
+  if isinstance(model,hetgpy.homGP) or isinstance(model,hetgpy.hetGP):
     res = pred_gr['sd2'] / (2 * np.sqrt(preds['sd2'])) * norm.pdf(z) - pred_gr['mean'] * norm.cdf(z)
   else:
     # dz = - dm/s - z ds/s = -dm/s - z * ds2/(2s2) 
@@ -125,10 +125,34 @@ def predict_gr(model, x):
   Gradient of the prediction given a model
   '''
   if len(x.shape) == 1: x = x.reshape(-1,1)
-  kvec =  cov_gen(X1 = model.X0, X2 = x, theta = model.theta, type = model.covtype)
-  
   dm = np.full(fill_value=np.nan, shape = (x.shape[0], x.shape[1]))
   ds2 = dm.copy()
+
+  if isinstance(model,hetgpy.crnGP):
+    # crnGP treatment differs slightly due to seed treatment
+    s = x[:, -1]; xs = x[:, :-1]          # split seed
+    dm = np.full(fill_value=np.nan, shape = (xs.shape[0], xs.shape[1]))
+    ds2 = dm.copy()
+    kvec = cov_gen(X1=model.X0, X2=xs, theta=model.theta, type=model.covtype)
+    ks = np.full((xs.shape[0], model.X0.shape[0]), model.rho)
+    ks[s[:,None] == model.S0] = 1         # seed correlation, same as predict
+
+    for i in range(x.shape[0]):
+        dkvec = np.full(fill_value=np.nan, shape=(model.X0.shape[0], xs.shape[1]))
+        for j in range(xs.shape[1]):
+          dkvec[:,j] = np.squeeze(partial_cov_gen(xs[i:i+1], model.X0, theta = model.theta, i1 = 1, i2=j+1, type = model.covtype, arg = "X_i_j") * kvec[:,i]  * ks[i,:])
+
+        dm[i,:] = ((model.Z - model.beta0).T @ model.Ki) @ dkvec
+        kw = kvec[:, i] * ks[i, :] 
+        if model.trendtype == "OK": 
+            tmp = np.squeeze(1 - (model.Ki.sum(axis=1)) @ kw) / (np.sum(model.Ki)) \
+                  * (model.Ki.sum(axis=1)) @ dkvec 
+        else: 
+            tmp = 0
+        
+        ds2[i, :] = -2 * ((kw.T @ model.Ki) @ dkvec + tmp)
+    return dict(mean = dm, sd2 = model.nu_hat * ds2)
+  kvec =  cov_gen(X1 = model.X0, X2 = x, theta = model.theta, type = model.covtype)
   
   for i in range(x.shape[0]):
     dkvec = np.full(fill_value=np.nan, shape=(model.X0.shape[0], x.shape[1]))
@@ -136,13 +160,13 @@ def predict_gr(model, x):
       dkvec[:, j] = np.squeeze(partial_cov_gen(X1 = x[i:i+1,:], X2 = model.X0, theta = model.theta, i1 = 1, i2 = j + 1, arg = "X_i_j", type = model.covtype)) * kvec[:,i]
     
     dm[i,:] = ((model.Z0 - model.beta0).T @ model.Ki) @ dkvec
-    if (type(model)==homGP or type(model)==hetGP) and model.trendtype == "OK": 
+    if (isinstance(model,hetgpy.homGP) or isinstance(model,hetgpy.hetGP)) and model.trendtype == "OK": 
       tmp = np.squeeze(1 - (model.Ki.sum(axis=1)) @ kvec[:,i])/(np.sum(model.Ki)) * (model.Ki.sum(axis=1)) @ dkvec 
     else: 
       tmp = 0
     ds2[i,:] = -2 * ((kvec[:,i].T @ model.Ki) @ dkvec + tmp)
   
-  if type(model)==homGP or type(model)==hetGP:
+  if isinstance(model,hetgpy.baseGP.GP):
     return dict(mean = dm, sd2 = model.nu_hat * ds2)
   else:
     return dict(mean = model.sigma2 * dm, sd2 =  (model.nu + model.psi - 2) / (model.nu + len(model.Z) - 2) * model.sigma2**2 * ds2)
@@ -607,7 +631,7 @@ def deriv_crit_logEI(x, model, cst=None, preds=None):
     pred_gr = predict_gr(model, x)
     z = (cst - preds["mean"]) / np.sqrt(preds["sd2"])
 
-    if type(model) == homGP or type(model) == hetGP:
+    if isinstance(model,hetgpy.homGP) or isinstance(model,hetgpy.hetGP):
         ds = pred_gr["sd2"] / (2 * np.sqrt(preds["sd2"]).reshape(x.shape[0], x.shape[0]).T)
         dz = -pred_gr["mean"] / np.sqrt(preds["sd2"]) - z * ds / np.sqrt(preds["sd2"])
         return dz * dlog_h(z) + ds / np.sqrt(preds["sd2"])
@@ -629,3 +653,56 @@ def deriv_crit_logEI(x, model, cst=None, preds=None):
         eitmp = eitmp + np.sqrt(preds["sd2"]) * (1 + (z**2 - 1) / (model["nu"] + len(model["Z"]) - 1)) * t.pdf(x=z, df=model["nu"] + len(model["Z"]))
         res = res/eitmp
     return res
+
+def crit_TS(x, model, n_TS = 1, rng = None, check_PSD = True):
+  '''
+  Thompson sampling
+
+  Parameters
+  ----------
+  x: np.ndarray
+      set of designs (n x d, one point per row) over which to evaluate samples
+  model: hetgpy.baseGP
+  '''
+  if rng is None:
+     rng = np.random.default_rng()
+  elif isinstance(rng,int):
+     rng = np.random.default_rng(rng)
+  elif isinstance(rng,np.random.Generator):
+     pass
+  elif not isinstance(rng,np.random.Generator):
+     raise ValueError(f"rng must be an int or np.random.Generator, got {type(rng)}")
+     
+  preds = model.predict(x, xprime = x)
+  # numerically stabiltize covariance
+  preds['cov'] = 0.5 * (preds['cov'] + preds['cov'].T)
+
+  if check_PSD:
+    # ensure PSD
+    eigval, eigvec = np.linalg.eigh(preds['cov'])
+    if (eigval<0).any():
+        print('Covariance matrix is not positive semidefinite. Clipping negative eigenvalues.')
+        eigval[eigval < 0] = 0
+        preds['cov'] = eigvec @ np.diag(eigval) @ eigvec.T
+  # sample
+  samples = rng.multivariate_normal(mean = preds['mean'], cov = preds['cov'], size = n_TS)
+
+  return samples
+
+def crit_BAPE(model, x,log=True):
+    '''
+    BAPE acquisition function (Kandasamy et al. 2015): variance of the
+    exponentiated (lognormal) posterior. Model is a GP on the log-likelihood.
+    
+    Parameters
+    ----------
+    model: fitted model
+    x: candidate point
+    log: convert to log scale (default True)
+    '''
+    pred = model.predict(x)
+    mu, sd2 = pred['mean'], pred['sd2']
+    if log:
+       return np.log(np.expm1(sd2)) + 2*mu + sd2
+    return (np.exp(sd2) - 1) * np.exp(2*mu + sd2)
+   

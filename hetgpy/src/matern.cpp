@@ -620,6 +620,7 @@ Eigen::MatrixXd partial_d_dist_abs_dX1_i1_i2_X2_m32(Eigen::MatrixXd X1, Eigen::M
 
 PYBIND11_MODULE(matern, m) {
     m.doc() = "auto-compiled c++ extension";
+    // Matern 5_2
     m.def("matern5_2_1args",&matern5_2_1args,py::arg("X1"));
     m.def("d_matern5_2_1args_theta_k_iso",&d_matern5_2_1args_theta_k_iso,py::arg("X1"),py::arg("theta"));
     m.def("d_matern5_2_1args_theta_k",&d_matern5_2_1args_theta_k,py::arg("X1"),py::arg("theta"));
@@ -629,6 +630,7 @@ PYBIND11_MODULE(matern, m) {
     m.def("d_matern5_2_2args_kthetag",&d_matern5_2_2args_kthetag,py::arg("X1"),py::arg("X2"),py::arg("kt"));
     m.def("partial_d_dist_abs_dX_i1_i2",&partial_d_dist_abs_dX_i1_i2);
     m.def("partial_d_dist_abs_dX1_i1_i2_X2",&partial_d_dist_abs_dX1_i1_i2_X2);
+    // Matern 3_2
     m.def("matern3_2_1args",&matern3_2_1args,py::arg("X1"));
     m.def("d_matern3_2_1args_theta_k_iso",&d_matern3_2_1args_theta_k_iso,py::arg("X1"),py::arg("theta"));
     m.def("d_matern3_2_1args_theta_k",&d_matern3_2_1args_theta_k,py::arg("X1"),py::arg("theta"));
@@ -636,4 +638,5 @@ PYBIND11_MODULE(matern, m) {
     m.def("matern3_2_2args",&matern3_2_2args,py::arg("X1"),py::arg("X2"));
     m.def("d_matern3_2_2args_theta_k_iso",&d_matern3_2_2args_theta_k_iso,py::arg("X1"),py::arg("X2"),py::arg("theta"));
     m.def("d_matern3_2_2args_kthetag",&d_matern3_2_2args_kthetag,py::arg("X1"),py::arg("X2"),py::arg("kt"));
+    m.def("partial_d_dist_abs_dX1_i1_i2_X2_m32",&partial_d_dist_abs_dX1_i1_i2_X2_m32);
 }
