@@ -87,6 +87,9 @@ class GP(ABC):
     def crit_TS(self,x,n_TS = 1, rng = None, check_PSD = True):
         from hetgpy.optim import crit_TS
         return crit_TS(model = self, x = x, n_TS = n_TS, rng = rng, check_PSD = check_PSD)
+    def crit_BAPE(self,x,log=True):
+        from hetgpy.optim import crit_BAPE
+        return crit_BAPE(model = self, x = x, log = log)
     
     
 

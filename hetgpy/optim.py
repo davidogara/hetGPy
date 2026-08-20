@@ -689,7 +689,7 @@ def crit_TS(x, model, n_TS = 1, rng = None, check_PSD = True):
 
   return samples
 
-def crit_bape(model, x,log=True):
+def crit_BAPE(model, x,log=True):
     '''
     BAPE acquisition function (Kandasamy et al. 2015): variance of the
     exponentiated (lognormal) posterior. Model is a GP on the log-likelihood.
