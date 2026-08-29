@@ -53,7 +53,13 @@ def crit_EI(x, model, cst = None, preds = None):
   >>> model.mle(X = X, Z = Z, lower = np.array([0.01]), upper = np.array([1]), known = dict(g = 2e-8))
   >>> EI = crit_EI(xgrid, model, cst = model.Z0.min())
   '''
-  if cst is None: cst = np.min(model.predict(x = model['X0'])['mean'])
+  if cst is None: 
+     X0 = model.X0
+     if isinstance(model,hetgpy.crnGP):
+        # use a seed outside the model support to paramterize the incumbent
+        # since for a noisy function the observed min may be overly optimistic
+        X0 = np.column_stack([X0,(model.S0 * 0 + model.S0.max() + 1)])
+     cst = np.min(model.predict(x = X0)['mean'])
   if len(x.shape) == 1: x = x.reshape(-1,model.X0.shape[1])
   if preds is None: preds = model.predict(x = x)
   
