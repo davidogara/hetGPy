@@ -32,6 +32,17 @@ class crnGP(GP):
         super().__init__()
         self.ids = None
         return
+    def _validate_seed(self,X: np.array):
+        '''
+        Validate that a seed is provided and is an integer
+        '''
+        if not len(X.shape) == 2:
+            raise ValueError(f"X must be at least 2D, got {X.shape}")
+        if X.shape[1] < 2:
+            raise ValueError(f"X must contain at least two columns, got {X.shape[1]}")
+        if not (X[:,-1] == X[:,-1].astype(int)).all():
+            raise ValueError(f"last column of X must be resolvable to an integer")
+        
     
     def pairwise_rho(self,S0r, S0c = None,rho = None):
         rho = np.atleast_1d(rho)
@@ -392,8 +403,7 @@ class crnGP(GP):
         init = init.copy()
         known = known.copy()
         noiseControl = noiseControl.copy()
-        if len(X.shape)==1:
-            X = X.reshape(-1,1)
+        self._validate_seed(X)
         if T0 is None and X.shape[0] != Z.shape[0]:
             raise ValueError(f"Dimension mismatch between Z and X: {Z.shape=}, {X.shape=}")
         if T0 is not None and X.shape[0] != Z.shape[0]:
@@ -654,7 +664,7 @@ class crnGP(GP):
         Parameters
         ----------
         x : ndarray_like
-            matrix of designs locations to predict at (one point per row)
+            matrix of designs locations to predict at (one point per row, must contain seed column)
         xprime : ndarray_like
             optional second matrix of predictive locations to obtain the predictive covariance matrix between ``x`` and ``xprime``
         t0: ndarray_like
@@ -681,10 +691,13 @@ class crnGP(GP):
             - ``confidence_interval``: prediction with kriging variance only
             - ``predictive_interval``: prediction with kriging and noise variance
         '''
+        self._validate_seed(x)
         if len(x.shape)==1:
             x = x.reshape(-1,1)
             if (x.shape[1]-1) != self.X0.shape[1]:
                 raise ValueError(f"Problem with x format")
+        if x.shape[1] != (self.X0.shape[1] + 1):
+            raise ValueError(f'number of cols in x is {x.shape[1]} must be: {self.X0.shape[1] + 1}')
         s = x[:,-1]
         x = x[:,0:-1]
         if xprime is not None:
